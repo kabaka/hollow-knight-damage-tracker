@@ -4,6 +4,7 @@ import { PageLayout } from '../components/PageLayout';
 import { AttackLogPanel } from '../features/attack-log/AttackLogPanel';
 import { BuildConfigPanel } from '../features/build-config/BuildConfigPanel';
 import { CombatStatsPanel } from '../features/combat-stats/CombatStatsPanel';
+import { FightStateProvider } from '../features/fight-state/FightStateContext';
 
 const SECTIONS = [
   {
@@ -28,15 +29,17 @@ const SECTIONS = [
 
 export const App: FC = () => {
   return (
-    <PageLayout sections={SECTIONS}>
-      <div>
-        <p className="page__title">Hollow Knight Damage Tracker</p>
-        <p className="page__subtitle">
-          Plan your build, record every strike, and monitor fight-ending damage stats in
-          real time. This early prototype focuses on layout and accessibility while core
-          logic is built out.
-        </p>
-      </div>
-    </PageLayout>
+    <FightStateProvider>
+      <PageLayout sections={SECTIONS}>
+        <div>
+          <p className="page__title">Hollow Knight Damage Tracker</p>
+          <p className="page__subtitle">
+            Plan your build, record every strike, and monitor fight-ending damage stats in
+            real time. This prototype now tracks damage totals with configurable builds
+            and boss targets.
+          </p>
+        </div>
+      </PageLayout>
+    </FightStateProvider>
   );
 };

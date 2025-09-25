@@ -42,13 +42,23 @@ A `pre-commit` hook ensures formatting, linting, and unit tests run before each 
 
 ## Current Architecture
 
-The initial UI layout focuses on clarity and accessibility while the underlying damage tracking logic is implemented:
+The UI now wires together real-time combat calculations driven by typed data models:
 
-- `src/app/App.tsx` renders the shell of the application and defines three primary panels: build configuration, attack logging, and combat statistics.
-- Components under `src/features/*` encapsulate early UI scaffolding for each major feature area.
+- `src/data/` stores structured JSON for charms, nail upgrades, spells, and boss health pools, along with helpers that expose typed lookups.
+- `FightStateProvider` (under `src/features/fight-state/`) centralizes build configuration, attack logs, and derived combat statistics that power the UI.
+- `BuildConfigPanel`, `AttackLogPanel`, and `CombatStatsPanel` consume the shared state to surface boss presets, configurable damage presets, and running metrics.
 - Shared layout primitives live in `src/components/` and global theming resides in `src/styles/`.
 
-Vitest (unit tests) and Playwright (e2e tests) validate that core sections render correctly so future iterations can evolve safely.
+Vitest (unit tests) and Playwright (e2e tests) validate that core sections render correctly and that critical interactions—such as selecting bosses or logging attacks—update derived statistics as expected.
+
+### Feature Highlights
+
+- **Boss presets and custom targets:** Quickly switch between lore-accurate boss HP values or specify any target for practice sessions.
+- **Data-driven build controls:** Choose nail upgrades, toggle influential charms, and declare which spell upgrades are available to tune damage presets.
+- **Categorized attack logging:** Nail strikes, spell casts, and advanced techniques each expose context-aware damage values that respect build modifiers like Unbreakable Strength or Shaman Stone.
+- **Live combat analytics:** Remaining HP, DPS, average damage, and actions per minute update instantly as attacks are logged, giving immediate feedback on fight pacing.
+
+Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
 ## Project Roadmap
 

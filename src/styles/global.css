@@ -123,8 +123,9 @@ body {
 
 .button-grid__button {
   display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
   border: 1px solid rgba(255 255 255 / 10%);
   border-radius: 0.75rem;
   background: rgba(255 255 255 / 6%);
@@ -135,6 +136,7 @@ body {
   transition:
     transform 120ms ease,
     background 120ms ease;
+  gap: 0.5rem;
 }
 
 .button-grid__button:hover,
@@ -143,6 +145,54 @@ body {
   transform: translateY(-2px);
   background: rgba(96 204 255 / 15%);
   border-color: rgba(96 204 255 / 40%);
+}
+
+.button-grid__label {
+  font-size: 1rem;
+}
+
+.button-grid__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.button-grid__damage {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.button-grid__soul {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.button-grid__description {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.attack-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.attack-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.attack-group__title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
 }
 
 .data-list {
@@ -185,6 +235,11 @@ body {
   font-weight: 600;
 }
 
+.form-field__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .form-field select,
 .form-field input {
   border-radius: 0.5rem;
@@ -196,4 +251,53 @@ body {
 
 .form-field small {
   color: var(--color-muted);
+}
+
+.choice-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.choice-list__option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
+.choice-list__option input[type='checkbox'],
+.choice-list__option input[type='radio'] {
+  margin-top: 0.2rem;
+}
+
+.choice-list__option-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  cursor: pointer;
+}
+
+.choice-list__label {
+  font-weight: 600;
+}
+
+.choice-list__description {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.choice-list__fieldset {
+  border: 1px solid rgba(255 255 255 / 10%);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.choice-list__fieldset legend {
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  text-transform: uppercase;
 }
