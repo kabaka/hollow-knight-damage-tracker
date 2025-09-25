@@ -32,7 +32,7 @@ export const App: FC = () => {
     <FightStateProvider>
       <PageLayout sections={SECTIONS}>
         <div>
-          <p className="page__title">Hollow Knight Damage Tracker</p>
+          <h1 className="page__title">Hollow Knight Damage Tracker</h1>
           <p className="page__subtitle">
             Plan your build, record every strike, and monitor fight-ending damage stats in
             real time. This prototype now tracks damage totals with configurable builds

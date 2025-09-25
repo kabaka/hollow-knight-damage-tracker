@@ -21,7 +21,7 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByText(/hollow knight damage tracker/i, { selector: 'p' }),
+      screen.getByRole('heading', { name: /hollow knight damage tracker/i, level: 1 }),
     ).toBeInTheDocument();
     expect(screen.getByText(/plan your build/i)).toBeVisible();
   });

@@ -7,6 +7,14 @@ import { CombatStatsPanel } from '../combat-stats/CombatStatsPanel';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 
 describe('AttackLogPanel', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
   it('updates nail damage when upgrading the nail and activating strength charms', async () => {
     const user = userEvent.setup();
 
