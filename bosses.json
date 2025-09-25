@@ -144,7 +144,7 @@
     "description": "A ghostly warrior of the Soul Sanctum.",
     "location": "Soul Sanctum",
     "health": 240,
-     "godhomeVersions": [
+    "godhomeVersions": [
       {
         "title": "Attuned",
         "health": 750
@@ -224,7 +224,7 @@
     "description": "The mother of all flukes.",
     "location": "Royal Waterways",
     "health": 350,
-     "godhomeVersions": [
+    "godhomeVersions": [
       {
         "title": "Attuned",
         "health": 500
@@ -364,7 +364,7 @@
     "description": "A warrior and her beast in the Colosseum of Fools.",
     "location": "Colosseum of Fools",
     "health": 1050,
-     "godhomeVersions": [
+    "godhomeVersions": [
       {
         "title": "Attuned",
         "health": 750
@@ -444,7 +444,7 @@
     "description": "A loyal protector of the Hive Queen.",
     "location": "The Hive",
     "health": 850,
-     "godhomeVersions": [
+    "godhomeVersions": [
       {
         "title": "Attuned",
         "health": 850
@@ -854,4 +854,3 @@
     ]
   }
 ]
-
