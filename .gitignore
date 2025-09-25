@@ -10,6 +10,7 @@ coverage/
 .vite/
 playwright-report/
 report.html
+test-results/
 
 # Logs
 *.log
