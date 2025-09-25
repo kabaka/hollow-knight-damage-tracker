@@ -1,10 +1,11 @@
 import type { FC, PropsWithChildren } from 'react';
-import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import {
   DEFAULT_BOSS_ID,
   DEFAULT_CUSTOM_HP,
   bossMap,
+  bossSequenceMap,
   nailUpgrades,
   spells,
   strengthCharmIds,
@@ -35,6 +36,14 @@ const sanitizePositiveInteger = (value: unknown, fallback: number): number => {
     return fallback;
   }
   return Math.max(1, Math.round(numeric));
+};
+
+const sanitizeNonNegativeInteger = (value: unknown, fallback: number): number => {
+  const numeric = toFiniteNumber(value);
+  if (numeric === null) {
+    return fallback;
+  }
+  return Math.max(0, Math.round(numeric));
 };
 
 const sanitizeStringArray = (value: unknown, fallback: string[]): string[] => {
@@ -119,6 +128,22 @@ const sanitizeAttackEvents = (value: unknown, fallback: AttackEvent[]): AttackEv
   return events;
 };
 
+const sanitizeSequenceEventMap = (
+  value: unknown,
+  fallback: Record<string, AttackEvent[]>,
+): Record<string, AttackEvent[]> => {
+  if (!isRecord(value)) {
+    return { ...fallback };
+  }
+
+  const sanitized: Record<string, AttackEvent[]> = {};
+  for (const [key, events] of Object.entries(value)) {
+    sanitized[key] = sanitizeAttackEvents(events, fallback[key] ?? []);
+  }
+
+  return sanitized;
+};
+
 export type AttackCategory = 'nail' | 'spell' | 'advanced' | 'charm';
 export type SpellLevel = 'base' | 'upgrade';
 
@@ -143,6 +168,10 @@ export interface FightState {
   build: BuildState;
   damageLog: AttackEvent[];
   redoStack: AttackEvent[];
+  activeSequenceId: string | null;
+  sequenceIndex: number;
+  sequenceLogs: Record<string, AttackEvent[]>;
+  sequenceRedoStacks: Record<string, AttackEvent[]>;
 }
 
 export interface AttackInput {
@@ -178,10 +207,109 @@ interface FightContextValue {
     undoLastAttack: () => void;
     redoLastAttack: () => void;
     resetLog: () => void;
+    startSequence: (sequenceId: string) => void;
+    stopSequence: () => void;
+    setSequenceStage: (index: number) => void;
+    advanceSequenceStage: () => void;
+    rewindSequenceStage: () => void;
   };
 }
 
 export const CUSTOM_BOSS_ID = 'custom';
+
+const toSequenceStageKey = (sequenceId: string, index: number) =>
+  `${sequenceId}#${index}`;
+
+const persistCurrentSequenceStage = (state: FightState): FightState => {
+  if (!state.activeSequenceId) {
+    return state;
+  }
+
+  const key = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
+  return {
+    ...state,
+    sequenceLogs: {
+      ...state.sequenceLogs,
+      [key]: [...state.damageLog],
+    },
+    sequenceRedoStacks: {
+      ...state.sequenceRedoStacks,
+      [key]: [...state.redoStack],
+    },
+  };
+};
+
+const loadSequenceStage = (
+  state: FightState,
+  sequenceId: string,
+  index: number,
+): FightState => {
+  const sequence = bossSequenceMap.get(sequenceId);
+  if (!sequence || sequence.entries.length === 0) {
+    return {
+      ...state,
+      activeSequenceId: null,
+      sequenceIndex: 0,
+    };
+  }
+
+  const clampedIndex = Math.max(0, Math.min(index, sequence.entries.length - 1));
+  const key = toSequenceStageKey(sequenceId, clampedIndex);
+  const storedLog = state.sequenceLogs[key] ?? [];
+  const storedRedo = state.sequenceRedoStacks[key] ?? [];
+  const nextTarget = sequence.entries[clampedIndex]?.target;
+
+  return {
+    ...state,
+    activeSequenceId: sequenceId,
+    sequenceIndex: clampedIndex,
+    selectedBossId: nextTarget?.id ?? state.selectedBossId,
+    damageLog: [...storedLog],
+    redoStack: [...storedRedo],
+  };
+};
+
+const exitSequence = (state: FightState): FightState => {
+  if (!state.activeSequenceId) {
+    return state;
+  }
+
+  const persisted = persistCurrentSequenceStage(state);
+  return {
+    ...persisted,
+    activeSequenceId: null,
+    sequenceIndex: 0,
+  };
+};
+
+const applyLogUpdate = (
+  state: FightState,
+  damageLog: AttackEvent[],
+  redoStack: AttackEvent[],
+): FightState => {
+  if (!state.activeSequenceId) {
+    return {
+      ...state,
+      damageLog,
+      redoStack,
+    };
+  }
+
+  const key = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
+  return {
+    ...state,
+    damageLog,
+    redoStack,
+    sequenceLogs: {
+      ...state.sequenceLogs,
+      [key]: damageLog,
+    },
+    sequenceRedoStacks: {
+      ...state.sequenceRedoStacks,
+      [key]: redoStack,
+    },
+  };
+};
 
 const initialSpellLevels = (): Record<string, SpellLevel> => {
   const levels: Record<string, SpellLevel> = {};
@@ -201,20 +329,26 @@ const createInitialState = (): FightState => ({
   },
   damageLog: [],
   redoStack: [],
+  activeSequenceId: null,
+  sequenceIndex: 0,
+  sequenceLogs: {},
+  sequenceRedoStacks: {},
 });
 
 const isCustomBoss = (bossId: string) => bossId === CUSTOM_BOSS_ID;
 
 const fightReducer = (state: FightState, action: FightAction): FightState => {
   switch (action.type) {
-    case 'selectBoss':
+    case 'selectBoss': {
+      const baseState = exitSequence(state);
       return {
-        ...state,
+        ...baseState,
         selectedBossId: action.bossId,
       };
+    }
     case 'setCustomTargetHp':
       return {
-        ...state,
+        ...exitSequence(state),
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: Math.max(1, Math.round(action.hp)),
       };
@@ -255,40 +389,66 @@ const fightReducer = (state: FightState, action: FightAction): FightState => {
         soulCost: action.soulCost,
       };
 
-      return {
-        ...state,
-        damageLog: [...state.damageLog, event],
-        redoStack: [],
-      };
+      return applyLogUpdate(state, [...state.damageLog, event], []);
     }
     case 'undoLastAttack': {
       if (state.damageLog.length === 0) {
         return state;
       }
       const undoneEvent = state.damageLog[state.damageLog.length - 1];
-      return {
-        ...state,
-        damageLog: state.damageLog.slice(0, -1),
-        redoStack: [undoneEvent, ...state.redoStack],
-      };
+      return applyLogUpdate(state, state.damageLog.slice(0, -1), [
+        undoneEvent,
+        ...state.redoStack,
+      ]);
     }
     case 'redoLastAttack': {
       if (state.redoStack.length === 0) {
         return state;
       }
       const [nextEvent, ...remaining] = state.redoStack;
-      return {
-        ...state,
-        damageLog: [...state.damageLog, nextEvent],
-        redoStack: remaining,
-      };
+      return applyLogUpdate(state, [...state.damageLog, nextEvent], remaining);
     }
     case 'resetLog':
-      return {
-        ...state,
-        damageLog: [],
-        redoStack: [],
-      };
+      return applyLogUpdate(state, [], []);
+    case 'startSequence': {
+      const persisted = persistCurrentSequenceStage(state);
+      return loadSequenceStage(persisted, action.sequenceId, 0);
+    }
+    case 'stopSequence':
+      return exitSequence(state);
+    case 'setSequenceStage':
+      return state.activeSequenceId
+        ? loadSequenceStage(
+            persistCurrentSequenceStage(state),
+            state.activeSequenceId,
+            action.index,
+          )
+        : state;
+    case 'advanceSequence': {
+      if (!state.activeSequenceId) {
+        return state;
+      }
+      const sequence = bossSequenceMap.get(state.activeSequenceId);
+      if (!sequence) {
+        return exitSequence(state);
+      }
+      if (state.sequenceIndex >= sequence.entries.length - 1) {
+        return persistCurrentSequenceStage(state);
+      }
+      return loadSequenceStage(
+        persistCurrentSequenceStage(state),
+        state.activeSequenceId,
+        state.sequenceIndex + 1,
+      );
+    }
+    case 'rewindSequence':
+      return state.activeSequenceId
+        ? loadSequenceStage(
+            persistCurrentSequenceStage(state),
+            state.activeSequenceId,
+            state.sequenceIndex - 1,
+          )
+        : state;
     default:
       return state;
   }
@@ -313,7 +473,12 @@ type FightAction =
     }
   | { type: 'undoLastAttack' }
   | { type: 'redoLastAttack' }
-  | { type: 'resetLog' };
+  | { type: 'resetLog' }
+  | { type: 'startSequence'; sequenceId: string }
+  | { type: 'stopSequence' }
+  | { type: 'setSequenceStage'; index: number }
+  | { type: 'advanceSequence' }
+  | { type: 'rewindSequence' };
 
 const calculateDerivedStats = (state: FightState): DerivedStats => {
   const { damageLog, selectedBossId, customTargetHp } = state;
@@ -358,6 +523,38 @@ const ensureSpellLevels = (state: FightState): FightState => {
   };
 };
 
+const ensureSequenceState = (state: FightState): FightState => {
+  if (!state.activeSequenceId) {
+    return state;
+  }
+
+  const sequence = bossSequenceMap.get(state.activeSequenceId);
+  if (!sequence || sequence.entries.length === 0) {
+    return {
+      ...state,
+      activeSequenceId: null,
+      sequenceIndex: 0,
+    };
+  }
+
+  const clampedIndex = Math.max(
+    0,
+    Math.min(state.sequenceIndex, sequence.entries.length - 1),
+  );
+  const key = toSequenceStageKey(state.activeSequenceId, clampedIndex);
+  const damageLog = state.sequenceLogs[key] ?? [];
+  const redoStack = state.sequenceRedoStacks[key] ?? [];
+  const targetId = sequence.entries[clampedIndex]?.target.id ?? state.selectedBossId;
+
+  return {
+    ...state,
+    sequenceIndex: clampedIndex,
+    selectedBossId: targetId,
+    damageLog: [...damageLog],
+    redoStack: [...redoStack],
+  };
+};
+
 const mergePersistedState = (
   persisted: Record<string, unknown>,
   fallback: FightState,
@@ -388,17 +585,38 @@ const mergePersistedState = (
   const damageLog = sanitizeAttackEvents(persisted.damageLog, fallback.damageLog);
   const redoStack = sanitizeAttackEvents(persisted.redoStack, fallback.redoStack);
 
-  return ensureSpellLevels({
-    selectedBossId,
-    customTargetHp,
-    build: {
-      nailUpgradeId,
-      activeCharmIds,
-      spellLevels,
-    },
-    damageLog,
-    redoStack,
-  });
+  const activeSequenceId =
+    typeof persisted.activeSequenceId === 'string' ? persisted.activeSequenceId : null;
+  const sequenceIndex = sanitizeNonNegativeInteger(
+    persisted.sequenceIndex,
+    fallback.sequenceIndex,
+  );
+  const sequenceLogs = sanitizeSequenceEventMap(
+    persisted.sequenceLogs,
+    fallback.sequenceLogs,
+  );
+  const sequenceRedoStacks = sanitizeSequenceEventMap(
+    persisted.sequenceRedoStacks,
+    fallback.sequenceRedoStacks,
+  );
+
+  return ensureSequenceState(
+    ensureSpellLevels({
+      selectedBossId,
+      customTargetHp,
+      build: {
+        nailUpgradeId,
+        activeCharmIds,
+        spellLevels,
+      },
+      damageLog,
+      redoStack,
+      activeSequenceId,
+      sequenceIndex,
+      sequenceLogs,
+      sequenceRedoStacks,
+    }),
+  );
 };
 
 const restorePersistedState = (fallback: FightState): FightState => {
@@ -451,14 +669,56 @@ const persistStateToStorage = (state: FightState) => {
 
 export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   const [state, dispatch] = useReducer(fightReducer, undefined, () =>
-    restorePersistedState(ensureSpellLevels(createInitialState())),
+    restorePersistedState(ensureSequenceState(ensureSpellLevels(createInitialState()))),
   );
+  const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     persistStateToStorage(state);
   }, [state]);
 
   const derived = useMemo(() => calculateDerivedStats(state), [state]);
+
+  useEffect(() => {
+    if (!state.activeSequenceId) {
+      sequenceCompletionRef.current.clear();
+      return;
+    }
+
+    const sequence = bossSequenceMap.get(state.activeSequenceId);
+    if (!sequence || sequence.entries.length === 0) {
+      return;
+    }
+
+    const stageKey = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
+
+    if (state.damageLog.length === 0 || derived.remainingHp > 0) {
+      sequenceCompletionRef.current.delete(stageKey);
+      return;
+    }
+
+    if (state.sequenceIndex >= sequence.entries.length - 1) {
+      return;
+    }
+
+    const lastEvent = state.damageLog[state.damageLog.length - 1];
+    if (!lastEvent) {
+      return;
+    }
+
+    if (sequenceCompletionRef.current.get(stageKey) === lastEvent.timestamp) {
+      return;
+    }
+
+    sequenceCompletionRef.current.set(stageKey, lastEvent.timestamp);
+    dispatch({ type: 'advanceSequence' });
+  }, [
+    state.activeSequenceId,
+    state.sequenceIndex,
+    state.damageLog,
+    derived.remainingHp,
+    dispatch,
+  ]);
 
   const actions = useMemo<FightContextValue['actions']>(
     () => ({
@@ -482,6 +742,11 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       undoLastAttack: () => dispatch({ type: 'undoLastAttack' }),
       redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
       resetLog: () => dispatch({ type: 'resetLog' }),
+      startSequence: (sequenceId) => dispatch({ type: 'startSequence', sequenceId }),
+      stopSequence: () => dispatch({ type: 'stopSequence' }),
+      setSequenceStage: (index) => dispatch({ type: 'setSequenceStage', index }),
+      advanceSequenceStage: () => dispatch({ type: 'advanceSequence' }),
+      rewindSequenceStage: () => dispatch({ type: 'rewindSequence' }),
     }),
     [],
   );

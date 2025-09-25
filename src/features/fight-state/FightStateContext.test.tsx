@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CUSTOM_BOSS_ID, FightStateProvider, useFightState } from './FightStateContext';
+import { bossSequenceMap } from '../../data';
 
 const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
 
@@ -109,5 +110,87 @@ describe('FightStateProvider persistence', () => {
       expect(parsed.state.selectedBossId).toBe(CUSTOM_BOSS_ID);
       expect(parsed.state.customTargetHp).toBe(4321);
     });
+  });
+});
+
+describe('boss sequences', () => {
+  const masterSequence = bossSequenceMap.get('pantheon-of-the-master');
+
+  if (!masterSequence) {
+    throw new Error('Missing pantheon sequence fixture for tests');
+  }
+
+  const firstStage = masterSequence.entries[0];
+  const secondStage = masterSequence.entries[1];
+
+  it('auto-advances stages and preserves individual logs', async () => {
+    const user = userEvent.setup();
+
+    const Harness = () => {
+      const { actions, state } = useFightState();
+      const totalLoggedDamage = state.damageLog.reduce(
+        (sum, event) => sum + event.damage,
+        0,
+      );
+
+      return (
+        <div>
+          <button type="button" onClick={() => actions.startSequence(masterSequence.id)}>
+            Start Sequence
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              actions.logAttack({
+                id: 'test-hit',
+                label: 'Test Hit',
+                damage: firstStage.target.hp,
+                category: 'nail',
+                timestamp: Date.now(),
+              })
+            }
+          >
+            Log Completion
+          </button>
+          <button type="button" onClick={() => actions.rewindSequenceStage()}>
+            Previous Stage
+          </button>
+          <span data-testid="sequence-id">{state.activeSequenceId ?? 'none'}</span>
+          <span data-testid="sequence-index">{state.sequenceIndex}</span>
+          <span data-testid="selected-boss">{state.selectedBossId}</span>
+          <span data-testid="log-count">{state.damageLog.length}</span>
+          <span data-testid="log-total">{totalLoggedDamage}</span>
+        </div>
+      );
+    };
+
+    render(
+      <FightStateProvider>
+        <Harness />
+      </FightStateProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Start Sequence' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-id').textContent).toBe(masterSequence.id);
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log Completion' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+    });
+
+    expect(screen.getByTestId('selected-boss').textContent).toBe(secondStage.target.id);
+    expect(screen.getByTestId('log-count').textContent).toBe('0');
+
+    await user.click(screen.getByRole('button', { name: 'Previous Stage' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+    });
+
+    expect(screen.getByTestId('log-count').textContent).toBe('1');
+    expect(screen.getByTestId('log-total').textContent).toBe(
+      firstStage.target.hp.toString(),
+    );
   });
 });
