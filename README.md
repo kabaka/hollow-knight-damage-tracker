@@ -56,6 +56,7 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 - **Boss presets, Godhome variants, and custom targets:** Quickly switch between Hallownest encounters, Godhome trials (Attuned, Ascended, Radiant), or specify any target for practice sessions.
 - **Data-driven build controls with charm presets:** Choose nail upgrades, toggle influential charms, apply popular charm loadouts with one click, and declare which spell upgrades are available to tune damage presets.
 - **Categorized attack logging with undo/redo:** Nail strikes, spell casts, and advanced techniques each expose context-aware damage values that respect build modifiers like Unbreakable Strength or Shaman Stone, while new undo/redo controls make correcting mistakes effortless.
+- **Keyboard shortcuts and finishing guidance:** Each attack button surfaces the remaining hits required to reach zero HP if you relied solely on that move, and keyboard shortcuts (number row followed by QWERTY order) allow spectators to log attacks or press <kbd>Esc</kbd> for a quick reset without leaving the action.
 - **Live combat analytics:** Remaining HP, DPS, average damage, and actions per minute update instantly as attacks are logged, giving immediate feedback on fight pacing.
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.

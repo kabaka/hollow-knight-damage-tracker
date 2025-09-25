@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import {
   hasStrengthCharm,
@@ -22,6 +22,62 @@ type AttackGroup = {
   label: string;
   attacks: AttackDefinition[];
 };
+
+type AttackWithMetadata = AttackDefinition & {
+  hotkey?: string;
+  hitsRemaining: number | null;
+};
+
+type AttackGroupWithMetadata = {
+  id: string;
+  label: string;
+  attacks: AttackWithMetadata[];
+};
+
+const KEY_SEQUENCE = [
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '0',
+  'q',
+  'w',
+  'e',
+  'r',
+  't',
+  'y',
+  'u',
+  'i',
+  'o',
+  'p',
+  'a',
+  's',
+  'd',
+  'f',
+  'g',
+  'h',
+  'j',
+  'k',
+  'l',
+  ';',
+  'z',
+  'x',
+  'c',
+  'v',
+  'b',
+  'n',
+  'm',
+  ',',
+  '.',
+  '/',
+];
+
+const RESET_SHORTCUT_KEY = 'Escape';
 
 const NAIL_ART_MULTIPLIERS: Record<string, number> = {
   'great-slash': 2.5,
@@ -132,10 +188,92 @@ const buildAttackGroups = (
 
 export const AttackLogPanel: FC = () => {
   const fight = useFightState();
-  const { actions, state } = fight;
+  const { actions, state, derived } = fight;
   const { damageLog, redoStack } = state;
 
   const attackGroups = useMemo(() => buildAttackGroups(state), [state]);
+
+  const { groupsWithMetadata, shortcutMap } = useMemo(() => {
+    const map = new Map<string, AttackDefinition>();
+    let hotkeyIndex = 0;
+
+    const groups: AttackGroupWithMetadata[] = attackGroups.map((group) => ({
+      ...group,
+      attacks: group.attacks.map((attack) => {
+        const hotkey = KEY_SEQUENCE[hotkeyIndex];
+        hotkeyIndex += 1;
+
+        if (hotkey) {
+          map.set(hotkey, attack);
+        }
+
+        const hitsRemaining =
+          attack.damage > 0
+            ? Math.ceil(Math.max(0, derived.remainingHp) / attack.damage)
+            : null;
+
+        return {
+          ...attack,
+          hotkey,
+          hitsRemaining,
+        } satisfies AttackWithMetadata;
+      }),
+    }));
+
+    return { groupsWithMetadata: groups, shortcutMap: map };
+  }, [attackGroups, derived.remainingHp]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      if (event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (target) {
+        const interactiveElement = target.closest(
+          'input, textarea, select, [contenteditable="true"]',
+        );
+        if (interactiveElement) {
+          return;
+        }
+      }
+
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+
+      if (key === RESET_SHORTCUT_KEY) {
+        if (state.damageLog.length === 0 && state.redoStack.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        actions.resetLog();
+        return;
+      }
+
+      if (key.length === 1) {
+        const attack = shortcutMap.get(key);
+        if (!attack) {
+          return;
+        }
+
+        event.preventDefault();
+        actions.logAttack({
+          id: attack.id,
+          label: attack.label,
+          damage: attack.damage,
+          category: attack.category,
+          soulCost: attack.soulCost,
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [actions, shortcutMap, state.damageLog.length, state.redoStack.length]);
 
   return (
     <div>
@@ -165,13 +303,14 @@ export const AttackLogPanel: FC = () => {
           type="button"
           className="quick-actions__button"
           onClick={actions.resetLog}
+          aria-keyshortcuts="Esc"
           disabled={damageLog.length === 0 && redoStack.length === 0}
         >
-          Quick reset
+          Quick reset (Esc)
         </button>
       </div>
       <div className="attack-groups">
-        {attackGroups.map((group) => (
+        {groupsWithMetadata.map((group) => (
           <section key={group.id} className="attack-group">
             <h3 className="attack-group__title">{group.label}</h3>
             <div className="button-grid" role="group" aria-label={group.label}>
@@ -180,6 +319,7 @@ export const AttackLogPanel: FC = () => {
                   key={attack.id}
                   type="button"
                   className="button-grid__button"
+                  aria-keyshortcuts={attack.hotkey?.toUpperCase()}
                   onClick={() =>
                     actions.logAttack({
                       id: attack.id,
@@ -190,14 +330,34 @@ export const AttackLogPanel: FC = () => {
                     })
                   }
                 >
-                  <span className="button-grid__label">{attack.label}</span>
+                  <div className="button-grid__header">
+                    <span className="button-grid__label">{attack.label}</span>
+                    {attack.hotkey ? (
+                      <span className="button-grid__hotkey" aria-hidden="true">
+                        {attack.hotkey.toUpperCase()}
+                      </span>
+                    ) : null}
+                  </div>
+                  {attack.hotkey ? (
+                    <span className="visually-hidden">
+                      Shortcut key {attack.hotkey.toUpperCase()}.
+                    </span>
+                  ) : null}
                   <span className="button-grid__meta">
-                    <span className="button-grid__damage" aria-hidden="true">
+                    <span className="button-grid__damage" aria-label="Damage per hit">
                       {attack.damage}
                     </span>
                     {typeof attack.soulCost === 'number' ? (
                       <span className="button-grid__soul" aria-label="Soul cost">
                         {attack.soulCost} SOUL
+                      </span>
+                    ) : null}
+                    {typeof attack.hitsRemaining === 'number' ? (
+                      <span
+                        className="button-grid__hits"
+                        aria-label="Hits to finish with this attack"
+                      >
+                        Hits to finish: {attack.hitsRemaining}
                       </span>
                     ) : null}
                   </span>
