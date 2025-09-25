@@ -9,7 +9,7 @@ The project is built with [Vite](https://vitejs.dev/) and [React](https://react.
 ### Prerequisites
 
 - Node.js 18.18 or later
-- pnpm 8.7 or later
+- pnpm 9 or later
 
 ### Install dependencies
 
