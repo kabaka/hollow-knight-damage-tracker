@@ -1,0 +1,60 @@
+{
+  "bosses": [
+    {
+      "id": "gruz-mother",
+      "name": "Gruz Mother",
+      "hp": 120,
+      "location": "Forgotten Crossroads",
+      "notes": "Early game mini-boss often used for warm-up damage checks."
+    },
+    {
+      "id": "false-knight",
+      "name": "False Knight",
+      "hp": 360,
+      "location": "Forgotten Crossroads",
+      "notes": "Arena includes breakable pillars that can interrupt the fight."
+    },
+    {
+      "id": "hornet-protector",
+      "name": "Hornet Protector",
+      "hp": 700,
+      "location": "Greenpath",
+      "notes": "First duel against Hornet with moderate HP pool."
+    },
+    {
+      "id": "mantis-lords",
+      "name": "Mantis Lords",
+      "hp": 640,
+      "location": "Fungal Wastes",
+      "notes": "Combined health for the final tandem phase of the duel."
+    },
+    {
+      "id": "soul-master",
+      "name": "Soul Master",
+      "hp": 920,
+      "location": "City of Tears",
+      "notes": "Includes the second enraged slam phase within the total HP."
+    },
+    {
+      "id": "dung-defender",
+      "name": "Dung Defender",
+      "hp": 1050,
+      "location": "Royal Waterways",
+      "notes": "High HP brawler with short vulnerability windows."
+    },
+    {
+      "id": "broken-vessel",
+      "name": "Broken Vessel",
+      "hp": 680,
+      "location": "Ancient Basin",
+      "notes": "HP total before becoming Lost Kin in Godhome refights."
+    },
+    {
+      "id": "radiance",
+      "name": "The Radiance",
+      "hp": 1700,
+      "location": "Temple of the Black Egg",
+      "notes": "Final boss of the base game including aerial phases."
+    }
+  ]
+}

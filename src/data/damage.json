@@ -696,11 +696,7 @@
           "type": "minion_summon",
           "effect": "Summons a flying minion that attacks enemies.",
           "value": {
-            "damagePerLevel": [
-              5,
-              8,
-              11
-            ]
+            "damagePerLevel": [5, 8, 11]
           },
           "notes": "Damage increases as the charm is upgraded. Attacks every 1.2-1.4 seconds."
         }
@@ -868,4 +864,3 @@
     }
   ]
 }
-
