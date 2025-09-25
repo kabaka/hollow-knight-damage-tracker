@@ -54,8 +54,9 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 ### Feature Highlights
 
 - **Boss presets, Godhome variants, and custom targets:** Quickly switch between Hallownest encounters, Godhome trials (Attuned, Ascended, Radiant), or specify any target for practice sessions.
-- **Data-driven build controls with charm presets:** Choose nail upgrades, toggle influential charms, apply popular charm loadouts with one click, and declare which spell upgrades are available to tune damage presets.
-- **Categorized attack logging with undo/redo:** Nail strikes, spell casts, and advanced techniques each expose context-aware damage values that respect build modifiers like Unbreakable Strength or Shaman Stone, while new undo/redo controls make correcting mistakes effortless.
+- **Data-driven build controls with charm presets:** Choose nail upgrades, toggle influential charms—including retaliatory vines, summons, and spell conversions—and apply popular loadouts with one click while declaring which spell upgrades are available to tune damage presets.
+- **Charm effects and summons surfaced in combat:** Activating charms such as Flukenest, Thorns of Agony, Sharp Shadow, or Glowing Womb automatically exposes dedicated attack buttons so every damage source (including minions and Fury variants) can be logged accurately.
+- **Categorized attack logging with undo/redo:** A compact grid organizes nail strikes, spell casts, advanced techniques, and charm effects with readable damage summaries that respect build modifiers like Unbreakable Strength or Shaman Stone, while undo/redo controls make correcting mistakes effortless.
 - **Keyboard shortcuts and finishing guidance:** Each attack button surfaces the remaining hits required to reach zero HP if you relied solely on that move, and keyboard shortcuts (number row followed by QWERTY order) allow spectators to log attacks or press <kbd>Esc</kbd> for a quick reset without leaving the action.
 - **Live combat analytics:** Remaining HP, DPS, average damage, and actions per minute update instantly as attacks are logged, giving immediate feedback on fight pacing.
 - **Automatic session persistence:** Build selections, logged attacks, and boss progress are stored locally so the tracker survives accidental refreshes or browser restarts.

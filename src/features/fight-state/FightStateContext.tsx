@@ -93,7 +93,12 @@ const sanitizeAttackEvents = (value: unknown, fallback: AttackEvent[]): AttackEv
       continue;
     }
 
-    if (category !== 'nail' && category !== 'spell' && category !== 'advanced') {
+    if (
+      category !== 'nail' &&
+      category !== 'spell' &&
+      category !== 'advanced' &&
+      category !== 'charm'
+    ) {
       continue;
     }
 
@@ -114,7 +119,7 @@ const sanitizeAttackEvents = (value: unknown, fallback: AttackEvent[]): AttackEv
   return events;
 };
 
-export type AttackCategory = 'nail' | 'spell' | 'advanced';
+export type AttackCategory = 'nail' | 'spell' | 'advanced' | 'charm';
 export type SpellLevel = 'base' | 'upgrade';
 
 export interface AttackEvent {

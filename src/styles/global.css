@@ -117,8 +117,8 @@ body {
 
 .button-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem;
 }
 
 .button-grid__button {
@@ -126,17 +126,18 @@ body {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  border: 1px solid rgba(255 255 255 / 10%);
-  border-radius: 0.75rem;
-  background: rgba(255 255 255 / 6%);
-  padding: 0.75rem;
+  border: 1px solid rgba(255 255 255 / 12%);
+  border-radius: 0.65rem;
+  background: rgba(255 255 255 / 5%);
+  padding: 0.65rem 0.7rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: inherit;
   transition:
     transform 120ms ease,
-    background 120ms ease;
-  gap: 0.5rem;
+    background 120ms ease,
+    border-color 120ms ease;
+  gap: 0.35rem;
 }
 
 .button-grid__header {
@@ -150,51 +151,59 @@ body {
 .button-grid__button:hover,
 .button-grid__button:focus-visible {
   outline: none;
-  transform: translateY(-2px);
-  background: rgba(96 204 255 / 15%);
-  border-color: rgba(96 204 255 / 40%);
+  transform: translateY(-1px);
+  background: rgba(96 204 255 / 14%);
+  border-color: rgba(96 204 255 / 42%);
 }
 
 .button-grid__label {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .button-grid__hotkey {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0.1rem 0.35rem;
   border-radius: 0.4rem;
-  border: 1px solid rgba(255 255 255 / 18%);
+  border: 1px solid rgba(255 255 255 / 16%);
   color: var(--color-muted);
-  background: rgba(255 255 255 / 8%);
+  background: rgba(255 255 255 / 10%);
 }
 
 .button-grid__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: 100%;
   font-size: 0.85rem;
   color: var(--color-muted);
 }
 
 .button-grid__damage {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-text);
 }
 
 .button-grid__soul {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255 255 255 / 12%);
 }
 
 .button-grid__hits {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255 255 255 / 12%);
 }
 
 .button-grid__description {
@@ -332,11 +341,59 @@ body {
   gap: 0.5rem;
 }
 
+.choice-groups {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.choice-section {
+  border: 1px solid rgba(255 255 255 / 10%);
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.choice-section__legend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  padding: 0;
+}
+
+.choice-section__description {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
 .choice-list__option {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.45rem;
   align-items: flex-start;
+}
+
+.choice-list--columns {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.choice-list--columns .choice-list__option {
+  border: 1px solid rgba(255 255 255 / 8%);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  background: rgba(255 255 255 / 3%);
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.choice-list--columns .choice-list__option:hover,
+.choice-list--columns .choice-list__option:focus-within {
+  border-color: rgba(96 204 255 / 35%);
+  background: rgba(96 204 255 / 12%);
 }
 
 .choice-list__option input[type='checkbox'],
@@ -353,6 +410,7 @@ body {
 
 .choice-list__label {
   font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .choice-list__description {

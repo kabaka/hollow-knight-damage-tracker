@@ -46,7 +46,7 @@ describe('AttackLogPanel', () => {
       </>,
     );
 
-    await user.click(screen.getByLabelText(/shade soul/i));
+    await user.click(screen.getByRole('radio', { name: /shade soul/i }));
 
     const shadeSoulButtons = screen.getAllByRole('button', { name: /shade soul/i });
     expect(shadeSoulButtons.length).toBeGreaterThan(0);
@@ -152,5 +152,47 @@ describe('AttackLogPanel', () => {
 
     damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
     expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
+  });
+
+  it('shows charm effect attacks when enabling damage charms', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <BuildConfigPanel />
+        <AttackLogPanel />
+      </>,
+    );
+
+    await user.click(screen.getByLabelText(/thorns of agony/i));
+    await user.click(screen.getByLabelText(/glowing womb/i));
+
+    expect(screen.getByRole('heading', { name: /charm effects/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /thorns of agony burst/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /hatchling impact/i })).toBeInTheDocument();
+  });
+
+  it('replaces vengeful spirit with Flukenest damage when equipped', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <BuildConfigPanel />
+        <AttackLogPanel />
+      </>,
+    );
+
+    const vengefulSpiritButton = screen.getByRole('button', {
+      name: /^vengeful spirit/i,
+    });
+    const damageDisplay = within(vengefulSpiritButton).getByLabelText(/damage per hit/i);
+    expect(damageDisplay).toHaveTextContent('15');
+
+    await user.click(screen.getByLabelText(/flukenest/i));
+
+    expect(damageDisplay).toHaveTextContent('36');
+    expect(vengefulSpiritButton).toHaveTextContent(/flukenest volley/i);
   });
 });

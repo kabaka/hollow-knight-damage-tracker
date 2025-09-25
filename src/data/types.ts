@@ -1,7 +1,7 @@
 export interface CharmEffect {
   type: string;
   effect: string;
-  value: number | Record<string, number> | null;
+  value?: unknown;
   notes?: string;
 }
 

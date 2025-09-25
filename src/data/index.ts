@@ -43,7 +43,18 @@ const toSlug = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const toNumberEntries = (value: unknown) =>
+  isRecord(value)
+    ? Object.entries(value).filter(
+        (entry): entry is [string, number] => typeof entry[1] === 'number',
+      )
+    : [];
+
 export const charms = rawDamage.charms as Charm[];
+export const charmMap = new Map(charms.map((charm) => [charm.id, charm]));
 export const nailUpgrades = rawDamage.nailUpgrades as NailUpgrade[];
 export const spells = rawDamage.spells.map((spell) => ({
   ...spell,
@@ -126,13 +137,24 @@ const defaultBossTarget =
 export const DEFAULT_BOSS_ID = defaultBossTarget?.id ?? defaultBossTargetId;
 export const DEFAULT_CUSTOM_HP = 2100;
 
-export const keyCharmIds = [
+export const supportedCharmIds = [
   'fragile-strength',
   'unbreakable-strength',
+  'fury-of-the-fallen',
   'shaman-stone',
   'spell-twister',
   'quick-slash',
-];
+  'grubberflys-elegy',
+  'flukenest',
+  'thorns-of-agony',
+  'sharp-shadow',
+  'dreamshield',
+  'defenders-crest',
+  'spore-shroom',
+  'glowing-womb',
+  'weaversong',
+  'grimmchild',
+] as const;
 
 export const strengthCharmIds = new Set(['fragile-strength', 'unbreakable-strength']);
 
@@ -140,10 +162,4 @@ const shamanStoneEffect = charms
   .find((charm) => charm.id === 'shaman-stone')
   ?.effects.find((effect) => effect.type === 'spell_damage_multiplier');
 
-export const shamanStoneMultipliers = new Map(
-  shamanStoneEffect &&
-  shamanStoneEffect.value &&
-  typeof shamanStoneEffect.value === 'object'
-    ? Object.entries(shamanStoneEffect.value)
-    : [],
-);
+export const shamanStoneMultipliers = new Map(toNumberEntries(shamanStoneEffect?.value));

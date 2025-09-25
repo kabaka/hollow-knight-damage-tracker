@@ -6,10 +6,67 @@ import {
   useFightState,
   type SpellLevel,
 } from '../fight-state/FightStateContext';
-import { bossMap, bosses, charms, keyCharmIds, nailUpgrades, spells } from '../../data';
+import type { Charm } from '../../data';
+import {
+  bossMap,
+  bosses,
+  charmMap,
+  supportedCharmIds,
+  nailUpgrades,
+  spells,
+} from '../../data';
 
-const orderCharmIds = (selected: string[]) =>
-  keyCharmIds.filter((charmId) => selected.includes(charmId));
+type SupportedCharmId = (typeof supportedCharmIds)[number];
+
+const orderCharmIds = (selected: string[]) => {
+  const ordered = supportedCharmIds.filter((charmId) => selected.includes(charmId));
+  const extras = selected.filter((id) => !ordered.includes(id as SupportedCharmId));
+  return [...ordered, ...extras];
+};
+
+const CHARM_GROUPS = [
+  {
+    id: 'damage-boosts',
+    label: 'Damage Modifiers',
+    description:
+      'Boost core attacks, alter casting efficiency, or unlock nail-based projectiles.',
+    charmIds: [
+      'fragile-strength',
+      'unbreakable-strength',
+      'fury-of-the-fallen',
+      'shaman-stone',
+      'spell-twister',
+      'quick-slash',
+      'grubberflys-elegy',
+      'flukenest',
+    ],
+  },
+  {
+    id: 'area-control',
+    label: 'Area & Retaliation Damage',
+    description:
+      'Automated bursts, auras, and counterattacks that keep pressure on nearby foes.',
+    charmIds: [
+      'thorns-of-agony',
+      'sharp-shadow',
+      'dreamshield',
+      'defenders-crest',
+      'spore-shroom',
+    ],
+  },
+  {
+    id: 'summons',
+    label: 'Summoned Allies',
+    description:
+      'Call in hatchlings or weavers to chip away at health bars while you focus on mechanics.',
+    charmIds: ['glowing-womb', 'weaversong', 'grimmchild'],
+  },
+] satisfies Array<{
+  id: string;
+  label: string;
+  description: string;
+  charmIds: SupportedCharmId[];
+}>;
 
 const CHARM_PRESETS = [
   {
@@ -35,11 +92,14 @@ export const BuildConfigPanel: FC = () => {
     actions,
   } = useFightState();
 
-  const charmOptions = useMemo(
+  const charmGroups = useMemo(
     () =>
-      keyCharmIds
-        .map((id) => charms.find((charm) => charm.id === id))
-        .filter((charm): charm is NonNullable<typeof charm> => Boolean(charm)),
+      CHARM_GROUPS.map((group) => ({
+        ...group,
+        charms: group.charmIds
+          .map((id) => charmMap.get(id))
+          .filter((charm): charm is Charm => Boolean(charm)),
+      })).filter((group) => group.charms.length > 0),
     [],
   );
 
@@ -202,28 +262,49 @@ export const BuildConfigPanel: FC = () => {
       </div>
 
       <div className="form-field">
-        <span className="form-field__label">Key Charms</span>
-        <div className="choice-list" role="group" aria-label="Select key charms">
-          {charmOptions.map((charm) => {
-            const summary = charm.effects.map((effect) => effect.effect).join(' ');
-            const checkboxId = `charm-${charm.id}`;
+        <span className="form-field__label">Damage Charms</span>
+        <div className="choice-groups">
+          {charmGroups.map((group) => {
+            const descriptionId = `${group.id}-description`;
             return (
-              <div key={charm.id} className="choice-list__option">
-                <input
-                  id={checkboxId}
-                  type="checkbox"
-                  checked={build.activeCharmIds.includes(charm.id)}
-                  onChange={() => toggleCharm(charm.id)}
-                />
-                <label htmlFor={checkboxId} className="choice-list__option-label">
-                  <span className="choice-list__label">{charm.name}</span>
-                  <span className="choice-list__description">{summary}</span>
-                </label>
-              </div>
+              <fieldset
+                key={group.id}
+                className="choice-section"
+                aria-describedby={descriptionId}
+              >
+                <legend className="choice-section__legend">{group.label}</legend>
+                <p id={descriptionId} className="choice-section__description">
+                  {group.description}
+                </p>
+                <div className="choice-list choice-list--columns">
+                  {group.charms.map((charm) => {
+                    const summary = charm.effects
+                      .map((effect) => effect.effect)
+                      .join(' ');
+                    const checkboxId = `charm-${charm.id}`;
+                    return (
+                      <div key={charm.id} className="choice-list__option">
+                        <input
+                          id={checkboxId}
+                          type="checkbox"
+                          checked={build.activeCharmIds.includes(charm.id)}
+                          onChange={() => toggleCharm(charm.id)}
+                        />
+                        <label htmlFor={checkboxId} className="choice-list__option-label">
+                          <span className="choice-list__label">{charm.name}</span>
+                          <span className="choice-list__description">{summary}</span>
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
             );
           })}
         </div>
-        <small>Select the charms influencing your combat style.</small>
+        <small>
+          Toggle any charms that influence damage output or create new attacks.
+        </small>
       </div>
 
       <div className="form-field">
