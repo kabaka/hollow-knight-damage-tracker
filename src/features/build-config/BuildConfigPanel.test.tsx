@@ -75,4 +75,11 @@ describe('BuildConfigPanel', () => {
     expect(screen.getByLabelText(/shaman stone/i)).not.toBeChecked();
     expect(screen.getByLabelText(/spell twister/i)).not.toBeChecked();
   });
+
+  it('surfaces extended damage charms such as Thorns of Agony', () => {
+    renderWithFightProvider(<BuildConfigPanel />);
+
+    expect(screen.getByLabelText(/thorns of agony/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/glowing womb/i)).toBeInTheDocument();
+  });
 });
