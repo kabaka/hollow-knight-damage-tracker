@@ -1,5 +1,6 @@
 import rawDamage from './damage.json';
 import rawBosses from './bosses.json';
+import rawSequences from './sequences.json';
 import type {
   Boss,
   BossTarget,
@@ -8,6 +9,8 @@ import type {
   NailUpgrade,
   Spell,
   SpellVariant,
+  BossSequence,
+  BossSequenceEntry,
 } from './types';
 
 export type {
@@ -128,6 +131,72 @@ export const nailUpgradeMap = new Map(
   nailUpgrades.map((upgrade) => [upgrade.id, upgrade]),
 );
 export const spellMap = new Map(spells.map((spell) => [spell.id, spell]));
+
+type RawSequenceEntry = {
+  boss: string;
+  version: string;
+};
+
+type RawSequence = {
+  id: string;
+  name: string;
+  category?: string;
+  entries: RawSequenceEntry[];
+};
+
+const rawSequenceData = rawSequences as RawSequence[];
+
+const normalizeSequenceVersion = (version: string) => {
+  const normalized = version.trim().toLowerCase();
+  if (normalized === '' || normalized === 'standard') {
+    return 'Standard';
+  }
+  if (normalized === 'final boss') {
+    return 'Attuned';
+  }
+  return version;
+};
+
+const resolveSequenceTarget = (entry: RawSequenceEntry) => {
+  const normalizedVersion = normalizeSequenceVersion(entry.version);
+  return (
+    parsedBossTargets.find(
+      (target) =>
+        target.bossName === entry.boss &&
+        (target.version.title === normalizedVersion || normalizedVersion === ''),
+    ) ?? parsedBossTargets.find((target) => target.bossName === entry.boss)
+  );
+};
+
+const parsedSequences: BossSequence[] = rawSequenceData
+  .map((sequence) => {
+    const sequenceId = toSlug(sequence.id || sequence.name);
+    const entries: BossSequenceEntry[] = sequence.entries
+      .map((entry, index) => {
+        const target = resolveSequenceTarget(entry);
+        if (!target) {
+          return null;
+        }
+        return {
+          id: `${sequenceId}__${index}`,
+          target,
+        } satisfies BossSequenceEntry;
+      })
+      .filter((entry): entry is BossSequenceEntry => Boolean(entry));
+
+    return {
+      id: sequenceId,
+      name: sequence.name,
+      category: sequence.category ?? 'Boss Sequences',
+      entries,
+    } satisfies BossSequence;
+  })
+  .filter((sequence) => sequence.entries.length > 0);
+
+export const bossSequences = parsedSequences;
+export const bossSequenceMap = new Map(
+  bossSequences.map((sequence) => [sequence.id, sequence]),
+);
 
 const defaultBossTargetId = `${toSlug('False Knight')}__standard`;
 

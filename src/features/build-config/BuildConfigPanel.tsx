@@ -1,5 +1,5 @@
 import type { ChangeEvent, FC } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import {
   CUSTOM_BOSS_ID,
@@ -10,6 +10,8 @@ import type { Charm } from '../../data';
 import {
   bossMap,
   bosses,
+  bossSequenceMap,
+  bossSequences,
   charmMap,
   supportedCharmIds,
   nailUpgrades,
@@ -88,7 +90,7 @@ const CHARM_PRESETS = [
 
 export const BuildConfigPanel: FC = () => {
   const {
-    state: { selectedBossId, customTargetHp, build },
+    state: { selectedBossId, customTargetHp, build, activeSequenceId, sequenceIndex },
     actions,
   } = useFightState();
 
@@ -113,12 +115,57 @@ export const BuildConfigPanel: FC = () => {
     [selectedTarget],
   );
 
+  const activeSequence = useMemo(
+    () => (activeSequenceId ? bossSequenceMap.get(activeSequenceId) : undefined),
+    [activeSequenceId],
+  );
+
+  const sequenceEntries = activeSequence?.entries ?? [];
+  const cappedSequenceIndex = sequenceEntries.length
+    ? Math.min(Math.max(sequenceIndex, 0), sequenceEntries.length - 1)
+    : 0;
+  const currentSequenceEntry = sequenceEntries[cappedSequenceIndex];
+  const isSequenceActive = Boolean(activeSequence);
+  const hasPreviousSequenceStage = isSequenceActive && cappedSequenceIndex > 0;
+  const hasNextSequenceStage =
+    isSequenceActive && cappedSequenceIndex < sequenceEntries.length - 1;
+  const sequenceSelectValue = activeSequenceId ?? '';
+
   const bossSelectValue =
     selectedBossId === CUSTOM_BOSS_ID
       ? CUSTOM_BOSS_ID
       : (selectedTarget?.bossId ?? CUSTOM_BOSS_ID);
 
   const selectedVersion = selectedTarget?.version;
+
+  const handleSequenceChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextSequenceId = event.target.value;
+    if (nextSequenceId === '') {
+      actions.stopSequence();
+      return;
+    }
+    actions.startSequence(nextSequenceId);
+  };
+
+  const handleSequenceStageChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextIndex = Number.parseInt(event.target.value, 10);
+    if (Number.isNaN(nextIndex)) {
+      return;
+    }
+    actions.setSequenceStage(nextIndex);
+  };
+
+  const handleAdvanceSequence = () => {
+    if (hasNextSequenceStage) {
+      actions.advanceSequenceStage();
+    }
+  };
+
+  const handleRewindSequence = () => {
+    if (hasPreviousSequenceStage) {
+      actions.rewindSequenceStage();
+    }
+  };
 
   const handleBossChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const nextBossId = event.target.value;
@@ -166,6 +213,35 @@ export const BuildConfigPanel: FC = () => {
     actions.setSpellLevel(spellId, level);
   };
 
+  useEffect(() => {
+    if (!isSequenceActive) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === '[' && hasPreviousSequenceStage) {
+        event.preventDefault();
+        actions.rewindSequenceStage();
+      } else if (event.key === ']' && hasNextSequenceStage) {
+        event.preventDefault();
+        actions.advanceSequenceStage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [actions, hasNextSequenceStage, hasPreviousSequenceStage, isSequenceActive]);
+
   return (
     <form className="form-grid" aria-describedby="build-config-description">
       <p id="build-config-description" className="section__description">
@@ -174,8 +250,81 @@ export const BuildConfigPanel: FC = () => {
       </p>
 
       <div className="form-field">
+        <label htmlFor="boss-sequence">Boss Sequence</label>
+        <select
+          id="boss-sequence"
+          value={sequenceSelectValue}
+          onChange={handleSequenceChange}
+        >
+          <option value="">Single target practice</option>
+          {bossSequences.map((sequence) => (
+            <option key={sequence.id} value={sequence.id}>
+              {sequence.name}
+            </option>
+          ))}
+        </select>
+        <small>
+          {isSequenceActive && activeSequence
+            ? `Stage ${cappedSequenceIndex + 1} of ${sequenceEntries.length} • ${activeSequence.category}`
+            : 'Select a pantheon or rush to auto-advance through each boss.'}
+        </small>
+      </div>
+
+      {isSequenceActive && activeSequence ? (
+        <div className="form-field">
+          <label htmlFor="sequence-stage">Sequence Stage</label>
+          <div
+            className="sequence-controls"
+            role="group"
+            aria-label="Sequence navigation"
+          >
+            <button
+              type="button"
+              className="sequence-controls__button"
+              onClick={handleRewindSequence}
+              disabled={!hasPreviousSequenceStage}
+              aria-keyshortcuts="["
+            >
+              Previous
+            </button>
+            <select
+              id="sequence-stage"
+              value={String(cappedSequenceIndex)}
+              onChange={handleSequenceStageChange}
+            >
+              {sequenceEntries.map((entry, index) => (
+                <option key={entry.id} value={index}>
+                  {`${String(index + 1).padStart(2, '0')} • ${entry.target.bossName} • ${entry.target.version.title}`}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="sequence-controls__button"
+              onClick={handleAdvanceSequence}
+              disabled={!hasNextSequenceStage}
+              aria-keyshortcuts="]"
+            >
+              Next
+            </button>
+          </div>
+          <small>
+            {currentSequenceEntry
+              ? `${currentSequenceEntry.target.location} • ${currentSequenceEntry.target.hp.toLocaleString()} HP`
+              : 'Select a boss within the sequence.'}{' '}
+            Use [ and ] to cycle between bosses without leaving the keyboard.
+          </small>
+        </div>
+      ) : null}
+
+      <div className="form-field">
         <label htmlFor="boss-target">Boss Target</label>
-        <select id="boss-target" value={bossSelectValue} onChange={handleBossChange}>
+        <select
+          id="boss-target"
+          value={bossSelectValue}
+          onChange={handleBossChange}
+          disabled={isSequenceActive}
+        >
           {bosses.map((boss) => (
             <option key={boss.id} value={boss.id}>
               {boss.name}
@@ -184,15 +333,17 @@ export const BuildConfigPanel: FC = () => {
           <option value={CUSTOM_BOSS_ID}>Custom target</option>
         </select>
         <small>
-          {selectedBossId === CUSTOM_BOSS_ID
-            ? 'Set an exact HP amount for practice or race scenarios.'
-            : `${selectedBoss?.location ?? 'Unknown arena'} • ${
-                selectedVersion?.title ?? 'Standard'
-              } • ${selectedTarget?.hp.toLocaleString() ?? '?'} HP`}
+          {isSequenceActive
+            ? 'Sequence controls determine the active boss. Switch above to return to single-target practice.'
+            : selectedBossId === CUSTOM_BOSS_ID
+              ? 'Set an exact HP amount for practice or race scenarios.'
+              : `${selectedBoss?.location ?? 'Unknown arena'} • ${
+                  selectedVersion?.title ?? 'Standard'
+                } • ${selectedTarget?.hp.toLocaleString() ?? '?'} HP`}
         </small>
       </div>
 
-      {selectedBossId !== CUSTOM_BOSS_ID && selectedBoss ? (
+      {selectedBossId !== CUSTOM_BOSS_ID && selectedBoss && !isSequenceActive ? (
         <div className="form-field">
           <label htmlFor="boss-version">Boss Version</label>
           <select
@@ -210,7 +361,7 @@ export const BuildConfigPanel: FC = () => {
         </div>
       ) : null}
 
-      {selectedBossId === CUSTOM_BOSS_ID ? (
+      {selectedBossId === CUSTOM_BOSS_ID && !isSequenceActive ? (
         <div className="form-field">
           <label htmlFor="custom-target-hp">Custom Target HP</label>
           <input

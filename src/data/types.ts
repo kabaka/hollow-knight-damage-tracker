@@ -72,3 +72,15 @@ export interface BossTarget {
   hp: number;
   version: BossVersion;
 }
+
+export interface BossSequenceEntry {
+  id: string;
+  target: BossTarget;
+}
+
+export interface BossSequence {
+  id: string;
+  name: string;
+  category: string;
+  entries: BossSequenceEntry[];
+}

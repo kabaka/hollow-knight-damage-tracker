@@ -54,6 +54,7 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 ### Feature Highlights
 
 - **Boss presets, Godhome variants, and custom targets:** Quickly switch between Hallownest encounters, Godhome trials (Attuned, Ascended, Radiant), or specify any target for practice sessions.
+- **Pantheon and rush tracking:** Queue up Godhome pantheons or the Black Egg Temple rush, automatically advance to the next boss when HP hits zero, and revisit previous stages with bracket-key shortcuts or on-screen navigation.
 - **Data-driven build controls with charm presets:** Choose nail upgrades, toggle influential charms—including retaliatory vines, summons, and spell conversions—and apply popular loadouts with one click while declaring which spell upgrades are available to tune damage presets.
 - **Charm effects and summons surfaced in combat:** Activating charms such as Flukenest, Thorns of Agony, Sharp Shadow, or Glowing Womb automatically exposes dedicated attack buttons so every damage source (including minions and Fury variants) can be logged accurately.
 - **Categorized attack logging with undo/redo:** A compact grid organizes nail strikes, spell casts, advanced techniques, and charm effects with readable damage summaries that respect build modifiers like Unbreakable Strength or Shaman Stone, while undo/redo controls make correcting mistakes effortless.

@@ -300,6 +300,46 @@ body {
   color: var(--color-muted);
 }
 
+.sequence-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sequence-controls select {
+  flex: 1;
+}
+
+.sequence-controls__button {
+  border: 1px solid rgba(255 255 255 / 20%);
+  border-radius: 0.5rem;
+  background: rgba(255 255 255 / 8%);
+  color: inherit;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.sequence-controls__button:hover,
+.sequence-controls__button:focus-visible {
+  outline: none;
+  background: rgba(96 204 255 / 15%);
+  border-color: rgba(96 204 255 / 35%);
+  transform: translateY(-1px);
+}
+
+.sequence-controls__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .quick-actions {
   display: flex;
   flex-wrap: wrap;
