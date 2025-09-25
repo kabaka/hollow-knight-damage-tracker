@@ -6,6 +6,14 @@ import { CombatStatsPanel } from '../combat-stats/CombatStatsPanel';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 
 describe('BuildConfigPanel', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
   it('allows selecting a custom boss target and updates stats', async () => {
     const user = userEvent.setup();
 

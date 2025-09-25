@@ -58,6 +58,7 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 - **Categorized attack logging with undo/redo:** Nail strikes, spell casts, and advanced techniques each expose context-aware damage values that respect build modifiers like Unbreakable Strength or Shaman Stone, while new undo/redo controls make correcting mistakes effortless.
 - **Keyboard shortcuts and finishing guidance:** Each attack button surfaces the remaining hits required to reach zero HP if you relied solely on that move, and keyboard shortcuts (number row followed by QWERTY order) allow spectators to log attacks or press <kbd>Esc</kbd> for a quick reset without leaving the action.
 - **Live combat analytics:** Remaining HP, DPS, average damage, and actions per minute update instantly as attacks are logged, giving immediate feedback on fight pacing.
+- **Automatic session persistence:** Build selections, logged attacks, and boss progress are stored locally so the tracker survives accidental refreshes or browser restarts.
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
