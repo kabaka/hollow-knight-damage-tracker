@@ -1,0 +1,857 @@
+[
+  {
+    "name": "Gruz Mother",
+    "description": "Slumbering mother of the gruzzers.",
+    "location": "Forgotten Crossroads",
+    "health": 90,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 945
+      },
+      {
+        "title": "Radiant",
+        "health": 945
+      }
+    ]
+  },
+  {
+    "name": "False Knight",
+    "description": "A maggot driven mad by a stolen hero's strength.",
+    "location": "Forgotten Crossroads",
+    "health": 355,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 780
+      },
+      {
+        "title": "Ascended",
+        "health": 1680
+      },
+      {
+        "title": "Radiant",
+        "health": 1680
+      }
+    ]
+  },
+  {
+    "name": "Failed Champion",
+    "description": "Dream variant of the False Knight.",
+    "location": "Forgotten Crossroads",
+    "health": 1080,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1080
+      },
+      {
+        "title": "Ascended",
+        "health": 1800
+      },
+      {
+        "title": "Radiant",
+        "health": 1800
+      }
+    ]
+  },
+  {
+    "name": "Vengefly King",
+    "description": "The patriarch of a vengefly colony.",
+    "location": "Greenpath",
+    "health": 90,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 450
+      },
+      {
+        "title": "Ascended",
+        "health": 735
+      },
+      {
+        "title": "Radiant",
+        "health": 735
+      }
+    ]
+  },
+  {
+    "name": "Massive Moss Charger",
+    "description": "A large moss creature that charges its foes.",
+    "location": "Greenpath",
+    "health": 100,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 480
+      },
+      {
+        "title": "Ascended",
+        "health": 850
+      },
+      {
+        "title": "Radiant",
+        "health": 850
+      }
+    ]
+  },
+  {
+    "name": "Hornet (Protector)",
+    "description": "The agile protector of Hallownest's ruins.",
+    "location": "Greenpath",
+    "health": 225,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 900
+      },
+      {
+        "title": "Ascended",
+        "health": 1250
+      },
+      {
+        "title": "Radiant",
+        "health": 1250
+      }
+    ]
+  },
+  {
+    "name": "Mantis Lords",
+    "description": "The three rulers of the Mantis Tribe.",
+    "location": "Fungal Wastes",
+    "health": 570,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1100
+      },
+      {
+        "title": "Ascended",
+        "health": 1550
+      },
+      {
+        "title": "Radiant",
+        "health": 1550
+      }
+    ]
+  },
+  {
+    "name": "Soul Warrior",
+    "description": "A ghostly warrior of the Soul Sanctum.",
+    "location": "Soul Sanctum",
+    "health": 240,
+     "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 750
+      },
+      {
+        "title": "Ascended",
+        "health": 750
+      },
+      {
+        "title": "Radiant",
+        "health": 750
+      }
+    ]
+  },
+  {
+    "name": "Soul Master",
+    "description": "The head of the Soul Sanctum, twisted by his research.",
+    "location": "City of Tears",
+    "health": 385,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 950
+      },
+      {
+        "title": "Ascended",
+        "health": 1250
+      },
+      {
+        "title": "Radiant",
+        "health": 1250
+      }
+    ]
+  },
+  {
+    "name": "Soul Tyrant",
+    "description": "Dream variant of the Soul Master.",
+    "location": "City of Tears",
+    "health": 1250,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1250
+      },
+      {
+        "title": "Ascended",
+        "health": 1500
+      },
+      {
+        "title": "Radiant",
+        "health": 1500
+      }
+    ]
+  },
+  {
+    "name": "Dung Defender",
+    "description": "A joyous and skilled warrior protecting a forgotten king.",
+    "location": "Royal Waterways",
+    "health": 700,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 800
+      },
+      {
+        "title": "Ascended",
+        "health": 1200
+      },
+      {
+        "title": "Radiant",
+        "health": 1200
+      }
+    ]
+  },
+  {
+    "name": "Flukemarm",
+    "description": "The mother of all flukes.",
+    "location": "Royal Waterways",
+    "health": 350,
+     "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 500
+      },
+      {
+        "title": "Ascended",
+        "health": 900
+      },
+      {
+        "title": "Radiant",
+        "health": 900
+      }
+    ]
+  },
+  {
+    "name": "Crystal Guardian",
+    "description": "A bug encased in crystal, guarding a bench.",
+    "location": "Crystal Peak",
+    "health": 280,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 650
+      },
+      {
+        "title": "Radiant",
+        "health": 650
+      }
+    ]
+  },
+  {
+    "name": "Enraged Guardian",
+    "description": "The Crystal Guardian, awakened and enraged.",
+    "location": "Crystal Peak",
+    "health": 450,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 650
+      },
+      {
+        "title": "Radiant",
+        "health": 650
+      }
+    ]
+  },
+  {
+    "name": "Broken Vessel",
+    "description": "A discarded vessel animated by infection.",
+    "location": "Ancient Basin",
+    "health": 525,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 700
+      },
+      {
+        "title": "Ascended",
+        "health": 1000
+      },
+      {
+        "title": "Radiant",
+        "health": 1000
+      }
+    ]
+  },
+  {
+    "name": "Lost Kin",
+    "description": "Dream variant of the Broken Vessel.",
+    "location": "Ancient Basin",
+    "health": 1200,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1200
+      },
+      {
+        "title": "Ascended",
+        "health": 1650
+      },
+      {
+        "title": "Radiant",
+        "health": 1650
+      }
+    ]
+  },
+  {
+    "name": "Nosk",
+    "description": "A creature that mimics others to lure prey.",
+    "location": "Deepnest",
+    "health": 680,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 680
+      },
+      {
+        "title": "Ascended",
+        "health": 980
+      },
+      {
+        "title": "Radiant",
+        "health": 980
+      }
+    ]
+  },
+  {
+    "name": "The Collector",
+    "description": "A shadowy creature that preserves the creatures of Hallownest.",
+    "location": "Tower of Love",
+    "health": 750,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 900
+      },
+      {
+        "title": "Ascended",
+        "health": 1200
+      },
+      {
+        "title": "Radiant",
+        "health": 1200
+      }
+    ]
+  },
+  {
+    "name": "God Tamer",
+    "description": "A warrior and her beast in the Colosseum of Fools.",
+    "location": "Colosseum of Fools",
+    "health": 1050,
+     "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 750
+      },
+      {
+        "title": "Ascended",
+        "health": 1000
+      },
+      {
+        "title": "Radiant",
+        "health": 1000
+      }
+    ]
+  },
+  {
+    "name": "Hornet (Sentinel)",
+    "description": "A skilled warrior testing the Knight's strength.",
+    "location": "Kingdom's Edge",
+    "health": 700,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 800
+      },
+      {
+        "title": "Ascended",
+        "health": 1200
+      },
+      {
+        "title": "Radiant",
+        "health": 1200
+      }
+    ]
+  },
+  {
+    "name": "Traitor Lord",
+    "description": "The exiled lord of the Mantis Tribe who embraced the infection.",
+    "location": "Queen's Gardens",
+    "health": 800,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 800
+      },
+      {
+        "title": "Ascended",
+        "health": 1200
+      },
+      {
+        "title": "Radiant",
+        "health": 1200
+      }
+    ]
+  },
+  {
+    "name": "Uumuu",
+    "description": "A sentient jellyfish guarding Monomon the Teacher.",
+    "location": "Fog Canyon",
+    "health": 300,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 350
+      },
+      {
+        "title": "Ascended",
+        "health": 500
+      },
+      {
+        "title": "Radiant",
+        "health": 500
+      }
+    ]
+  },
+  {
+    "name": "Hive Knight",
+    "description": "A loyal protector of the Hive Queen.",
+    "location": "The Hive",
+    "health": 850,
+     "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 850
+      },
+      {
+        "title": "Ascended",
+        "health": 1300
+      },
+      {
+        "title": "Radiant",
+        "health": 1300
+      }
+    ]
+  },
+  {
+    "name": "Watcher Knight",
+    "description": "Six armored bugs guarding Lurien the Watcher.",
+    "location": "Watcher's Spire",
+    "health": 1320,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 2100
+      },
+      {
+        "title": "Ascended",
+        "health": 2400
+      },
+      {
+        "title": "Radiant",
+        "health": 2400
+      }
+    ]
+  },
+  {
+    "name": "Troupe Master Grimm",
+    "description": "The master of the Grimm Troupe.",
+    "location": "Dirtmouth",
+    "health": 1000,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1000
+      },
+      {
+        "title": "Ascended",
+        "health": 1200
+      },
+      {
+        "title": "Radiant",
+        "health": 1200
+      }
+    ]
+  },
+  {
+    "name": "Nightmare King Grimm",
+    "description": "The powerful, nightmarish heart of the Grimm Troupe.",
+    "location": "Dirtmouth",
+    "health": 1500,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1250
+      },
+      {
+        "title": "Ascended",
+        "health": 1500
+      },
+      {
+        "title": "Radiant",
+        "health": 1500
+      }
+    ]
+  },
+  {
+    "name": "Grey Prince Zote",
+    "description": "A 'hero' from the imagination of Bretta.",
+    "location": "Dirtmouth",
+    "health": 1200,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1400
+      },
+      {
+        "title": "Ascended",
+        "health": 1500
+      },
+      {
+        "title": "Radiant",
+        "health": 1500
+      }
+    ]
+  },
+  {
+    "name": "White Defender",
+    "description": "Dream variant of the Dung Defender.",
+    "location": "King's Passage",
+    "health": 1600,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1600
+      },
+      {
+        "title": "Ascended",
+        "health": 1800
+      },
+      {
+        "title": "Radiant",
+        "health": 1800
+      }
+    ]
+  },
+  {
+    "name": "Gorb",
+    "description": "The Great Mind.",
+    "location": "Howling Cliffs",
+    "health": 570,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 650
+      },
+      {
+        "title": "Radiant",
+        "health": 650
+      }
+    ]
+  },
+  {
+    "name": "Xero",
+    "description": "Warrior dream of a forgotten warrior.",
+    "location": "Resting Grounds",
+    "health": 570,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 650
+      },
+      {
+        "title": "Radiant",
+        "health": 650
+      }
+    ]
+  },
+  {
+    "name": "Elder Hu",
+    "description": "Warrior dream of a forgotten elder.",
+    "location": "Fungal Wastes",
+    "health": 650,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 600
+      },
+      {
+        "title": "Ascended",
+        "health": 600
+      },
+      {
+        "title": "Radiant",
+        "health": 600
+      }
+    ]
+  },
+  {
+    "name": "Marmu",
+    "description": "Warrior dream of a playful caterpillar.",
+    "location": "Queen's Gardens",
+    "health": 570,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 416
+      },
+      {
+        "title": "Ascended",
+        "health": 416
+      },
+      {
+        "title": "Radiant",
+        "health": 416
+      }
+    ]
+  },
+  {
+    "name": "No Eyes",
+    "description": "Warrior dream of a tormented spirit.",
+    "location": "Stone Sanctuary",
+    "health": 570,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 570
+      },
+      {
+        "title": "Ascended",
+        "health": 750
+      },
+      {
+        "title": "Radiant",
+        "health": 750
+      }
+    ]
+  },
+  {
+    "name": "Galien",
+    "description": "Warrior dream of a great warrior.",
+    "location": "Deepnest",
+    "health": 640,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 650
+      },
+      {
+        "title": "Radiant",
+        "health": 650
+      }
+    ]
+  },
+  {
+    "name": "Markoth",
+    "description": "Warrior dream of a moth warrior.",
+    "location": "Kingdom's Edge",
+    "health": 705,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 650
+      },
+      {
+        "title": "Ascended",
+        "health": 975
+      },
+      {
+        "title": "Radiant",
+        "health": 975
+      }
+    ]
+  },
+  {
+    "name": "Brothers Oro & Mato",
+    "description": "The Nailmaster brothers.",
+    "location": "Godhome",
+    "health": 1550,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1550
+      },
+      {
+        "title": "Ascended",
+        "health": 2000
+      },
+      {
+        "title": "Radiant",
+        "health": 2000
+      }
+    ]
+  },
+  {
+    "name": "Paintmaster Sheo",
+    "description": "The Nailmaster of arts.",
+    "location": "Godhome",
+    "health": 950,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 950
+      },
+      {
+        "title": "Ascended",
+        "health": 1200
+      },
+      {
+        "title": "Radiant",
+        "health": 1200
+      }
+    ]
+  },
+  {
+    "name": "Great Nailsage Sly",
+    "description": "The master of all Nailmasters.",
+    "location": "Godhome",
+    "health": 1050,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1050
+      },
+      {
+        "title": "Ascended",
+        "health": 1500
+      },
+      {
+        "title": "Radiant",
+        "health": 1500
+      }
+    ]
+  },
+  {
+    "name": "Winged Nosk",
+    "description": "A Nosk that mimics Hornet.",
+    "location": "Godhome",
+    "health": 750,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 750
+      },
+      {
+        "title": "Ascended",
+        "health": 1050
+      },
+      {
+        "title": "Radiant",
+        "health": 1050
+      }
+    ]
+  },
+  {
+    "name": "Sisters of Battle",
+    "description": "Dream variant of the Mantis Lords.",
+    "location": "Godhome",
+    "health": 2150,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 2150
+      },
+      {
+        "title": "Ascended",
+        "health": 2500
+      },
+      {
+        "title": "Radiant",
+        "health": 2500
+      }
+    ]
+  },
+  {
+    "name": "The Hollow Knight",
+    "description": "The vessel chosen to seal away the Radiance.",
+    "location": "Temple of the Black Egg",
+    "health": 1250,
+    "godhomeVersions": []
+  },
+  {
+    "name": "Pure Vessel",
+    "description": "The Hollow Knight in its prime.",
+    "location": "Godhome",
+    "health": 1500,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1500
+      },
+      {
+        "title": "Ascended",
+        "health": 1750
+      },
+      {
+        "title": "Radiant",
+        "health": 1750
+      }
+    ]
+  },
+  {
+    "name": "The Radiance",
+    "description": "The ancient being that is the source of the infection.",
+    "location": "Temple of the Black Egg",
+    "health": 1700,
+    "godhomeVersions": []
+  },
+  {
+    "name": "Absolute Radiance",
+    "description": "The Radiance at the peak of its power.",
+    "location": "Godhome",
+    "health": 2300,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 2300
+      },
+      {
+        "title": "Ascended",
+        "health": 2500
+      },
+      {
+        "title": "Radiant",
+        "health": 2500
+      }
+    ]
+  }
+]
+
