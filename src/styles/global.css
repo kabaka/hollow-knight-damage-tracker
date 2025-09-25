@@ -253,6 +253,42 @@ body {
   color: var(--color-muted);
 }
 
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quick-actions__button {
+  border: 1px solid rgba(255 255 255 / 20%);
+  border-radius: 999px;
+  background: rgba(255 255 255 / 6%);
+  color: inherit;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.quick-actions__button:hover,
+.quick-actions__button:focus-visible {
+  outline: none;
+  background: rgba(96 204 255 / 15%);
+  border-color: rgba(96 204 255 / 35%);
+  transform: translateY(-1px);
+}
+
+.quick-actions__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .choice-list {
   display: grid;
   gap: 0.5rem;

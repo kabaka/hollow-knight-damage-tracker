@@ -47,10 +47,28 @@ export interface Spell {
   upgrade?: SpellVariant;
 }
 
+export interface BossVersion {
+  id: string;
+  title: string;
+  hp: number;
+  type: 'base' | 'godhome';
+  targetId: string;
+}
+
 export interface Boss {
   id: string;
   name: string;
-  hp: number;
+  description: string;
   location: string;
-  notes?: string;
+  versions: BossVersion[];
+}
+
+export interface BossTarget {
+  id: string;
+  bossId: string;
+  bossName: string;
+  location: string;
+  description: string;
+  hp: number;
+  version: BossVersion;
 }

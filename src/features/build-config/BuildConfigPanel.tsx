@@ -6,10 +6,28 @@ import {
   useFightState,
   type SpellLevel,
 } from '../fight-state/FightStateContext';
-import { bosses, charms, keyCharmIds, nailUpgrades, spells } from '../../data';
+import { bossMap, bosses, charms, keyCharmIds, nailUpgrades, spells } from '../../data';
 
 const orderCharmIds = (selected: string[]) =>
   keyCharmIds.filter((charmId) => selected.includes(charmId));
+
+const CHARM_PRESETS = [
+  {
+    id: 'spellcaster',
+    label: 'Spellcaster (Shaman + Twister)',
+    charmIds: ['shaman-stone', 'spell-twister'],
+  },
+  {
+    id: 'strength-speed',
+    label: 'Strength & Quick Slash',
+    charmIds: ['unbreakable-strength', 'quick-slash'],
+  },
+  {
+    id: 'glass-cannon',
+    label: 'Glass Cannon (Fragile Strength + Shaman Stone)',
+    charmIds: ['fragile-strength', 'shaman-stone'],
+  },
+] as const;
 
 export const BuildConfigPanel: FC = () => {
   const {
@@ -25,14 +43,39 @@ export const BuildConfigPanel: FC = () => {
     [],
   );
 
+  const selectedTarget = useMemo(() => bossMap.get(selectedBossId), [selectedBossId]);
+
   const selectedBoss = useMemo(
-    () => bosses.find((boss) => boss.id === selectedBossId),
-    [selectedBossId],
+    () =>
+      selectedTarget
+        ? bosses.find((boss) => boss.id === selectedTarget.bossId)
+        : undefined,
+    [selectedTarget],
   );
 
+  const bossSelectValue =
+    selectedBossId === CUSTOM_BOSS_ID
+      ? CUSTOM_BOSS_ID
+      : (selectedTarget?.bossId ?? CUSTOM_BOSS_ID);
+
+  const selectedVersion = selectedTarget?.version;
+
   const handleBossChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextBoss = event.target.value;
-    actions.selectBoss(nextBoss);
+    const nextBossId = event.target.value;
+    if (nextBossId === CUSTOM_BOSS_ID) {
+      actions.selectBoss(CUSTOM_BOSS_ID);
+      return;
+    }
+
+    const nextBoss = bosses.find((boss) => boss.id === nextBossId);
+    const nextTargetId = nextBoss?.versions[0]?.targetId;
+    if (nextTargetId) {
+      actions.selectBoss(nextTargetId);
+    }
+  };
+
+  const handleBossVersionChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    actions.selectBoss(event.target.value);
   };
 
   const handleCustomHpChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +98,10 @@ export const BuildConfigPanel: FC = () => {
     actions.setActiveCharms(orderCharmIds(nextIds));
   };
 
+  const applyCharmPreset = (charmIds: string[]) => {
+    actions.setActiveCharms(orderCharmIds(charmIds));
+  };
+
   const handleSpellLevelChange = (spellId: string, level: SpellLevel) => {
     actions.setSpellLevel(spellId, level);
   };
@@ -68,7 +115,7 @@ export const BuildConfigPanel: FC = () => {
 
       <div className="form-field">
         <label htmlFor="boss-target">Boss Target</label>
-        <select id="boss-target" value={selectedBossId} onChange={handleBossChange}>
+        <select id="boss-target" value={bossSelectValue} onChange={handleBossChange}>
           {bosses.map((boss) => (
             <option key={boss.id} value={boss.id}>
               {boss.name}
@@ -79,9 +126,29 @@ export const BuildConfigPanel: FC = () => {
         <small>
           {selectedBossId === CUSTOM_BOSS_ID
             ? 'Set an exact HP amount for practice or race scenarios.'
-            : `${selectedBoss?.location ?? 'Unknown arena'} • ${selectedBoss?.hp ?? '?'} HP`}
+            : `${selectedBoss?.location ?? 'Unknown arena'} • ${
+                selectedVersion?.title ?? 'Standard'
+              } • ${selectedTarget?.hp.toLocaleString() ?? '?'} HP`}
         </small>
       </div>
+
+      {selectedBossId !== CUSTOM_BOSS_ID && selectedBoss ? (
+        <div className="form-field">
+          <label htmlFor="boss-version">Boss Version</label>
+          <select
+            id="boss-version"
+            value={selectedBossId}
+            onChange={handleBossVersionChange}
+          >
+            {selectedBoss.versions.map((version) => (
+              <option key={version.targetId} value={version.targetId}>
+                {version.title} • {version.hp.toLocaleString()} HP
+              </option>
+            ))}
+          </select>
+          <small>Toggle between Hallownest encounters and Godhome trials.</small>
+        </div>
+      ) : null}
 
       {selectedBossId === CUSTOM_BOSS_ID ? (
         <div className="form-field">
@@ -108,6 +175,30 @@ export const BuildConfigPanel: FC = () => {
           ))}
         </select>
         <small>Damage values adjust to the selected nail tier.</small>
+      </div>
+
+      <div className="form-field">
+        <span className="form-field__label">Charm Presets</span>
+        <div className="quick-actions" role="group" aria-label="Charm presets">
+          {CHARM_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className="quick-actions__button"
+              onClick={() => applyCharmPreset(preset.charmIds)}
+            >
+              {preset.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="quick-actions__button"
+            onClick={() => actions.setActiveCharms([])}
+          >
+            Clear charms
+          </button>
+        </div>
+        <small>Apply popular loadouts instantly; you can fine-tune charms below.</small>
       </div>
 
       <div className="form-field">

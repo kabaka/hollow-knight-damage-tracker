@@ -33,6 +33,7 @@ export interface FightState {
   customTargetHp: number;
   build: BuildState;
   damageLog: AttackEvent[];
+  redoStack: AttackEvent[];
 }
 
 export interface AttackInput {
@@ -66,6 +67,7 @@ interface FightContextValue {
     setSpellLevel: (spellId: string, level: SpellLevel) => void;
     logAttack: (input: AttackInput) => void;
     undoLastAttack: () => void;
+    redoLastAttack: () => void;
     resetLog: () => void;
   };
 }
@@ -89,6 +91,7 @@ const createInitialState = (): FightState => ({
     spellLevels: initialSpellLevels(),
   },
   damageLog: [],
+  redoStack: [],
 });
 
 const isCustomBoss = (bossId: string) => bossId === CUSTOM_BOSS_ID;
@@ -133,34 +136,49 @@ const fightReducer = (state: FightState, action: FightAction): FightState => {
           },
         },
       };
-    case 'logAttack':
+    case 'logAttack': {
+      const event: AttackEvent = {
+        id: `${action.id}-${action.timestamp}`,
+        label: action.label,
+        damage: action.damage,
+        category: action.category,
+        timestamp: action.timestamp,
+        soulCost: action.soulCost,
+      };
+
       return {
         ...state,
-        damageLog: [
-          ...state.damageLog,
-          {
-            id: `${action.id}-${action.timestamp}`,
-            label: action.label,
-            damage: action.damage,
-            category: action.category,
-            timestamp: action.timestamp,
-            soulCost: action.soulCost,
-          },
-        ],
+        damageLog: [...state.damageLog, event],
+        redoStack: [],
       };
+    }
     case 'undoLastAttack': {
       if (state.damageLog.length === 0) {
         return state;
       }
+      const undoneEvent = state.damageLog[state.damageLog.length - 1];
       return {
         ...state,
         damageLog: state.damageLog.slice(0, -1),
+        redoStack: [undoneEvent, ...state.redoStack],
+      };
+    }
+    case 'redoLastAttack': {
+      if (state.redoStack.length === 0) {
+        return state;
+      }
+      const [nextEvent, ...remaining] = state.redoStack;
+      return {
+        ...state,
+        damageLog: [...state.damageLog, nextEvent],
+        redoStack: remaining,
       };
     }
     case 'resetLog':
       return {
         ...state,
         damageLog: [],
+        redoStack: [],
       };
     default:
       return state;
@@ -185,6 +203,7 @@ type FightAction =
       soulCost?: number;
     }
   | { type: 'undoLastAttack' }
+  | { type: 'redoLastAttack' }
   | { type: 'resetLog' };
 
 const calculateDerivedStats = (state: FightState): DerivedStats => {
@@ -257,6 +276,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
           timestamp: timestamp ?? Date.now(),
         }),
       undoLastAttack: () => dispatch({ type: 'undoLastAttack' }),
+      redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
       resetLog: () => dispatch({ type: 'resetLog' }),
     }),
     [],

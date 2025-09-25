@@ -132,9 +132,10 @@ const buildAttackGroups = (
 
 export const AttackLogPanel: FC = () => {
   const fight = useFightState();
-  const { actions } = fight;
+  const { actions, state } = fight;
+  const { damageLog, redoStack } = state;
 
-  const attackGroups = useMemo(() => buildAttackGroups(fight.state), [fight.state]);
+  const attackGroups = useMemo(() => buildAttackGroups(state), [state]);
 
   return (
     <div>
@@ -143,6 +144,32 @@ export const AttackLogPanel: FC = () => {
         record standard swings, spells, and advanced techniques with the appropriate
         modifiers applied.
       </p>
+      <div className="quick-actions" role="group" aria-label="Attack log controls">
+        <button
+          type="button"
+          className="quick-actions__button"
+          onClick={actions.undoLastAttack}
+          disabled={damageLog.length === 0}
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          className="quick-actions__button"
+          onClick={actions.redoLastAttack}
+          disabled={redoStack.length === 0}
+        >
+          Redo
+        </button>
+        <button
+          type="button"
+          className="quick-actions__button"
+          onClick={actions.resetLog}
+          disabled={damageLog.length === 0 && redoStack.length === 0}
+        >
+          Quick reset
+        </button>
+      </div>
       <div className="attack-groups">
         {attackGroups.map((group) => (
           <section key={group.id} className="attack-group">

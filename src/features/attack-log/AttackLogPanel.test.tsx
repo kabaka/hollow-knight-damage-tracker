@@ -59,9 +59,54 @@ describe('AttackLogPanel', () => {
     expect(within(damageRow as HTMLElement).getByText('5')).toBeInTheDocument();
 
     const remainingRow = screen.getByText('Remaining HP').closest('.data-list__item');
-    expect(within(remainingRow as HTMLElement).getByText('355')).toBeInTheDocument();
+    expect(within(remainingRow as HTMLElement).getByText('350')).toBeInTheDocument();
 
     const actionsRow = screen.getByText('Attacks Logged').closest('.data-list__item');
     expect(within(actionsRow as HTMLElement).getByText('1')).toBeInTheDocument();
+  });
+
+  it('supports undo, redo, and quick reset controls', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <AttackLogPanel />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    const undoButton = screen.getByRole('button', { name: /undo/i });
+    const redoButton = screen.getByRole('button', { name: /redo/i });
+    const resetButton = screen.getByRole('button', { name: /quick reset/i });
+
+    expect(undoButton).toBeDisabled();
+    expect(redoButton).toBeDisabled();
+    expect(resetButton).toBeDisabled();
+
+    const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
+    await user.click(nailStrikeButton);
+
+    expect(undoButton).not.toBeDisabled();
+    expect(redoButton).toBeDisabled();
+    expect(resetButton).not.toBeDisabled();
+
+    await user.click(undoButton);
+
+    let damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
+    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
+    expect(redoButton).not.toBeDisabled();
+
+    await user.click(redoButton);
+
+    damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
+    expect(within(damageRow as HTMLElement).getByText('5')).toBeInTheDocument();
+
+    await user.click(resetButton);
+
+    damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
+    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
+    expect(undoButton).toBeDisabled();
+    expect(redoButton).toBeDisabled();
+    expect(resetButton).toBeDisabled();
   });
 });
