@@ -302,28 +302,56 @@ body {
 
 .sequence-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  align-items: center;
+  align-items: stretch;
+  inline-size: 100%;
 }
 
 .sequence-controls select {
-  flex: 1;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  order: 1;
 }
 
 .sequence-controls__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(255 255 255 / 20%);
   border-radius: 0.5rem;
   background: rgba(255 255 255 / 8%);
   color: inherit;
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   cursor: pointer;
+  white-space: nowrap;
   transition:
     background 120ms ease,
     border-color 120ms ease,
     transform 120ms ease;
+}
+
+.sequence-controls__button:first-of-type {
+  order: 0;
+}
+
+.sequence-controls__button:last-of-type {
+  order: 2;
+}
+
+@media (width <= 600px) {
+  .sequence-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sequence-controls__button,
+  .sequence-controls select {
+    inline-size: 100%;
+  }
 }
 
 .sequence-controls__button:hover,

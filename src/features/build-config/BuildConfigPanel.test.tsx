@@ -57,6 +57,24 @@ describe('BuildConfigPanel', () => {
     expect(targetRow).toHaveTextContent('945');
   });
 
+  it('keeps equivalent boss versions selected when switching bosses', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(<BuildConfigPanel />);
+
+    await user.selectOptions(screen.getByLabelText(/boss target/i), 'false-knight');
+    await user.selectOptions(
+      screen.getByLabelText(/boss version/i),
+      'false-knight__ascended',
+    );
+
+    await user.selectOptions(screen.getByLabelText(/boss target/i), 'failed-champion');
+
+    expect(screen.getByLabelText(/boss version/i)).toHaveValue(
+      'failed-champion__ascended',
+    );
+  });
+
   it('applies charm presets for common loadouts', async () => {
     const user = userEvent.setup();
 

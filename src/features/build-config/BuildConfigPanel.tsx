@@ -175,7 +175,11 @@ export const BuildConfigPanel: FC = () => {
     }
 
     const nextBoss = bosses.find((boss) => boss.id === nextBossId);
-    const nextTargetId = nextBoss?.versions[0]?.targetId;
+    const preferredTitle = selectedVersion?.title;
+    const matchingVersion = preferredTitle
+      ? nextBoss?.versions.find((version) => version.title === preferredTitle)
+      : undefined;
+    const nextTargetId = (matchingVersion ?? nextBoss?.versions[0])?.targetId;
     if (nextTargetId) {
       actions.selectBoss(nextTargetId);
     }
