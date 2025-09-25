@@ -1,5 +1,5 @@
 import rawDamage from './damage.json';
-import rawBosses from '../../bosses.json';
+import rawBosses from './bosses.json';
 import type {
   Boss,
   BossTarget,
