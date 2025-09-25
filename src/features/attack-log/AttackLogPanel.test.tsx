@@ -18,13 +18,14 @@ describe('AttackLogPanel', () => {
     );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
-    expect(nailStrikeButton).toHaveTextContent(/5/);
+    const damageDisplay = within(nailStrikeButton).getByLabelText(/damage per hit/i);
+    expect(damageDisplay).toHaveTextContent('5');
 
     await user.selectOptions(screen.getByLabelText(/nail upgrade/i), 'pure-nail');
-    expect(nailStrikeButton).toHaveTextContent(/21/);
+    expect(damageDisplay).toHaveTextContent('21');
 
     await user.click(screen.getByLabelText(/unbreakable strength/i));
-    expect(nailStrikeButton).toHaveTextContent(/32/);
+    expect(damageDisplay).toHaveTextContent('32');
   });
 
   it('surfaces spell upgrades in the advanced group when unlocked', async () => {
@@ -63,6 +64,20 @@ describe('AttackLogPanel', () => {
 
     const actionsRow = screen.getByText('Attacks Logged').closest('.data-list__item');
     expect(within(actionsRow as HTMLElement).getByText('1')).toBeInTheDocument();
+  });
+
+  it('shows hits remaining for each attack and updates after logging damage', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(<AttackLogPanel />);
+
+    const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
+    const hitsDisplay = within(nailStrikeButton).getByLabelText(/hits to finish/i);
+    expect(hitsDisplay).toHaveTextContent(/hits to finish: 71/i);
+
+    await user.click(nailStrikeButton);
+
+    expect(hitsDisplay).toHaveTextContent(/hits to finish: 70/i);
   });
 
   it('supports undo, redo, and quick reset controls', async () => {
@@ -108,5 +123,26 @@ describe('AttackLogPanel', () => {
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
+  });
+
+  it('supports keyboard shortcuts for logging attacks and resetting', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <AttackLogPanel />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    await user.keyboard('1');
+
+    let damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
+    expect(within(damageRow as HTMLElement).getByText('5')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
+    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
   });
 });
