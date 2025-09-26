@@ -31,20 +31,67 @@ const calculateCharmCost = (charmIds: string[]) =>
   charmIds.reduce((total, id) => total + getCharmCost(id), 0);
 
 const REPLACEABLE_CHARMS = new Map<string, string>([
+  ['fragile-heart', 'unbreakable-heart'],
+  ['unbreakable-heart', 'fragile-heart'],
+  ['fragile-greed', 'unbreakable-greed'],
+  ['unbreakable-greed', 'fragile-greed'],
   ['fragile-strength', 'unbreakable-strength'],
   ['unbreakable-strength', 'fragile-strength'],
+  ['grimmchild', 'carefree-melody'],
+  ['carefree-melody', 'grimmchild'],
+  ['kingsoul', 'void-heart'],
+  ['void-heart', 'kingsoul'],
 ]);
 
 export const charmGridLayout = [
   [
-    ['fragile-strength', 'unbreakable-strength'],
-    ['fury-of-the-fallen'],
+    ['wayward-compass'],
+    ['gathering-swarm'],
+    ['stalwart-shell'],
+    ['soul-catcher'],
     ['shaman-stone'],
-    ['spell-twister'],
+    ['soul-eater'],
+    ['dashmaster'],
+    ['sprintmaster'],
+    ['grubsong'],
+    ['grubberflys-elegy'],
   ],
-  [['quick-slash'], ['grubberflys-elegy'], ['flukenest']],
-  [['thorns-of-agony'], ['sharp-shadow'], ['dreamshield'], ['defenders-crest']],
-  [['spore-shroom'], ['glowing-womb'], ['weaversong'], ['grimmchild']],
+  [
+    ['fragile-heart', 'unbreakable-heart'],
+    ['fragile-greed', 'unbreakable-greed'],
+    ['fragile-strength', 'unbreakable-strength'],
+    ['spell-twister'],
+    ['steady-body'],
+    ['heavy-blow'],
+    ['quick-slash'],
+    ['longnail'],
+    ['mark-of-pride'],
+    ['fury-of-the-fallen'],
+  ],
+  [
+    ['thorns-of-agony'],
+    ['baldur-shell'],
+    ['flukenest'],
+    ['defenders-crest'],
+    ['glowing-womb'],
+    ['quick-focus'],
+    ['deep-focus'],
+    ['lifeblood-heart'],
+    ['lifeblood-core'],
+    ['jonis-blessing'],
+  ],
+  [
+    ['hiveblood'],
+    ['spore-shroom'],
+    ['sharp-shadow'],
+    ['shape-of-unn'],
+    ['nailmasters-glory'],
+    ['weaversong'],
+    ['dream-wielder'],
+    ['dreamshield'],
+    ['grimmchild', 'carefree-melody'],
+    ['kingsoul', 'void-heart'],
+  ],
 ] as const;
 
 export const useBuildConfiguration = () => {
