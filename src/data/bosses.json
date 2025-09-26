@@ -23,7 +23,7 @@
     "name": "False Knight",
     "description": "A maggot driven mad by a stolen hero's strength.",
     "location": "Forgotten Crossroads",
-    "health": 355,
+    "health": 415,
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -71,11 +71,31 @@
       },
       {
         "title": "Ascended",
-        "health": 735
+        "health": 1165
       },
       {
         "title": "Radiant",
-        "health": 735
+        "health": 1165
+      }
+    ]
+  },
+  {
+    "name": "Brooding Mawlek",
+    "description": "A creature of the ancient basin, maddened by infection.",
+    "location": "Forgotten Crossroads",
+    "health": 300,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 1050
+      },
+      {
+        "title": "Ascended",
+        "health": 1050
+      },
+      {
+        "title": "Radiant",
+        "health": 1050
       }
     ]
   },
@@ -123,7 +143,7 @@
     "name": "Mantis Lords",
     "description": "The three rulers of the Mantis Tribe.",
     "location": "Fungal Wastes",
-    "health": 570,
+    "health": 530,
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -131,11 +151,11 @@
       },
       {
         "title": "Ascended",
-        "health": 1550
+        "health": 1700
       },
       {
         "title": "Radiant",
-        "health": 1550
+        "health": 1700
       }
     ]
   },
@@ -376,6 +396,26 @@
       {
         "title": "Radiant",
         "health": 1000
+      }
+    ]
+  },
+  {
+    "name": "Oblobbles",
+    "description": "A pair of flying, spitting husks.",
+    "location": "Colosseum of Fools",
+    "health": 720,
+    "godhomeVersions": [
+      {
+        "title": "Attuned",
+        "health": 900
+      },
+      {
+        "title": "Ascended",
+        "health": 1500
+      },
+      {
+        "title": "Radiant",
+        "health": 1500
       }
     ]
   },
@@ -783,11 +823,11 @@
     "name": "Sisters of Battle",
     "description": "Dream variant of the Mantis Lords.",
     "location": "Godhome",
-    "health": 2150,
+    "health": 2000,
     "godhomeVersions": [
       {
         "title": "Attuned",
-        "health": 2150
+        "health": 2000
       },
       {
         "title": "Ascended",
@@ -854,3 +894,4 @@
     ]
   }
 ]
+
