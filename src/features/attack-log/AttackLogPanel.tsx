@@ -8,6 +8,7 @@ export const AttackLogPanel: FC = () => {
   const fight = useFightState();
   const { actions, state, derived } = fight;
   const { damageLog, redoStack } = state;
+  const canEndFight = derived.fightStartTimestamp != null && !derived.isFightComplete;
 
   const { groupsWithMetadata, shortcutMap } = useAttackDefinitions(
     state,
@@ -35,6 +36,12 @@ export const AttackLogPanel: FC = () => {
       }
 
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+
+      if (key === 'Enter' && canEndFight) {
+        event.preventDefault();
+        actions.endFight();
+        return;
+      }
 
       if (key === RESET_SHORTCUT_KEY) {
         if (state.damageLog.length === 0 && state.redoStack.length === 0) {
@@ -64,7 +71,7 @@ export const AttackLogPanel: FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [actions, shortcutMap, state.damageLog.length, state.redoStack.length]);
+  }, [actions, shortcutMap, state.damageLog.length, state.redoStack.length, canEndFight]);
 
   return (
     <div>
@@ -98,6 +105,15 @@ export const AttackLogPanel: FC = () => {
           disabled={damageLog.length === 0 && redoStack.length === 0}
         >
           Quick reset (Esc)
+        </button>
+        <button
+          type="button"
+          className="quick-actions__button"
+          onClick={actions.endFight}
+          aria-keyshortcuts="Enter"
+          disabled={!canEndFight}
+        >
+          End fight (Enter)
         </button>
       </div>
       <div className="attack-groups">

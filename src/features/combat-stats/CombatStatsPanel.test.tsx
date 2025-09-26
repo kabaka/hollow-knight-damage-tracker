@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useEffect } from 'react';
 
 import { CombatStatsPanel } from './CombatStatsPanel';
-import { type AttackInput, useFightState } from '../fight-state/FightStateContext';
+import { useFightState } from '../fight-state/FightStateContext';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
 
@@ -17,15 +17,13 @@ if (!defaultBossTarget) {
 const ActionRegistrar = ({
   onReady,
 }: {
-  onReady: (logAttack: (input: AttackInput) => void) => void;
+  onReady: (actions: ReturnType<typeof useFightState>['actions']) => void;
 }) => {
-  const {
-    actions: { logAttack },
-  } = useFightState();
+  const { actions } = useFightState();
 
   useEffect(() => {
-    onReady(logAttack);
-  }, [logAttack, onReady]);
+    onReady(actions);
+  }, [actions, onReady]);
 
   return null;
 };
@@ -40,18 +38,20 @@ describe('CombatStatsPanel', () => {
   });
 
   it('estimates remaining fight time using observed DPS', async () => {
-    let logAttack: ((input: AttackInput) => void) | null = null;
+    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
 
     renderWithFightProvider(
       <>
-        <ActionRegistrar onReady={(logger) => (logAttack = logger)} />
+        <ActionRegistrar onReady={(value) => (actions = value)} />
         <CombatStatsPanel />
       </>,
     );
 
     await waitFor(() => {
-      expect(logAttack).not.toBeNull();
+      expect(actions).not.toBeNull();
     });
+
+    const { logAttack, endFight } = actions ?? {};
 
     const estimateRow = screen
       .getByText('Estimated Time Remaining')
@@ -75,6 +75,7 @@ describe('CombatStatsPanel', () => {
         category: 'nail',
         timestamp: 3000,
       });
+      endFight?.(3000);
     });
 
     const totalDamage = baseNailDamage * 2;
@@ -93,18 +94,20 @@ describe('CombatStatsPanel', () => {
   });
 
   it('renders sparklines to visualize damage trends', async () => {
-    let logAttack: ((input: AttackInput) => void) | null = null;
+    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
 
     renderWithFightProvider(
       <>
-        <ActionRegistrar onReady={(logger) => (logAttack = logger)} />
+        <ActionRegistrar onReady={(value) => (actions = value)} />
         <CombatStatsPanel />
       </>,
     );
 
     await waitFor(() => {
-      expect(logAttack).not.toBeNull();
+      expect(actions).not.toBeNull();
     });
+
+    const { logAttack, endFight } = actions ?? {};
 
     act(() => {
       logAttack?.({
@@ -121,6 +124,7 @@ describe('CombatStatsPanel', () => {
         category: 'nail',
         timestamp: 5000,
       });
+      endFight?.(5000);
     });
 
     expect(
@@ -132,18 +136,20 @@ describe('CombatStatsPanel', () => {
   });
 
   it('scales sparklines using elapsed fight time', async () => {
-    let logAttack: ((input: AttackInput) => void) | null = null;
+    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
 
     renderWithFightProvider(
       <>
-        <ActionRegistrar onReady={(logger) => (logAttack = logger)} />
+        <ActionRegistrar onReady={(value) => (actions = value)} />
         <CombatStatsPanel />
       </>,
     );
 
     await waitFor(() => {
-      expect(logAttack).not.toBeNull();
+      expect(actions).not.toBeNull();
     });
+
+    const { logAttack, endFight } = actions ?? {};
 
     act(() => {
       logAttack?.({
@@ -160,6 +166,7 @@ describe('CombatStatsPanel', () => {
         category: 'nail',
         timestamp: 1000,
       });
+      endFight?.(1000);
     });
 
     const sparkline = screen.getByRole('img', {
@@ -183,5 +190,37 @@ describe('CombatStatsPanel', () => {
 
     expect(firstX).toBeCloseTo(2, 1);
     expect(lastX).toBeCloseTo(86, 1);
+  });
+
+  it('includes elapsed time when a fight is manually ended', async () => {
+    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
+
+    renderWithFightProvider(
+      <>
+        <ActionRegistrar onReady={(value) => (actions = value)} />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(actions).not.toBeNull();
+    });
+
+    const { logAttack, endFight } = actions ?? {};
+
+    act(() => {
+      logAttack?.({
+        id: 'elapsed-hit-1',
+        label: 'Test Hit',
+        damage: baseNailDamage,
+        category: 'nail',
+        timestamp: 0,
+      });
+      endFight?.(2000);
+    });
+
+    const elapsedRow = screen.getByText('Elapsed').closest('.data-list__item');
+    expect(elapsedRow).not.toBeNull();
+    expect(within(elapsedRow as HTMLElement).getByText('0:02')).toBeInTheDocument();
   });
 });
