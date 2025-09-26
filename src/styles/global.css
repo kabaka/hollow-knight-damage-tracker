@@ -526,8 +526,37 @@ body {
 }
 
 .data-list__value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   font-size: 1.3rem;
   font-weight: 700;
+}
+
+.data-list__value-text {
+  line-height: 1;
+}
+
+.sparkline {
+  width: 88px;
+  height: 28px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.sparkline__area {
+  fill: currentcolor;
+  opacity: 0.18;
+}
+
+.sparkline__line {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Modal */
