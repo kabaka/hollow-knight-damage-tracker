@@ -5,6 +5,24 @@ import { AttackLogPanel } from './AttackLogPanel';
 import { BuildConfigPanel } from '../build-config/BuildConfigPanel';
 import { CombatStatsPanel } from '../combat-stats/CombatStatsPanel';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
+import { bossMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
+
+const baseNailDamage = nailUpgrades[0]?.damage ?? 5;
+const defaultBossTarget = bossMap.get(DEFAULT_BOSS_ID);
+
+if (!defaultBossTarget) {
+  throw new Error('Expected default boss target to be defined for tests');
+}
+
+if (baseNailDamage <= 0) {
+  throw new Error('Expected base nail damage to be positive for tests');
+}
+
+const baseNailDamageText = String(baseNailDamage);
+const defaultBossHp = defaultBossTarget.hp;
+const remainingAfterOneHit = Math.max(0, defaultBossHp - baseNailDamage);
+const initialHitsToFinish = Math.ceil(defaultBossHp / baseNailDamage);
+const hitsToFinishAfterOneHit = Math.ceil(remainingAfterOneHit / baseNailDamage);
 
 describe('AttackLogPanel', () => {
   beforeEach(() => {
@@ -27,7 +45,7 @@ describe('AttackLogPanel', () => {
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     const damageDisplay = within(nailStrikeButton).getByLabelText(/damage per hit/i);
-    expect(damageDisplay).toHaveTextContent('5');
+    expect(damageDisplay).toHaveTextContent(baseNailDamageText);
 
     await user.selectOptions(screen.getByLabelText(/nail upgrade/i), 'pure-nail');
     expect(damageDisplay).toHaveTextContent('21');
@@ -65,10 +83,14 @@ describe('AttackLogPanel', () => {
     await user.click(screen.getByRole('button', { name: /nail strike/i }));
 
     const damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('5')).toBeInTheDocument();
+    expect(
+      within(damageRow as HTMLElement).getByText(baseNailDamageText),
+    ).toBeInTheDocument();
 
     const remainingRow = screen.getByText('Remaining HP').closest('.data-list__item');
-    expect(within(remainingRow as HTMLElement).getByText('350')).toBeInTheDocument();
+    expect(
+      within(remainingRow as HTMLElement).getByText(String(remainingAfterOneHit)),
+    ).toBeInTheDocument();
 
     const actionsRow = screen.getByText('Attacks Logged').closest('.data-list__item');
     expect(within(actionsRow as HTMLElement).getByText('1')).toBeInTheDocument();
@@ -81,11 +103,15 @@ describe('AttackLogPanel', () => {
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     const hitsDisplay = within(nailStrikeButton).getByLabelText(/hits to finish/i);
-    expect(hitsDisplay).toHaveTextContent(/hits to finish: 71/i);
+    expect(hitsDisplay).toHaveTextContent(
+      new RegExp(`hits to finish: ${initialHitsToFinish}`, 'i'),
+    );
 
     await user.click(nailStrikeButton);
 
-    expect(hitsDisplay).toHaveTextContent(/hits to finish: 70/i);
+    expect(hitsDisplay).toHaveTextContent(
+      new RegExp(`hits to finish: ${hitsToFinishAfterOneHit}`, 'i'),
+    );
   });
 
   it('supports undo, redo, and quick reset controls', async () => {
@@ -122,7 +148,9 @@ describe('AttackLogPanel', () => {
     await user.click(redoButton);
 
     damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('5')).toBeInTheDocument();
+    expect(
+      within(damageRow as HTMLElement).getByText(baseNailDamageText),
+    ).toBeInTheDocument();
 
     await user.click(resetButton);
 
@@ -146,7 +174,9 @@ describe('AttackLogPanel', () => {
     await user.keyboard('1');
 
     let damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('5')).toBeInTheDocument();
+    expect(
+      within(damageRow as HTMLElement).getByText(baseNailDamageText),
+    ).toBeInTheDocument();
 
     await user.keyboard('{Escape}');
 
