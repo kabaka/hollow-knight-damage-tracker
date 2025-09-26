@@ -135,6 +135,7 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
         <label className="header-field">
           <span className="header-field__label">Boss target</span>
           <select
+            id="boss-target"
             value={bossSelectValue}
             onChange={(event) => handleBossChange(event.target.value)}
             disabled={isSequenceActive}

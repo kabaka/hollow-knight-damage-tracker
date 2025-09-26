@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 
+import type { Charm } from '../../data';
+
 import { MAX_NOTCH_LIMIT, MIN_NOTCH_LIMIT } from '../fight-state/fightReducer';
 import { charmGridLayout, useBuildConfiguration } from './useBuildConfiguration';
 import { CUSTOM_BOSS_ID } from '../fight-state/FightStateContext';
@@ -45,8 +47,33 @@ const createCharmIconMap = () => {
   return map;
 };
 
-const describeCharm = (name: string, cost: number) =>
-  `${name} (${cost} notch${cost === 1 ? '' : 'es'})`;
+const formatNotchLabel = (value: number) => `${value} notch${value === 1 ? '' : 'es'}`;
+
+const getCharmDetailText = (charm: Charm) => {
+  const segments: string[] = [];
+  if (charm.description) {
+    segments.push(charm.description);
+  }
+  const effectDescriptions = charm.effects
+    .map((effect) => [effect.effect, effect.notes].filter(Boolean).join(' '))
+    .filter((value) => value.trim().length > 0);
+  if (effectDescriptions.length > 0) {
+    segments.push(effectDescriptions.join(' '));
+  }
+  return segments.join(' ');
+};
+
+const getCharmTooltip = (charm: Charm) => {
+  const detail = getCharmDetailText(charm);
+  const header = `${charm.name} — ${formatNotchLabel(charm.cost)}`;
+  return detail ? `${header}\n${detail}` : header;
+};
+
+const getCharmAriaLabel = (charm: Charm) => {
+  const detail = getCharmDetailText(charm);
+  const base = `${charm.name}, ${formatNotchLabel(charm.cost)}.`;
+  return detail ? `${base} ${detail}` : base;
+};
 
 export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose }) => {
   const {
@@ -77,6 +104,30 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const charmIconMap = useMemo(createCharmIconMap, []);
 
+  const { build, selectedBossId } = state;
+  const notchUsage = `${activeCharmCost}/${notchLimit}`;
+  const equippedCharms = useMemo(
+    () =>
+      activeCharmIds
+        .map((id) => charmDetails.get(id))
+        .filter((charm): charm is Charm => Boolean(charm)),
+    [activeCharmIds, charmDetails],
+  );
+  const notchIndicators = useMemo(
+    () =>
+      Array.from({ length: MAX_NOTCH_LIMIT }, (_, index) => {
+        const isWithinLimit = index < notchLimit;
+        const isUsed = index < activeCharmCost;
+        return {
+          isWithinLimit,
+          isUsed,
+          isOverfill: isUsed && !isWithinLimit,
+        };
+      }),
+    [activeCharmCost, notchLimit],
+  );
+  const isOvercharmed = activeCharmCost > notchLimit;
+
   useEffect(() => {
     if (!isOpen) {
       return undefined;
@@ -106,10 +157,6 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
   if (!isOpen) {
     return null;
   }
-
-  const { build, selectedBossId } = state;
-  const notchUsage = `${activeCharmCost}/${notchLimit}`;
-  const notchFill = Math.min(1, activeCharmCost / notchLimit);
 
   return (
     <div
@@ -146,111 +193,187 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
         </header>
 
         <div className="modal__body">
-          <section className="modal-section" aria-labelledby="notch-limit-heading">
+          <section className="modal-section" aria-labelledby="charm-workbench-heading">
             <div className="modal-section__header">
-              <h3 id="notch-limit-heading">Charm Notches</h3>
-              <span className="notch-meter__value">{notchUsage}</span>
+              <h3 id="charm-workbench-heading">Charm Workbench</h3>
             </div>
             <p className="modal-section__description">
-              Limit active charms to match your save file&apos;s notch capacity. The grid
-              below enforces this limit automatically.
+              Manage equipped charms, adjust your notch bracelet, and browse the staggered
+              inventory grid.
             </p>
-            <div className="notch-meter" role="presentation">
-              <div className="notch-meter__bar">
-                <div
-                  className="notch-meter__fill"
-                  style={{ width: `${notchFill * 100}%` }}
-                />
-              </div>
-              <input
-                type="range"
-                min={MIN_NOTCH_LIMIT}
-                max={MAX_NOTCH_LIMIT}
-                value={notchLimit}
-                onChange={(event) => setNotchLimit(Number(event.target.value))}
-                aria-label="Notch limit"
-              />
-              <div className="notch-meter__labels" aria-hidden="true">
-                <span>{MIN_NOTCH_LIMIT}</span>
-                <span>{MAX_NOTCH_LIMIT}</span>
-              </div>
-            </div>
-          </section>
-
-          <section className="modal-section" aria-labelledby="charm-loadouts-heading">
-            <div className="modal-section__header">
-              <h3 id="charm-loadouts-heading">Charm Loadouts</h3>
-            </div>
-            <div className="preset-buttons" role="group" aria-label="Charm presets">
-              {CHARM_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  className="preset-buttons__button"
-                  onClick={() => applyCharmPreset(preset.charmIds)}
-                >
-                  {preset.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="preset-buttons__button"
-                onClick={() => applyCharmPreset([])}
-              >
-                Clear charms
-              </button>
-            </div>
-            <div className="charm-grid" role="grid" aria-label="Charm inventory">
-              {charmGridLayout.map((row, rowIndex) => (
-                <div
-                  key={`row-${rowIndex}`}
-                  role="row"
-                  className={`charm-grid__row${rowIndex % 2 === 1 ? ' charm-grid__row--offset' : ''}`}
-                >
-                  {row.map((options, columnIndex) => (
-                    <div
-                      key={`${rowIndex}-${columnIndex}`}
-                      role="gridcell"
-                      className="charm-slot"
-                    >
-                      {options.map((charmId) => {
-                        const charm = charmDetails.get(charmId);
-                        if (!charm) {
-                          return null;
-                        }
-                        const isActive = activeCharmIds.includes(charmId);
-                        const canEquip = canEquipCharm(charmId);
-                        const icon = charmIconMap.get(charmId);
+            <div className="charm-workbench">
+              <aside className="charm-workbench__sidebar">
+                <div className="equipped-panel">
+                  <h4 className="equipped-panel__title">Equipped</h4>
+                  <div className="equipped-panel__grid" role="list" aria-live="polite">
+                    {equippedCharms.length > 0 ? (
+                      equippedCharms.map((charm) => {
+                        const icon = charmIconMap.get(charm.id);
                         return (
-                          <button
-                            key={charmId}
-                            type="button"
-                            className={`charm-token${isActive ? ' charm-token--active' : ''}`}
-                            onClick={() => toggleCharm(charmId)}
-                            disabled={!canEquip && !isActive}
-                            aria-pressed={isActive}
-                            aria-label={describeCharm(charm.name, charm.cost)}
-                            title={describeCharm(charm.name, charm.cost)}
+                          <div
+                            key={charm.id}
+                            role="listitem"
+                            className="equipped-panel__item"
+                            title={getCharmTooltip(charm)}
                           >
                             {icon ? (
                               <img
                                 src={icon}
                                 alt=""
-                                className="charm-token__icon"
+                                className="equipped-panel__icon"
                                 aria-hidden="true"
                               />
                             ) : null}
-                            <span className="charm-token__name">{charm.name}</span>
-                            <span className="charm-token__cost" aria-hidden="true">
-                              {charm.cost}
+                            <span className="visually-hidden">
+                              {getCharmAriaLabel(charm)}
                             </span>
-                          </button>
+                          </div>
                         );
-                      })}
+                      })
+                    ) : (
+                      <p className="equipped-panel__empty">No charms equipped.</p>
+                    )}
+                  </div>
+                </div>
+                <div
+                  className={`notch-panel${isOvercharmed ? ' notch-panel--overcharmed' : ''}`}
+                >
+                  <div className="notch-panel__header">
+                    <h4 className="notch-panel__title">Notches</h4>
+                    <span className="notch-panel__usage">{notchUsage}</span>
+                  </div>
+                  <div className="notch-panel__bracelet" role="presentation">
+                    {notchIndicators.map((indicator, index) => {
+                      const classes = ['notch-dot'];
+                      if (indicator.isWithinLimit) {
+                        classes.push('notch-dot--available');
+                      } else {
+                        classes.push('notch-dot--locked');
+                      }
+                      if (indicator.isUsed) {
+                        classes.push('notch-dot--filled');
+                      }
+                      if (indicator.isOverfill) {
+                        classes.push('notch-dot--overfill');
+                      }
+                      return (
+                        <span
+                          key={index}
+                          className={classes.join(' ')}
+                          aria-hidden="true"
+                        />
+                      );
+                    })}
+                  </div>
+                  <label className="notch-panel__slider" htmlFor="notch-limit">
+                    <span className="notch-panel__slider-label">Notch limit</span>
+                    <input
+                      id="notch-limit"
+                      type="range"
+                      min={MIN_NOTCH_LIMIT}
+                      max={MAX_NOTCH_LIMIT}
+                      value={notchLimit}
+                      onChange={(event) => setNotchLimit(Number(event.target.value))}
+                    />
+                  </label>
+                  <p className="notch-panel__description">
+                    Set this to match your save file&apos;s available notches. Reducing
+                    the limit below your equipped cost cracks the bracelet to warn you
+                    that you are overcharmed.
+                  </p>
+                </div>
+                <div className="preset-panel">
+                  <h4 className="preset-panel__title">Presets</h4>
+                  <p className="preset-panel__description">
+                    Apply quick loadouts or clear your charms with a single tap.
+                  </p>
+                  <div className="preset-buttons" role="group" aria-label="Charm presets">
+                    {CHARM_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className="preset-buttons__button"
+                        onClick={() => applyCharmPreset(preset.charmIds)}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="preset-buttons__button"
+                      onClick={() => applyCharmPreset([])}
+                    >
+                      Clear charms
+                    </button>
+                  </div>
+                </div>
+              </aside>
+              <div className="charm-workbench__grid">
+                <div className="charm-grid" role="grid" aria-label="Charm inventory">
+                  {charmGridLayout.map((row, rowIndex) => (
+                    <div
+                      key={`row-${rowIndex}`}
+                      role="row"
+                      className={`charm-grid__row${rowIndex % 2 === 1 ? ' charm-grid__row--offset' : ''}`}
+                    >
+                      {row.map((options, columnIndex) => (
+                        <div
+                          key={`${rowIndex}-${columnIndex}`}
+                          role="gridcell"
+                          className={[
+                            'charm-slot',
+                            options.length > 1 ? 'charm-slot--paired' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        >
+                          {options.map((charmId) => {
+                            const charm = charmDetails.get(charmId);
+                            if (!charm) {
+                              return null;
+                            }
+                            const isActive = activeCharmIds.includes(charmId);
+                            const canEquip = canEquipCharm(charmId);
+                            const icon = charmIconMap.get(charmId);
+                            const classes = [
+                              'charm-token',
+                              isActive ? 'charm-token--active' : 'charm-token--idle',
+                              !canEquip && !isActive ? 'charm-token--locked' : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ');
+                            return (
+                              <button
+                                key={charmId}
+                                type="button"
+                                className={classes}
+                                onClick={() => toggleCharm(charmId)}
+                                disabled={!canEquip && !isActive}
+                                aria-pressed={isActive}
+                                aria-label={getCharmAriaLabel(charm)}
+                                title={getCharmTooltip(charm)}
+                              >
+                                {icon ? (
+                                  <img
+                                    src={icon}
+                                    alt=""
+                                    className="charm-token__icon"
+                                    aria-hidden="true"
+                                  />
+                                ) : null}
+                                <span className="charm-token__name">{charm.name}</span>
+                                <span className="charm-token__cost" aria-hidden="true">
+                                  {charm.cost}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-              ))}
+              </div>
             </div>
           </section>
 
@@ -294,9 +417,10 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
               <h3 id="equipment-heading">Nail & Target</h3>
             </div>
             <div className="form-grid">
-              <label className="form-grid__field">
+              <label className="form-grid__field" htmlFor="nail-level">
                 <span>Nail upgrade</span>
                 <select
+                  id="nail-level"
                   value={build.nailUpgradeId}
                   onChange={(event) => setNailUpgrade(event.target.value)}
                 >
@@ -325,9 +449,10 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
               ) : null}
 
               {selectedBossId === CUSTOM_BOSS_ID && !isSequenceActive ? (
-                <label className="form-grid__field">
+                <label className="form-grid__field" htmlFor="custom-target-hp">
                   <span>Custom target HP</span>
                   <input
+                    id="custom-target-hp"
                     type="number"
                     min={1}
                     step={10}
