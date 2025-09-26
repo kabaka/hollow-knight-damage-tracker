@@ -2,6 +2,7 @@ import {
   DEFAULT_BOSS_ID,
   DEFAULT_CUSTOM_HP,
   bossSequenceMap,
+  charmMap,
   resolveSequenceEntries,
   nailUpgrades,
   spells,
@@ -24,6 +25,7 @@ export interface BuildState {
   nailUpgradeId: string;
   activeCharmIds: string[];
   spellLevels: Record<string, SpellLevel>;
+  notchLimit: number;
 }
 
 export interface FightState {
@@ -55,6 +57,7 @@ export type FightAction =
   | { type: 'setCustomTargetHp'; hp: number }
   | { type: 'setNailUpgrade'; nailUpgradeId: string }
   | { type: 'setActiveCharms'; charmIds: string[] }
+  | { type: 'setCharmNotchLimit'; notchLimit: number }
   | { type: 'setSpellLevel'; spellId: string; level: SpellLevel }
   | {
       type: 'logAttack';
@@ -91,6 +94,35 @@ export const initialSpellLevels = (): Record<string, SpellLevel> => {
   return levels;
 };
 
+export const MIN_NOTCH_LIMIT = 3;
+export const MAX_NOTCH_LIMIT = 11;
+
+const clampNotchLimit = (value: number) =>
+  Math.min(MAX_NOTCH_LIMIT, Math.max(MIN_NOTCH_LIMIT, Math.round(value)));
+
+const getCharmCost = (charmId: string) => charmMap.get(charmId)?.cost ?? 0;
+
+const clampCharmSelection = (charmIds: string[], notchLimit: number) => {
+  if (notchLimit <= 0) {
+    return [];
+  }
+
+  const uniqueOrdered = charmIds.filter((id, index) => charmIds.indexOf(id) === index);
+  const selected: string[] = [];
+  let totalCost = 0;
+
+  for (const id of uniqueOrdered) {
+    const cost = getCharmCost(id);
+    if (totalCost + cost > notchLimit) {
+      continue;
+    }
+    selected.push(id);
+    totalCost += cost;
+  }
+
+  return selected;
+};
+
 export const createInitialState = (): FightState => ({
   selectedBossId: DEFAULT_BOSS_ID,
   customTargetHp: DEFAULT_CUSTOM_HP,
@@ -98,6 +130,7 @@ export const createInitialState = (): FightState => ({
     nailUpgradeId: nailUpgrades[0]?.id ?? 'old-nail',
     activeCharmIds: [],
     spellLevels: initialSpellLevels(),
+    notchLimit: MAX_NOTCH_LIMIT,
   },
   damageLog: [],
   redoStack: [],
@@ -224,8 +257,19 @@ export const applyLogUpdate = (
   };
 };
 
-export const ensureSpellLevels = (state: FightState): FightState => {
-  if (Object.keys(state.build.spellLevels).length > 0) {
+const ensureNotchLimit = (state: FightState): FightState => {
+  const desiredLimit =
+    typeof state.build.notchLimit === 'number'
+      ? clampNotchLimit(state.build.notchLimit)
+      : MAX_NOTCH_LIMIT;
+
+  const clampedCharms = clampCharmSelection(state.build.activeCharmIds, desiredLimit);
+  const hasSameLimit = state.build.notchLimit === desiredLimit;
+  const hasSameCharms =
+    clampedCharms.length === state.build.activeCharmIds.length &&
+    clampedCharms.every((id, index) => state.build.activeCharmIds[index] === id);
+
+  if (hasSameLimit && hasSameCharms) {
     return state;
   }
 
@@ -233,9 +277,24 @@ export const ensureSpellLevels = (state: FightState): FightState => {
     ...state,
     build: {
       ...state.build,
-      spellLevels: initialSpellLevels(),
+      notchLimit: desiredLimit,
+      activeCharmIds: clampedCharms,
     },
   };
+};
+
+export const ensureSpellLevels = (state: FightState): FightState => {
+  if (Object.keys(state.build.spellLevels).length === 0) {
+    return ensureNotchLimit({
+      ...state,
+      build: {
+        ...state.build,
+        spellLevels: initialSpellLevels(),
+      },
+    });
+  }
+
+  return ensureNotchLimit(state);
 };
 
 export const ensureSequenceState = (state: FightState): FightState => {
@@ -295,9 +354,20 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         ...state,
         build: {
           ...state.build,
-          activeCharmIds: Array.from(new Set(action.charmIds)),
+          activeCharmIds: clampCharmSelection(action.charmIds, state.build.notchLimit),
         },
       };
+    case 'setCharmNotchLimit': {
+      const nextLimit = clampNotchLimit(action.notchLimit);
+      return {
+        ...state,
+        build: {
+          ...state.build,
+          notchLimit: nextLimit,
+          activeCharmIds: clampCharmSelection(state.build.activeCharmIds, nextLimit),
+        },
+      };
+    }
     case 'setSpellLevel':
       return {
         ...state,

@@ -1,13 +1,15 @@
 import {
-  FightState,
-  SpellLevel,
   AttackEvent,
+  FightState,
+  MAX_NOTCH_LIMIT,
+  MIN_NOTCH_LIMIT,
+  SpellLevel,
   ensureSequenceState,
   ensureSpellLevels,
 } from './fightReducer';
 
 export const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -74,6 +76,13 @@ export const sanitizeSpellLevels = (
   }
 
   return sanitized;
+};
+
+const sanitizeNotchLimit = (value: unknown, fallback: number): number => {
+  const numeric = toFiniteNumber(value);
+  const base =
+    numeric === null ? fallback : Math.round(Math.max(MIN_NOTCH_LIMIT, numeric));
+  return Math.min(MAX_NOTCH_LIMIT, Math.max(MIN_NOTCH_LIMIT, base));
 };
 
 export const sanitizeAttackEvents = (
@@ -201,6 +210,10 @@ export const mergePersistedState = (
     persistedBuild.spellLevels,
     fallback.build.spellLevels,
   );
+  const notchLimit = sanitizeNotchLimit(
+    persistedBuild.notchLimit,
+    fallback.build.notchLimit,
+  );
 
   const damageLog = sanitizeAttackEvents(persisted.damageLog, fallback.damageLog);
   const redoStack = sanitizeAttackEvents(persisted.redoStack, fallback.redoStack);
@@ -232,6 +245,7 @@ export const mergePersistedState = (
         nailUpgradeId,
         activeCharmIds,
         spellLevels,
+        notchLimit,
       },
       damageLog,
       redoStack,

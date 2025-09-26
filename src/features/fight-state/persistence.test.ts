@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { bossSequenceMap } from '../../data';
 import {
   CUSTOM_BOSS_ID,
+  MAX_NOTCH_LIMIT,
   createInitialState,
   ensureSequenceState,
   ensureSpellLevels,
@@ -38,6 +39,7 @@ describe('fight-state persistence', () => {
             'desolate-dive': 'upgrade',
             invalid: 'nope',
           },
+          notchLimit: 50,
         },
         damageLog: [
           {
@@ -97,6 +99,7 @@ describe('fight-state persistence', () => {
     expect(merged.customTargetHp).toBe(200);
     expect(merged.build.nailUpgradeId).toBe('pure-nail');
     expect(merged.build.activeCharmIds).toEqual(['shaman-stone']);
+    expect(merged.build.notchLimit).toBe(MAX_NOTCH_LIMIT);
     expect(merged.build.spellLevels['desolate-dive']).toBe('upgrade');
     expect(Object.values(merged.build.spellLevels)).toContain('base');
 
@@ -130,7 +133,7 @@ describe('fight-state persistence', () => {
     const fallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
 
     const persisted = {
-      version: 1,
+      version: 2,
       state: {
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: 4242,
@@ -138,6 +141,7 @@ describe('fight-state persistence', () => {
           nailUpgradeId: 'coiled-nail',
           activeCharmIds: ['shaman-stone'],
           spellLevels: { 'howling-wraiths': 'upgrade' },
+          notchLimit: 4,
         },
         damageLog: [],
         redoStack: [],
@@ -156,6 +160,7 @@ describe('fight-state persistence', () => {
     expect(restored.customTargetHp).toBe(4242);
     expect(restored.build.nailUpgradeId).toBe('coiled-nail');
     expect(restored.build.spellLevels['howling-wraiths']).toBe('upgrade');
+    expect(restored.build.notchLimit).toBe(4);
   });
 
   it('ignores malformed or incompatible persisted payloads', () => {
@@ -185,7 +190,7 @@ describe('fight-state persistence', () => {
     }
 
     const parsed = JSON.parse(stored) as { version: number; state: unknown };
-    expect(parsed.version).toBe(1);
+    expect(parsed.version).toBe(2);
     expect(parsed.state).toBeTruthy();
   });
 });
