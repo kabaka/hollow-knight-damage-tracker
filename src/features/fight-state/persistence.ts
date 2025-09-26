@@ -70,7 +70,7 @@ export const sanitizeSpellLevels = (
 
   const sanitized: Record<string, SpellLevel> = { ...fallback };
   for (const [spellId, level] of Object.entries(value)) {
-    if (level === 'base' || level === 'upgrade') {
+    if (level === 'none' || level === 'base' || level === 'upgrade') {
       sanitized[spellId] = level;
     }
   }

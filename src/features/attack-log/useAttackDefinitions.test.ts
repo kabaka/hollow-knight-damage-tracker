@@ -92,6 +92,25 @@ describe('useAttackDefinitions helpers', () => {
     expect(vengefulSpirit?.description).toMatch(/flukenest volley/i);
   });
 
+  it('omits spells that are not yet acquired', () => {
+    const [firstSpell] = spells;
+    if (!firstSpell) {
+      throw new Error('Expected at least one spell fixture');
+    }
+
+    const state = createFightState({
+      build: {
+        spellLevels: { [firstSpell.id]: 'none' },
+      },
+    });
+
+    const groups = buildAttackGroups(state);
+    const spellsGroup = groups.find((group) => group.id === 'spellcasting');
+    const attackIds = spellsGroup?.attacks.map((attack) => attack.id) ?? [];
+
+    expect(attackIds.some((id) => id.startsWith(`${firstSpell.id}-`))).toBe(false);
+  });
+
   it('builds shortcut metadata including hits remaining for each attack', () => {
     const state = createFightState();
     const groups = buildAttackGroups(state);
