@@ -73,26 +73,30 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
   ]);
 
   return (
-    <header className="app-header">
-      <div className="app-header__top">
-        <div className="app-header__brand">
-          <h1 className="app-header__title">Hollow Knight Damage Tracker</h1>
-          <p className="app-header__subtitle">
+    <div className="encounter-header">
+      <header className="app-navbar">
+        <div className="app-navbar__brand">
+          <h1 className="app-navbar__title">Hollow Knight Damage Tracker</h1>
+          <p className="app-navbar__subtitle">
             Plan your build, log every strike, and monitor fight-ending stats in real
             time.
           </p>
         </div>
-        <div className="app-header__actions">
+        <div className="app-navbar__actions">
           <button type="button" className="header-button" onClick={onOpenModal}>
             Player Loadout
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="app-header__filters" role="group" aria-label="Encounter selection">
-        <div className="header-stack">
-          <label className="header-field">
-            <span className="header-field__label">Boss sequence</span>
+      <section
+        className="encounter-toolbar"
+        role="group"
+        aria-label="Encounter selection"
+      >
+        <div className="toolbar-stack">
+          <label className="toolbar-field">
+            <span className="toolbar-field__label">Boss sequence</span>
             <select
               value={sequenceSelectValue}
               onChange={(event) => handleSequenceChange(event.target.value)}
@@ -121,8 +125,8 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
               >
                 Prev
               </button>
-              <label className="header-field header-field--compact">
-                <span className="header-field__label">Stage</span>
+              <label className="toolbar-field toolbar-field--compact">
+                <span className="toolbar-field__label">Stage</span>
                 <select
                   value={String(cappedSequenceIndex)}
                   onChange={(event) =>
@@ -149,9 +153,9 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
           ) : null}
         </div>
 
-        <div className="header-stack">
-          <label className="header-field">
-            <span className="header-field__label">Boss target</span>
+        <div className="toolbar-stack">
+          <label className="toolbar-field">
+            <span className="toolbar-field__label">Boss target</span>
             <select
               id="boss-target"
               value={bossSelectValue}
@@ -170,8 +174,8 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
           {!isSequenceActive &&
           selectedBoss &&
           state.selectedBossId !== CUSTOM_BOSS_ID ? (
-            <label className="header-field">
-              <span className="header-field__label">Boss version</span>
+            <label className="toolbar-field">
+              <span className="toolbar-field__label">Boss version</span>
               <select
                 value={state.selectedBossId}
                 onChange={(event) => handleBossVersionChange(event.target.value)}
@@ -186,8 +190,8 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
           ) : null}
 
           {!isSequenceActive && state.selectedBossId === CUSTOM_BOSS_ID ? (
-            <label className="header-field" htmlFor="custom-target-hp">
-              <span className="header-field__label">Custom target HP</span>
+            <label className="toolbar-field" htmlFor="custom-target-hp">
+              <span className="toolbar-field__label">Custom target HP</span>
               <input
                 id="custom-target-hp"
                 type="number"
@@ -200,18 +204,18 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
           ) : null}
 
           {selectedTarget && selectedVersion ? (
-            <div className="header-summary" aria-live="polite">
-              <span className="header-summary__title">Active target</span>
-              <span className="header-summary__value">{selectedTarget.bossName}</span>
-              <span className="header-summary__meta">{selectedVersion.title}</span>
+            <div className="toolbar-summary" aria-live="polite">
+              <span className="toolbar-summary__title">Active target</span>
+              <span className="toolbar-summary__value">{selectedTarget.bossName}</span>
+              <span className="toolbar-summary__meta">{selectedVersion.title}</span>
             </div>
           ) : null}
         </div>
-      </div>
+      </section>
 
       {activeSequence && activeSequence.conditions.length > 0 ? (
-        <div className="app-header__conditions">
-          <h4 className="app-header__conditions-title">Sequence conditions</h4>
+        <section className="sequence-conditions-panel">
+          <h4 className="sequence-conditions-panel__title">Sequence conditions</h4>
           <div
             className="sequence-conditions"
             role="group"
@@ -242,41 +246,41 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
               );
             })}
           </div>
-        </div>
+        </section>
       ) : null}
 
-      <div className="app-header__summary" aria-live="polite">
-        <div className="summary-tile">
-          <span className="summary-tile__label">Target HP</span>
-          <span className="summary-tile__value">{derived.targetHp.toLocaleString()}</span>
+      <section className="encounter-summary" aria-live="polite">
+        <div className="summary-chip">
+          <span className="summary-chip__label">Target HP</span>
+          <span className="summary-chip__value">{derived.targetHp.toLocaleString()}</span>
         </div>
-        <div className="summary-tile">
-          <span className="summary-tile__label">Damage Logged</span>
-          <span className="summary-tile__value">
+        <div className="summary-chip">
+          <span className="summary-chip__label">Damage Logged</span>
+          <span className="summary-chip__value">
             {derived.totalDamage.toLocaleString()}
           </span>
         </div>
-        <div className="summary-tile">
-          <span className="summary-tile__label">Remaining</span>
-          <span className="summary-tile__value">
+        <div className="summary-chip">
+          <span className="summary-chip__label">Remaining</span>
+          <span className="summary-chip__value">
             {derived.remainingHp.toLocaleString()}
           </span>
         </div>
         {currentSequenceEntry ? (
-          <div className="summary-tile">
-            <span className="summary-tile__label">Current Stage</span>
-            <span className="summary-tile__value">
+          <div className="summary-chip">
+            <span className="summary-chip__label">Current Stage</span>
+            <span className="summary-chip__value">
               {currentSequenceEntry.target.bossName}
             </span>
           </div>
         ) : selectedTarget ? (
-          <div className="summary-tile">
-            <span className="summary-tile__label">Arena</span>
-            <span className="summary-tile__value">{selectedTarget.location}</span>
+          <div className="summary-chip">
+            <span className="summary-chip__label">Arena</span>
+            <span className="summary-chip__value">{selectedTarget.location}</span>
           </div>
         ) : null}
-      </div>
-    </header>
+      </section>
+    </div>
   );
 };
 

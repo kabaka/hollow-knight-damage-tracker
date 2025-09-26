@@ -35,8 +35,8 @@ describe('App', () => {
     await user.type(hpInput, '500');
 
     const targetTile = screen
-      .getByText(/target hp/i, { selector: '.summary-tile__label' })
-      .closest('.summary-tile');
+      .getByText(/target hp/i, { selector: '.summary-chip__label' })
+      .closest('.summary-chip');
     expect(targetTile).toHaveTextContent('500');
   });
 
@@ -49,8 +49,8 @@ describe('App', () => {
     await user.selectOptions(versionSelect, 'gruz-mother__ascended');
 
     const targetTile = screen
-      .getByText(/target hp/i, { selector: '.summary-tile__label' })
-      .closest('.summary-tile');
+      .getByText(/target hp/i, { selector: '.summary-chip__label' })
+      .closest('.summary-chip');
     expect(targetTile).toHaveTextContent('945');
   });
 
