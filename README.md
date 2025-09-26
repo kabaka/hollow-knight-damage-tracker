@@ -65,6 +65,21 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
+## Automated simulated fight screenshots
+
+- Pull requests trigger a `fight-screenshots` GitHub Actions job that executes `tests/e2e/simulated-fight-screenshot.spec.ts` against Chromium, Firefox, and WebKit. Each run hydrates a deterministic combat log, captures the resulting UI, and uploads a browser-specific PNG artifact.
+
+### Incorporating screenshots into the README
+
+To surface the latest simulated fight image automatically, add a follow-up workflow that downloads the `simulated-fight-*` artifacts and updates the repository:
+
+1. Use a `workflow_run` trigger that fires after `fight-screenshots` completes (or reuse `pull_request_target` for trusted branches).
+2. Download the artifacts with [`actions/download-artifact`](https://github.com/actions/download-artifact) and move a canonical image (for example, `docs/assets/simulated-fight.png`) into the repository.
+3. Apply a templated README update that references the canonical file (e.g., embed the image in a "Latest simulation" section).
+4. Commit the change with [`peter-evans/create-pull-request`](https://github.com/peter-evans/create-pull-request) for preview during the PR, or push directly on `workflow_run` events targeting `main` once the PR merges.
+
+This pattern keeps the README current without granting workflows permission to modify contributor branches directly.
+
 ## Project Roadmap
 
 1. **Scaffolding:** Initialize the frontend project, configure TypeScript, linting, formatting, and unit test tooling.
