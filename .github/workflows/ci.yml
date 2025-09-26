@@ -44,7 +44,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     container:
-      image: mcr.microsoft.com/playwright:v1.46.1-jammy
+      image: mcr.microsoft.com/playwright:v1.55.1-jammy
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
