@@ -130,18 +130,29 @@ const SIMULATED_STATE: FightState = {
 
 test.describe('Simulated fight screenshot', () => {
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
+    const serializedState = JSON.stringify({
+      version: STORAGE_VERSION,
+      state: SIMULATED_STATE,
+    });
+
     await page.addInitScript(
-      ({ state, storageKey, storageVersion }) => {
-        window.localStorage.clear();
-        window.localStorage.setItem(
-          storageKey,
-          JSON.stringify({ version: storageVersion, state }),
-        );
+      ({ payload, storageKey }) => {
+        try {
+          const protocol = window.location.protocol;
+          const isHttpOrigin = protocol === 'http:' || protocol === 'https:';
+          if (!isHttpOrigin) {
+            return;
+          }
+
+          window.localStorage.clear();
+          window.localStorage.setItem(storageKey, payload);
+        } catch {
+          // Ignore storage access errors on about:blank or restricted contexts.
+        }
       },
       {
-        state: SIMULATED_STATE,
+        payload: serializedState,
         storageKey: STORAGE_KEY,
-        storageVersion: STORAGE_VERSION,
       },
     );
 
