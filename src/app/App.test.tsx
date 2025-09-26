@@ -25,15 +25,12 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /player loadout/i })).toBeVisible();
   });
 
-  it('allows selecting a custom boss target and updating HP from the modal', async () => {
+  it('allows selecting a custom boss target and updating HP from the header', async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.selectOptions(screen.getByLabelText(/boss target/i), 'custom');
-    await user.click(screen.getByRole('button', { name: /player loadout/i }));
-
-    const modal = await screen.findByRole('dialog', { name: /player loadout/i });
-    const hpInput = within(modal).getByLabelText(/custom target hp/i);
+    const hpInput = screen.getByLabelText(/custom target hp/i);
     await user.clear(hpInput);
     await user.type(hpInput, '500');
 
@@ -48,10 +45,7 @@ describe('App', () => {
     render(<App />);
 
     await user.selectOptions(screen.getByLabelText(/boss target/i), 'gruz-mother');
-    await user.click(screen.getByRole('button', { name: /player loadout/i }));
-
-    const modal = await screen.findByRole('dialog', { name: /player loadout/i });
-    const versionSelect = within(modal).getByLabelText(/boss version/i);
+    const versionSelect = await screen.findByLabelText(/boss version/i);
     await user.selectOptions(versionSelect, 'gruz-mother__ascended');
 
     const targetTile = screen
@@ -60,7 +54,7 @@ describe('App', () => {
     expect(targetTile).toHaveTextContent('945');
   });
 
-  it('applies charm presets and enforces notch limits', async () => {
+  it('applies charm presets and enforces overcharm limits', async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -81,19 +75,38 @@ describe('App', () => {
           (button) => button.getAttribute('aria-pressed') !== null,
         ) as HTMLButtonElement;
 
-    const shamanStoneButton = getCharmButton(/shaman stone/i);
-    const spellTwisterButton = getCharmButton(/spell twister/i);
-
-    expect(shamanStoneButton).toHaveAttribute('aria-pressed', 'true');
-    expect(spellTwisterButton).toHaveAttribute('aria-pressed', 'true');
+    expect(getCharmButton(/shaman stone/i)).toHaveAttribute('aria-pressed', 'true');
+    expect(getCharmButton(/spell twister/i)).toHaveAttribute('aria-pressed', 'true');
 
     const notchSlider = within(modal).getByRole('slider', { name: /notch limit/i });
-    fireEvent.change(notchSlider, { target: { value: '3' } });
+    fireEvent.change(notchSlider, { target: { value: '5' } });
 
-    const quickSlashButton = getCharmButton(/quick slash/i);
-    await user.click(quickSlashButton);
+    const longnailButton = getCharmButton(/longnail/i);
+    expect(longnailButton).not.toBeDisabled();
+    await user.click(longnailButton);
+    await within(modal).findByRole('button', { name: /longnail/i, pressed: true });
+    expect(within(modal).getByRole('status')).toHaveTextContent(/overcharmed/i);
 
     const fragileStrengthButton = getCharmButton(/fragile strength/i);
     expect(fragileStrengthButton).toBeDisabled();
+  });
+
+  it('surfaces sequence conditions in the header when selecting a pantheon', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.selectOptions(
+      screen.getByLabelText(/boss sequence/i),
+      'pantheon-of-the-sage',
+    );
+
+    const conditionsGroup = await screen.findByRole('group', {
+      name: /sequence conditions/i,
+    });
+    const checkbox = within(conditionsGroup).getByLabelText(/include grey prince zote/i);
+    expect(checkbox).not.toBeChecked();
+
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
   });
 });
