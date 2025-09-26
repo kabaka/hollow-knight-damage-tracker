@@ -15,7 +15,6 @@ jobs:
     permissions:
       contents: read
       checks: write
-      actions: write
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -34,7 +33,6 @@ jobs:
     permissions:
       contents: read
       checks: write
-      actions: write
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -53,7 +51,6 @@ jobs:
     permissions:
       contents: read
       checks: write
-      actions: write
     strategy:
       fail-fast: false
       matrix:
