@@ -142,6 +142,39 @@ export const sanitizeSequenceEventMap = (
   return sanitized;
 };
 
+const sanitizeSequenceConditions = (
+  value: unknown,
+  fallback: FightState['sequenceConditions'],
+): FightState['sequenceConditions'] => {
+  if (!isRecord(value)) {
+    return { ...fallback };
+  }
+
+  const sanitized: FightState['sequenceConditions'] = {};
+  for (const [sequenceId, rawConditions] of Object.entries(value)) {
+    if (!isRecord(rawConditions)) {
+      continue;
+    }
+
+    const conditions: Record<string, boolean> = {};
+    for (const [conditionId, rawValue] of Object.entries(rawConditions)) {
+      if (typeof rawValue === 'boolean') {
+        conditions[conditionId] = rawValue;
+      } else if (rawValue === 'true') {
+        conditions[conditionId] = true;
+      } else if (rawValue === 'false') {
+        conditions[conditionId] = false;
+      }
+    }
+
+    if (Object.keys(conditions).length > 0) {
+      sanitized[sequenceId] = conditions;
+    }
+  }
+
+  return { ...fallback, ...sanitized };
+};
+
 export const mergePersistedState = (
   persisted: Record<string, unknown>,
   fallback: FightState,
@@ -186,6 +219,10 @@ export const mergePersistedState = (
     persisted.sequenceRedoStacks,
     fallback.sequenceRedoStacks,
   );
+  const sequenceConditions = sanitizeSequenceConditions(
+    persisted.sequenceConditions,
+    fallback.sequenceConditions,
+  );
 
   return ensureSequenceState(
     ensureSpellLevels({
@@ -202,6 +239,7 @@ export const mergePersistedState = (
       sequenceIndex,
       sequenceLogs,
       sequenceRedoStacks,
+      sequenceConditions,
     }),
   );
 };

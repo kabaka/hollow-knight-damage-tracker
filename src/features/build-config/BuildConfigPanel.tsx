@@ -12,6 +12,8 @@ import {
   bosses,
   bossSequenceMap,
   bossSequences,
+  getSequenceConditionValues,
+  resolveSequenceEntries,
   charmMap,
   supportedCharmIds,
   nailUpgrades,
@@ -90,7 +92,14 @@ const CHARM_PRESETS = [
 
 export const BuildConfigPanel: FC = () => {
   const {
-    state: { selectedBossId, customTargetHp, build, activeSequenceId, sequenceIndex },
+    state: {
+      selectedBossId,
+      customTargetHp,
+      build,
+      activeSequenceId,
+      sequenceIndex,
+      sequenceConditions,
+    },
     actions,
   } = useFightState();
 
@@ -120,7 +129,26 @@ export const BuildConfigPanel: FC = () => {
     [activeSequenceId],
   );
 
-  const sequenceEntries = activeSequence?.entries ?? [];
+  const sequenceConditionOverrides = activeSequenceId
+    ? sequenceConditions[activeSequenceId]
+    : undefined;
+
+  const sequenceEntries = useMemo(
+    () =>
+      activeSequence
+        ? resolveSequenceEntries(activeSequence, sequenceConditionOverrides)
+        : [],
+    [activeSequence, sequenceConditionOverrides],
+  );
+
+  const sequenceConditionValues = useMemo(
+    () =>
+      activeSequence
+        ? getSequenceConditionValues(activeSequence, sequenceConditionOverrides)
+        : {},
+    [activeSequence, sequenceConditionOverrides],
+  );
+
   const cappedSequenceIndex = sequenceEntries.length
     ? Math.min(Math.max(sequenceIndex, 0), sequenceEntries.length - 1)
     : 0;
@@ -165,6 +193,13 @@ export const BuildConfigPanel: FC = () => {
     if (hasPreviousSequenceStage) {
       actions.rewindSequenceStage();
     }
+  };
+
+  const handleSequenceConditionToggle = (conditionId: string, enabled: boolean) => {
+    if (!activeSequence) {
+      return;
+    }
+    actions.setSequenceCondition(activeSequence.id, conditionId, enabled);
   };
 
   const handleBossChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -317,6 +352,41 @@ export const BuildConfigPanel: FC = () => {
               ? `${currentSequenceEntry.target.location} • ${currentSequenceEntry.target.hp.toLocaleString()} HP`
               : 'Select a boss within the sequence.'}{' '}
             Use [ and ] to cycle between bosses without leaving the keyboard.
+          </small>
+        </div>
+      ) : null}
+
+      {isSequenceActive && activeSequence && activeSequence.conditions.length > 0 ? (
+        <div className="form-field">
+          <span className="form-field__label">Conditional fights</span>
+          <div className="choice-list" role="group" aria-label="Sequence conditions">
+            {activeSequence.conditions.map((condition) => {
+              const checkboxId = `${activeSequence.id}-${condition.id}`;
+              const isEnabled = sequenceConditionValues[condition.id] ?? false;
+              return (
+                <div key={condition.id} className="choice-list__option">
+                  <input
+                    id={checkboxId}
+                    type="checkbox"
+                    checked={isEnabled}
+                    onChange={(event) =>
+                      handleSequenceConditionToggle(condition.id, event.target.checked)
+                    }
+                  />
+                  <label htmlFor={checkboxId} className="choice-list__option-label">
+                    <span className="choice-list__label">{condition.label}</span>
+                    {condition.description ? (
+                      <span className="choice-list__description">
+                        {condition.description}
+                      </span>
+                    ) : null}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+          <small>
+            Toggle optional encounters to match the bosses available in your save file.
           </small>
         </div>
       ) : null}

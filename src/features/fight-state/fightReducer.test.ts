@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { bossSequenceMap } from '../../data';
+import { bossSequenceMap, resolveSequenceEntries } from '../../data';
 import {
   CUSTOM_BOSS_ID,
   createInitialState,
@@ -104,5 +104,50 @@ describe('fightReducer', () => {
     expect(updated.selectedBossId).toBe(CUSTOM_BOSS_ID);
     expect(updated.activeSequenceId).toBeNull();
     expect(updated.customTargetHp).toBe(4321);
+  });
+
+  it('updates resolved stages when toggling conditional sequence fights', () => {
+    const sequence = bossSequenceMap.get('pantheon-of-the-sage');
+    if (!sequence) {
+      throw new Error('Missing sage pantheon fixture for reducer test');
+    }
+
+    const condition = sequence.conditions[0];
+    if (!condition) {
+      throw new Error('Missing conditional stage definition for reducer test');
+    }
+
+    const started = fightReducer(createInitialState(), {
+      type: 'startSequence',
+      sequenceId: sequence.id,
+    });
+
+    const defaultEntries = resolveSequenceEntries(
+      sequence,
+      started.sequenceConditions[sequence.id],
+    );
+    expect(
+      defaultEntries.some((entry) => entry.target.bossName === 'Grey Prince Zote'),
+    ).toBe(false);
+
+    const enabled = fightReducer(started, {
+      type: 'setSequenceCondition',
+      sequenceId: sequence.id,
+      conditionId: condition.id,
+      enabled: true,
+    });
+
+    expect(enabled.sequenceConditions[sequence.id]?.[condition.id]).toBe(true);
+
+    const resolvedEntries = resolveSequenceEntries(
+      sequence,
+      enabled.sequenceConditions[sequence.id],
+    );
+
+    expect(
+      resolvedEntries.some((entry) => entry.target.bossName === 'Grey Prince Zote'),
+    ).toBe(true);
+    expect(resolvedEntries.length).toBeGreaterThan(defaultEntries.length);
+    expect(enabled.selectedBossId).toBe(resolvedEntries[0]?.target.id);
   });
 });

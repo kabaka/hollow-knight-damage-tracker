@@ -2,9 +2,11 @@ import {
   DEFAULT_BOSS_ID,
   DEFAULT_CUSTOM_HP,
   bossSequenceMap,
+  resolveSequenceEntries,
   nailUpgrades,
   spells,
 } from '../../data';
+import type { BossSequenceEntry } from '../../data';
 
 export type AttackCategory = 'nail' | 'spell' | 'advanced' | 'charm';
 export type SpellLevel = 'base' | 'upgrade';
@@ -34,6 +36,7 @@ export interface FightState {
   sequenceIndex: number;
   sequenceLogs: Record<string, AttackEvent[]>;
   sequenceRedoStacks: Record<string, AttackEvent[]>;
+  sequenceConditions: Record<string, Record<string, boolean>>;
 }
 
 export interface AttackInput {
@@ -69,7 +72,13 @@ export type FightAction =
   | { type: 'stopSequence' }
   | { type: 'setSequenceStage'; index: number }
   | { type: 'advanceSequence' }
-  | { type: 'rewindSequence' };
+  | { type: 'rewindSequence' }
+  | {
+      type: 'setSequenceCondition';
+      sequenceId: string;
+      conditionId: string;
+      enabled: boolean;
+    };
 
 export const toSequenceStageKey = (sequenceId: string, index: number) =>
   `${sequenceId}#${index}`;
@@ -96,6 +105,7 @@ export const createInitialState = (): FightState => ({
   sequenceIndex: 0,
   sequenceLogs: {},
   sequenceRedoStacks: {},
+  sequenceConditions: {},
 });
 
 export const isCustomBoss = (bossId: string) => bossId === CUSTOM_BOSS_ID;
@@ -119,13 +129,36 @@ export const persistCurrentSequenceStage = (state: FightState): FightState => {
   };
 };
 
+const filterSequenceRecords = (
+  records: Record<string, AttackEvent[]>,
+  sequenceId: string,
+) => {
+  const prefix = `${sequenceId}#`;
+  return Object.fromEntries(
+    Object.entries(records).filter(([key]) => !key.startsWith(prefix)),
+  );
+};
+
+const getResolvedSequenceEntries = (
+  state: FightState,
+  sequenceId: string,
+): { sequence: ReturnType<typeof bossSequenceMap.get>; entries: BossSequenceEntry[] } => {
+  const sequence = bossSequenceMap.get(sequenceId);
+  if (!sequence) {
+    return { sequence: undefined, entries: [] };
+  }
+  const overrides = state.sequenceConditions[sequenceId];
+  const entries = resolveSequenceEntries(sequence, overrides);
+  return { sequence, entries };
+};
+
 export const loadSequenceStage = (
   state: FightState,
   sequenceId: string,
   index: number,
 ): FightState => {
-  const sequence = bossSequenceMap.get(sequenceId);
-  if (!sequence || sequence.entries.length === 0) {
+  const { sequence, entries } = getResolvedSequenceEntries(state, sequenceId);
+  if (!sequence || entries.length === 0) {
     return {
       ...state,
       activeSequenceId: null,
@@ -133,11 +166,11 @@ export const loadSequenceStage = (
     };
   }
 
-  const clampedIndex = Math.max(0, Math.min(index, sequence.entries.length - 1));
+  const clampedIndex = Math.max(0, Math.min(index, entries.length - 1));
   const key = toSequenceStageKey(sequenceId, clampedIndex);
   const storedLog = state.sequenceLogs[key] ?? [];
   const storedRedo = state.sequenceRedoStacks[key] ?? [];
-  const nextTarget = sequence.entries[clampedIndex]?.target;
+  const nextTarget = entries[clampedIndex]?.target;
 
   return {
     ...state,
@@ -210,8 +243,8 @@ export const ensureSequenceState = (state: FightState): FightState => {
     return state;
   }
 
-  const sequence = bossSequenceMap.get(state.activeSequenceId);
-  if (!sequence || sequence.entries.length === 0) {
+  const { sequence, entries } = getResolvedSequenceEntries(state, state.activeSequenceId);
+  if (!sequence || entries.length === 0) {
     return {
       ...state,
       activeSequenceId: null,
@@ -219,14 +252,11 @@ export const ensureSequenceState = (state: FightState): FightState => {
     };
   }
 
-  const clampedIndex = Math.max(
-    0,
-    Math.min(state.sequenceIndex, sequence.entries.length - 1),
-  );
+  const clampedIndex = Math.max(0, Math.min(state.sequenceIndex, entries.length - 1));
   const key = toSequenceStageKey(state.activeSequenceId, clampedIndex);
   const damageLog = state.sequenceLogs[key] ?? [];
   const redoStack = state.sequenceRedoStacks[key] ?? [];
-  const targetId = sequence.entries[clampedIndex]?.target.id ?? state.selectedBossId;
+  const targetId = entries[clampedIndex]?.target.id ?? state.selectedBossId;
 
   return {
     ...state,
@@ -316,6 +346,43 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
     }
     case 'stopSequence':
       return exitSequence(state);
+    case 'setSequenceCondition': {
+      const sequence = bossSequenceMap.get(action.sequenceId);
+      if (!sequence) {
+        return state;
+      }
+
+      const existing = state.sequenceConditions[action.sequenceId] ?? {};
+      const nextConditions = {
+        ...state.sequenceConditions,
+        [action.sequenceId]: {
+          ...existing,
+          [action.conditionId]: action.enabled,
+        },
+      };
+
+      const nextState: FightState = {
+        ...state,
+        sequenceConditions: nextConditions,
+      };
+
+      if (state.activeSequenceId !== action.sequenceId) {
+        return nextState;
+      }
+
+      const clearedLogsState: FightState = {
+        ...nextState,
+        damageLog: [],
+        redoStack: [],
+        sequenceLogs: filterSequenceRecords(nextState.sequenceLogs, action.sequenceId),
+        sequenceRedoStacks: filterSequenceRecords(
+          nextState.sequenceRedoStacks,
+          action.sequenceId,
+        ),
+      };
+
+      return ensureSequenceState(clearedLogsState);
+    }
     case 'setSequenceStage':
       return state.activeSequenceId
         ? loadSequenceStage(
@@ -328,11 +395,14 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       if (!state.activeSequenceId) {
         return state;
       }
-      const sequence = bossSequenceMap.get(state.activeSequenceId);
-      if (!sequence) {
+      const { sequence, entries } = getResolvedSequenceEntries(
+        state,
+        state.activeSequenceId,
+      );
+      if (!sequence || entries.length === 0) {
         return exitSequence(state);
       }
-      if (state.sequenceIndex >= sequence.entries.length - 1) {
+      if (state.sequenceIndex >= entries.length - 1) {
         return persistCurrentSequenceStage(state);
       }
       return loadSequenceStage(

@@ -3,18 +3,24 @@ import rawBosses from './bosses.json';
 import rawSequences from './sequences.json';
 import type {
   Boss,
+  BossSequence,
+  BossSequenceCondition,
+  BossSequenceEntry,
+  BossSequenceEntryCondition,
   BossTarget,
   BossVersion,
   Charm,
   NailUpgrade,
   Spell,
   SpellVariant,
-  BossSequence,
-  BossSequenceEntry,
 } from './types';
 
 export type {
   Boss,
+  BossSequence,
+  BossSequenceCondition,
+  BossSequenceEntry,
+  BossSequenceEntryCondition,
   BossTarget,
   BossVersion,
   Charm,
@@ -132,21 +138,39 @@ export const nailUpgradeMap = new Map(
 );
 export const spellMap = new Map(spells.map((spell) => [spell.id, spell]));
 
+type RawSequenceConditionDefinition = {
+  id: string;
+  label?: string;
+  description?: string;
+  defaultEnabled?: boolean;
+};
+
+type RawSequenceEntryCondition = {
+  id: string;
+  mode?: BossSequenceEntryCondition['mode'];
+  replacement?: { boss: string; version?: string };
+};
+
 type RawSequenceEntry = {
   boss: string;
-  version: string;
+  version?: string;
+  condition?: RawSequenceEntryCondition;
 };
 
 type RawSequence = {
   id: string;
   name: string;
   category?: string;
+  conditions?: RawSequenceConditionDefinition[];
   entries: RawSequenceEntry[];
 };
 
 const rawSequenceData = rawSequences as RawSequence[];
 
-const normalizeSequenceVersion = (version: string) => {
+const normalizeSequenceVersion = (version: string | undefined) => {
+  if (!version) {
+    return '';
+  }
   const normalized = version.trim().toLowerCase();
   if (normalized === '' || normalized === 'standard') {
     return 'Standard';
@@ -157,7 +181,7 @@ const normalizeSequenceVersion = (version: string) => {
   return version;
 };
 
-const resolveSequenceTarget = (entry: RawSequenceEntry) => {
+const resolveSequenceTarget = (entry: { boss: string; version?: string }) => {
   const normalizedVersion = normalizeSequenceVersion(entry.version);
   return (
     parsedBossTargets.find(
@@ -171,15 +195,85 @@ const resolveSequenceTarget = (entry: RawSequenceEntry) => {
 const parsedSequences: BossSequence[] = rawSequenceData
   .map((sequence) => {
     const sequenceId = toSlug(sequence.id || sequence.name);
+    const conditionDefinitions = new Map<string, BossSequenceCondition>();
+
+    const ensureConditionDefinition = (
+      definition: RawSequenceConditionDefinition | undefined,
+      fallbackId: string,
+      fallbackLabel: string,
+    ) => {
+      const conditionId = definition?.id ?? fallbackId;
+      if (!conditionId) {
+        return null;
+      }
+
+      if (conditionDefinitions.has(conditionId)) {
+        return conditionDefinitions.get(conditionId) ?? null;
+      }
+
+      const label = definition?.label?.trim() || fallbackLabel;
+      const condition: BossSequenceCondition = {
+        id: conditionId,
+        label,
+        description: definition?.description?.trim() || undefined,
+        defaultEnabled: Boolean(definition?.defaultEnabled),
+      };
+      conditionDefinitions.set(conditionId, condition);
+      return condition;
+    };
+
+    (sequence.conditions ?? []).forEach((rawCondition) => {
+      if (!rawCondition.id) {
+        return;
+      }
+      ensureConditionDefinition(
+        rawCondition,
+        rawCondition.id,
+        rawCondition.label?.trim() || rawCondition.id.replace(/-/g, ' '),
+      );
+    });
+
+    const parseEntryCondition = (
+      entry: RawSequenceEntry,
+    ): BossSequenceEntryCondition | undefined => {
+      if (!entry.condition || typeof entry.condition.id !== 'string') {
+        return undefined;
+      }
+
+      const baseDefinition = (sequence.conditions ?? []).find(
+        (definition) => definition.id === entry.condition?.id,
+      );
+
+      ensureConditionDefinition(baseDefinition, entry.condition.id, entry.boss);
+
+      const mode: BossSequenceEntryCondition['mode'] =
+        entry.condition.mode === 'replace' ? 'replace' : 'include';
+
+      const replacementTarget =
+        mode === 'replace' && entry.condition.replacement
+          ? resolveSequenceTarget(entry.condition.replacement)
+          : undefined;
+
+      return {
+        id: entry.condition.id,
+        mode,
+        replacementTarget,
+      } satisfies BossSequenceEntryCondition;
+    };
+
     const entries: BossSequenceEntry[] = sequence.entries
       .map((entry, index) => {
         const target = resolveSequenceTarget(entry);
         if (!target) {
           return null;
         }
+
+        const condition = parseEntryCondition(entry);
+
         return {
           id: `${sequenceId}__${index}`,
           target,
+          condition,
         } satisfies BossSequenceEntry;
       })
       .filter((entry): entry is BossSequenceEntry => Boolean(entry));
@@ -189,6 +283,7 @@ const parsedSequences: BossSequence[] = rawSequenceData
       name: sequence.name,
       category: sequence.category ?? 'Boss Sequences',
       entries,
+      conditions: Array.from(conditionDefinitions.values()),
     } satisfies BossSequence;
   })
   .filter((sequence) => sequence.entries.length > 0);
@@ -197,6 +292,56 @@ export const bossSequences = parsedSequences;
 export const bossSequenceMap = new Map(
   bossSequences.map((sequence) => [sequence.id, sequence]),
 );
+
+const buildConditionDefaults = (sequence: BossSequence) =>
+  sequence.conditions.reduce<Record<string, boolean>>((acc, condition) => {
+    acc[condition.id] = condition.defaultEnabled ?? false;
+    return acc;
+  }, {});
+
+export const getSequenceConditionValues = (
+  sequence: BossSequence,
+  overrides: Record<string, boolean> | undefined,
+) => {
+  const defaults = buildConditionDefaults(sequence);
+  if (!overrides) {
+    return defaults;
+  }
+
+  const values = { ...defaults };
+  for (const [conditionId, value] of Object.entries(overrides)) {
+    if (typeof value === 'boolean') {
+      values[conditionId] = value;
+    }
+  }
+  return values;
+};
+
+export const resolveSequenceEntries = (
+  sequence: BossSequence,
+  overrides?: Record<string, boolean>,
+) => {
+  const values = getSequenceConditionValues(sequence, overrides);
+  return sequence.entries.flatMap((entry) => {
+    if (!entry.condition) {
+      return [entry];
+    }
+
+    const isEnabled = values[entry.condition.id] ?? false;
+    if (entry.condition.mode === 'include') {
+      return isEnabled ? [entry] : [];
+    }
+
+    if (entry.condition.mode === 'replace') {
+      if (isEnabled && entry.condition.replacementTarget) {
+        return [{ ...entry, target: entry.condition.replacementTarget }];
+      }
+      return [entry];
+    }
+
+    return [entry];
+  });
+};
 
 const defaultBossTargetId = `${toSlug('False Knight')}__standard`;
 
