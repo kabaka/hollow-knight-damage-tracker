@@ -37,8 +37,14 @@ jobs:
       - run: pnpm test
 
   e2e-tests:
-    runs-on: ubuntu-latest
     needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    container:
+      image: mcr.microsoft.com/playwright:v1.46.1-jammy
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -49,8 +55,6 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e -- --project=${{ matrix.browser }}
         env:
           CI: true
