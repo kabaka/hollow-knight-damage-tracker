@@ -1,7 +1,12 @@
 import type { FC } from 'react';
 
+export interface SparklinePoint {
+  time: number;
+  value: number;
+}
+
 interface SparklineProps {
-  data: number[];
+  data: SparklinePoint[];
   ariaLabel: string;
   className?: string;
   width?: number;
@@ -10,7 +15,7 @@ interface SparklineProps {
 }
 
 const buildPolylinePoints = (
-  data: number[],
+  data: SparklinePoint[],
   width: number,
   height: number,
   padding: number,
@@ -18,30 +23,63 @@ const buildPolylinePoints = (
   const size = data.length;
 
   if (size === 0) {
-    return '';
+    return null;
   }
 
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min;
+  let minValue = data[0]?.value ?? 0;
+  let maxValue = minValue;
+  let minTime = data[0]?.time ?? 0;
+  let maxTime = minTime;
+
+  for (const point of data) {
+    if (point.value < minValue) {
+      minValue = point.value;
+    }
+    if (point.value > maxValue) {
+      maxValue = point.value;
+    }
+    if (point.time < minTime) {
+      minTime = point.time;
+    }
+    if (point.time > maxTime) {
+      maxTime = point.time;
+    }
+  }
+
+  const valueRange = maxValue - minValue;
+  const timeRange = maxTime - minTime;
 
   const innerWidth = width - padding * 2;
   const innerHeight = height - padding * 2;
 
   if (innerWidth <= 0 || innerHeight <= 0) {
-    return '';
+    return null;
   }
 
-  const step = size > 1 ? innerWidth / (size - 1) : innerWidth;
+  const points = data.map(({ time, value }) => {
+    const normalizedValue = valueRange === 0 ? 0.5 : (value - minValue) / valueRange;
+    const normalizedTime = timeRange === 0 ? 0 : (time - minTime) / timeRange;
+    const x = padding + normalizedTime * innerWidth;
+    const y = padding + (1 - normalizedValue) * innerHeight;
+    return { x, y };
+  });
 
-  return data
-    .map((value, index) => {
-      const normalized = range === 0 ? 0.5 : (value - min) / range;
-      const x = padding + index * step;
-      const y = padding + (1 - normalized) * innerHeight;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
+  if (points.length === 0) {
+    return null;
+  }
+
+  const formattedPoints = points
+    .map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`)
     .join(' ');
+
+  const firstX = points[0]?.x ?? padding;
+  const lastX = points[points.length - 1]?.x ?? padding;
+
+  return {
+    points: formattedPoints,
+    firstX,
+    lastX,
+  };
 };
 
 export const Sparkline: FC<SparklineProps> = ({
@@ -56,16 +94,15 @@ export const Sparkline: FC<SparklineProps> = ({
     return null;
   }
 
-  const polylinePoints = buildPolylinePoints(data, width, height, padding);
+  const polyline = buildPolylinePoints(data, width, height, padding);
 
-  if (!polylinePoints) {
+  if (!polyline) {
     return null;
   }
 
   const sparklineClassName = ['sparkline', className].filter(Boolean).join(' ');
-  const areaPoints = `${padding},${height - padding} ${polylinePoints} ${width - padding},${
-    height - padding
-  }`;
+  const baselineY = height - padding;
+  const areaPoints = `${polyline.firstX.toFixed(2)},${baselineY.toFixed(2)} ${polyline.points} ${polyline.lastX.toFixed(2)},${baselineY.toFixed(2)}`;
 
   return (
     <svg
@@ -79,7 +116,7 @@ export const Sparkline: FC<SparklineProps> = ({
     >
       <title>{ariaLabel}</title>
       <polygon className="sparkline__area" points={areaPoints} />
-      <polyline className="sparkline__line" points={polylinePoints} />
+      <polyline className="sparkline__line" points={polyline.points} />
     </svg>
   );
 };
