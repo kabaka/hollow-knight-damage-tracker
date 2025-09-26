@@ -65,6 +65,10 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
+## Automated simulated fight screenshots
+
+- Pull requests trigger a `screenshots` GitHub Actions job that executes `tests/e2e/simulated-fight-screenshot.spec.ts` against Chromium, Firefox, and WebKit. Each run hydrates a deterministic combat log, captures the resulting UI, and uploads a browser-specific PNG artifact.
+
 ## Project Roadmap
 
 1. **Scaffolding:** Initialize the frontend project, configure TypeScript, linting, formatting, and unit test tooling.

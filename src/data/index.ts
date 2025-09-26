@@ -1,6 +1,6 @@
-import rawDamage from './damage.json';
-import rawBosses from './bosses.json';
-import rawSequences from './sequences.json';
+import rawDamage from './damage.json' assert { type: 'json' };
+import rawBosses from './bosses.json' assert { type: 'json' };
+import rawSequences from './sequences.json' assert { type: 'json' };
 import type {
   Boss,
   BossSequence,

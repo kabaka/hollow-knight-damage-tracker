@@ -60,3 +60,34 @@ jobs:
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
         env:
           CI: true
+
+  screenshots:
+    if: github.event_name == 'pull_request'
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.1-jammy
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright test tests/e2e/simulated-fight-screenshot.spec.ts --project=${{ matrix.browser }}
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulated-fight-${{ matrix.browser }}
+          path: test-results/simulated-fight/${{ matrix.browser }}-simulated-fight.png
+          if-no-files-found: error
