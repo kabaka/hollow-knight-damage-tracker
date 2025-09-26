@@ -1,5 +1,13 @@
 import type { FC, PropsWithChildren } from 'react';
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   DEFAULT_CUSTOM_HP,
@@ -38,6 +46,11 @@ export interface DerivedStats {
   dps: number | null;
   actionsPerMinute: number | null;
   estimatedTimeRemainingMs: number | null;
+  fightStartTimestamp: number | null;
+  fightEndTimestamp: number | null;
+  isFightInProgress: boolean;
+  isFightComplete: boolean;
+  frameTimestamp: number;
 }
 
 interface FightContextValue {
@@ -54,6 +67,7 @@ interface FightContextValue {
     undoLastAttack: () => void;
     redoLastAttack: () => void;
     resetLog: () => void;
+    endFight: (timestamp?: number) => void;
     startSequence: (sequenceId: string) => void;
     stopSequence: () => void;
     setSequenceStage: (index: number) => void;
@@ -69,8 +83,11 @@ interface FightContextValue {
 
 const FightStateContext = createContext<FightContextValue | undefined>(undefined);
 
-const calculateDerivedStats = (state: FightState): DerivedStats => {
-  const { damageLog, selectedBossId, customTargetHp } = state;
+const calculateDerivedStats = (
+  state: FightState,
+  frameTimestamp: number,
+): DerivedStats => {
+  const { damageLog, selectedBossId, customTargetHp, fightEndTimestamp } = state;
   const targetHp = isCustomBoss(selectedBossId)
     ? Math.max(1, Math.round(customTargetHp))
     : (bossMap.get(selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
@@ -78,10 +95,13 @@ const calculateDerivedStats = (state: FightState): DerivedStats => {
   const attacksLogged = damageLog.length;
   const remainingHp = Math.max(0, targetHp - totalDamage);
   const averageDamage = attacksLogged === 0 ? null : totalDamage / attacksLogged;
+  const fightStartTimestamp = damageLog[0]?.timestamp ?? null;
+  const effectiveEndTimestamp =
+    fightEndTimestamp ?? (fightStartTimestamp != null ? frameTimestamp : null);
   const elapsedMs =
-    attacksLogged < 2
-      ? null
-      : damageLog[damageLog.length - 1].timestamp - damageLog[0].timestamp;
+    fightStartTimestamp != null && effectiveEndTimestamp != null
+      ? Math.max(0, effectiveEndTimestamp - fightStartTimestamp)
+      : null;
   const dps = elapsedMs && elapsedMs > 0 ? totalDamage / (elapsedMs / 1000) : null;
   const actionsPerMinute =
     elapsedMs && elapsedMs > 0 ? attacksLogged / (elapsedMs / 60000) : null;
@@ -91,6 +111,8 @@ const calculateDerivedStats = (state: FightState): DerivedStats => {
       : dps && dps > 0
         ? Math.round((remainingHp / dps) * 1000)
         : null;
+  const isFightInProgress = fightStartTimestamp != null && fightEndTimestamp == null;
+  const isFightComplete = fightStartTimestamp != null && fightEndTimestamp != null;
 
   return {
     targetHp,
@@ -102,6 +124,11 @@ const calculateDerivedStats = (state: FightState): DerivedStats => {
     dps,
     actionsPerMinute,
     estimatedTimeRemainingMs,
+    fightStartTimestamp,
+    fightEndTimestamp,
+    isFightInProgress,
+    isFightComplete,
+    frameTimestamp,
   };
 };
 
@@ -110,12 +137,42 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     restorePersistedState(ensureSequenceState(ensureSpellLevels(createInitialState()))),
   );
   const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
+  const [frameTimestamp, setFrameTimestamp] = useState(() => Date.now());
 
   useEffect(() => {
     persistStateToStorage(state);
   }, [state]);
 
-  const derived = useMemo(() => calculateDerivedStats(state), [state]);
+  const derived = useMemo(
+    () => calculateDerivedStats(state, frameTimestamp),
+    [state, frameTimestamp],
+  );
+
+  const shouldAnimate = state.damageLog.length > 0 && state.fightEndTimestamp == null;
+
+  useEffect(() => {
+    if (!shouldAnimate) {
+      return;
+    }
+
+    let frameId: number;
+    const tick = () => {
+      setFrameTimestamp(Date.now());
+      frameId = window.requestAnimationFrame(tick);
+    };
+
+    frameId = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [shouldAnimate]);
+
+  useEffect(() => {
+    if (!shouldAnimate && state.fightEndTimestamp != null) {
+      setFrameTimestamp(state.fightEndTimestamp);
+    }
+  }, [shouldAnimate, state.fightEndTimestamp]);
 
   useEffect(() => {
     if (!state.activeSequenceId) {
@@ -192,6 +249,8 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       undoLastAttack: () => dispatch({ type: 'undoLastAttack' }),
       redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
       resetLog: () => dispatch({ type: 'resetLog' }),
+      endFight: (timestamp) =>
+        dispatch({ type: 'endFight', timestamp: timestamp ?? Date.now() }),
       startSequence: (sequenceId) => dispatch({ type: 'startSequence', sequenceId }),
       stopSequence: () => dispatch({ type: 'stopSequence' }),
       setSequenceStage: (index) => dispatch({ type: 'setSequenceStage', index }),

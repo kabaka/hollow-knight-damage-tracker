@@ -93,6 +93,16 @@ describe('fight-state persistence', () => {
           },
           broken: 'nope',
         },
+        fightEndTimestamp: 'not-a-number',
+        fightManuallyEnded: 'nope',
+        sequenceFightEndTimestamps: {
+          [toSequenceStageKey(sequence.id, 0)]: '42',
+          invalid: 'value',
+        },
+        sequenceManualEndFlags: {
+          [toSequenceStageKey(sequence.id, 0)]: 'true',
+          invalid: 'maybe',
+        },
       } satisfies Record<string, unknown>,
       fallback,
     );
@@ -112,6 +122,8 @@ describe('fight-state persistence', () => {
       damage: 50,
     });
     expect(merged.redoStack).toHaveLength(1);
+    expect(merged.fightEndTimestamp).toBe(42);
+    expect(merged.fightManuallyEnded).toBe(true);
 
     expect(merged.activeSequenceId).toBe(sequence.id);
     expect(merged.sequenceIndex).toBe(0);
@@ -124,6 +136,8 @@ describe('fight-state persistence', () => {
       category: 'nail',
     });
     expect(merged.sequenceRedoStacks[stageKey]).toHaveLength(1);
+    expect(merged.sequenceFightEndTimestamps[stageKey]).toBe(42);
+    expect(merged.sequenceManualEndFlags[stageKey]).toBe(true);
     expect(
       merged.sequenceConditions['pantheon-of-the-sage']?.['include-grey-prince-zote'],
     ).toBe(true);
@@ -135,7 +149,7 @@ describe('fight-state persistence', () => {
     const fallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
 
     const persisted = {
-      version: 2,
+      version: 3,
       state: {
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: 4242,
@@ -152,6 +166,10 @@ describe('fight-state persistence', () => {
         sequenceLogs: {},
         sequenceRedoStacks: {},
         sequenceConditions: {},
+        fightEndTimestamp: null,
+        fightManuallyEnded: false,
+        sequenceFightEndTimestamps: {},
+        sequenceManualEndFlags: {},
       },
     } satisfies Record<string, unknown>;
 
@@ -192,7 +210,7 @@ describe('fight-state persistence', () => {
     }
 
     const parsed = JSON.parse(stored) as { version: number; state: unknown };
-    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(3);
     expect(parsed.state).toBeTruthy();
   });
 });

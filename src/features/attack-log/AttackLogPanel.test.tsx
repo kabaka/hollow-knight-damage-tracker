@@ -127,10 +127,12 @@ describe('AttackLogPanel', () => {
     const undoButton = screen.getByRole('button', { name: /undo/i });
     const redoButton = screen.getByRole('button', { name: /redo/i });
     const resetButton = screen.getByRole('button', { name: /quick reset/i });
+    const endFightButton = screen.getByRole('button', { name: /end fight/i });
 
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
+    expect(endFightButton).toBeDisabled();
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     await user.click(nailStrikeButton);
@@ -138,12 +140,14 @@ describe('AttackLogPanel', () => {
     expect(undoButton).not.toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).not.toBeDisabled();
+    expect(endFightButton).not.toBeDisabled();
 
     await user.click(undoButton);
 
     let damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
     expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
     expect(redoButton).not.toBeDisabled();
+    expect(endFightButton).toBeDisabled();
 
     await user.click(redoButton);
 
@@ -151,6 +155,7 @@ describe('AttackLogPanel', () => {
     expect(
       within(damageRow as HTMLElement).getByText(baseNailDamageText),
     ).toBeInTheDocument();
+    expect(endFightButton).not.toBeDisabled();
 
     await user.click(resetButton);
 
@@ -159,6 +164,7 @@ describe('AttackLogPanel', () => {
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
+    expect(endFightButton).toBeDisabled();
   });
 
   it('supports keyboard shortcuts for logging attacks and resetting', async () => {
@@ -178,10 +184,50 @@ describe('AttackLogPanel', () => {
       within(damageRow as HTMLElement).getByText(baseNailDamageText),
     ).toBeInTheDocument();
 
+    await user.keyboard('{Enter}');
+
+    const endFightButton = screen.getByRole('button', { name: /end fight/i });
+    expect(endFightButton).toBeDisabled();
+
     await user.keyboard('{Escape}');
 
     damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
     expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
+  });
+
+  it('allows ending fights early via the quick actions', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <AttackLogPanel />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
+    const endFightButton = screen.getByRole('button', { name: /end fight/i });
+    const resetButton = screen.getByRole('button', { name: /quick reset/i });
+
+    expect(endFightButton).toBeDisabled();
+
+    await user.click(nailStrikeButton);
+    expect(endFightButton).not.toBeDisabled();
+
+    await user.click(endFightButton);
+    expect(endFightButton).toBeDisabled();
+
+    const remainingRow = screen.getByText('Remaining HP').closest('.data-list__item');
+    expect(
+      within(remainingRow as HTMLElement).getByText(String(remainingAfterOneHit)),
+    ).toBeInTheDocument();
+
+    await user.click(resetButton);
+    expect(endFightButton).toBeDisabled();
+
+    await user.click(nailStrikeButton);
+    await user.keyboard('{Enter}');
+    expect(endFightButton).toBeDisabled();
   });
 
   it('shows charm effect attacks when enabling damage charms', async () => {
