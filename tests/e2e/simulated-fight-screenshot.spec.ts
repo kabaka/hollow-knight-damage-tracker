@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { expect, test, type StorageState } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import {
   SIMULATED_FIGHT_EXPECTED_ATTACKS,
@@ -27,28 +27,38 @@ if (!scenarioState) {
 
 const sanitizedScenarioState = ensureSequenceState(ensureSpellLevels(scenarioState));
 
-const storageState: StorageState = {
-  origins: [
-    {
-      origin: 'http://127.0.0.1:4173',
-      localStorage: [
-        {
-          name: STORAGE_KEY,
-          value: JSON.stringify({
-            version: STORAGE_VERSION,
-            state: sanitizedScenarioState,
-          }),
-        },
-      ],
-    },
-  ],
-};
+const serializedFightState = JSON.stringify({
+  version: STORAGE_VERSION,
+  state: sanitizedScenarioState,
+});
 
-test.use({ storageState });
+test.beforeEach(async ({ page }, testInfo) => {
+  const baseURL = testInfo.project.use?.baseURL ?? 'http://127.0.0.1:4173';
+  const origin = new URL(baseURL).origin;
+
+  await page.addInitScript(
+    ({ storageKey, payload, allowedOrigin }) => {
+      if (window.location.origin !== allowedOrigin) {
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(storageKey, payload);
+      } catch {
+        // Ignore storage errors so navigation can proceed.
+      }
+    },
+    {
+      storageKey: STORAGE_KEY,
+      payload: serializedFightState,
+      allowedOrigin: origin,
+    },
+  );
+});
 
 test.describe('Simulated fight screenshot', () => {
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const heading = page.getByRole('heading', {
       name: 'Hollow Knight Damage Tracker',
