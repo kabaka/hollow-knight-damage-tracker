@@ -37,6 +37,7 @@ export interface DerivedStats {
   elapsedMs: number | null;
   dps: number | null;
   actionsPerMinute: number | null;
+  estimatedTimeRemainingMs: number | null;
 }
 
 interface FightContextValue {
@@ -84,6 +85,12 @@ const calculateDerivedStats = (state: FightState): DerivedStats => {
   const dps = elapsedMs && elapsedMs > 0 ? totalDamage / (elapsedMs / 1000) : null;
   const actionsPerMinute =
     elapsedMs && elapsedMs > 0 ? attacksLogged / (elapsedMs / 60000) : null;
+  const estimatedTimeRemainingMs =
+    remainingHp === 0
+      ? 0
+      : dps && dps > 0
+        ? Math.round((remainingHp / dps) * 1000)
+        : null;
 
   return {
     targetHp,
@@ -94,6 +101,7 @@ const calculateDerivedStats = (state: FightState): DerivedStats => {
     elapsedMs,
     dps,
     actionsPerMinute,
+    estimatedTimeRemainingMs,
   };
 };
 
