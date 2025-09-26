@@ -128,35 +128,33 @@ const SIMULATED_STATE: FightState = {
   sequenceConditions: {},
 };
 
+const STORAGE_ORIGIN = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173';
+
 test.describe('Simulated fight screenshot', () => {
+  const serializedState = JSON.stringify({
+    version: STORAGE_VERSION,
+    state: SIMULATED_STATE,
+  });
+
+  test.use({
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: STORAGE_ORIGIN,
+          localStorage: [
+            {
+              name: STORAGE_KEY,
+              value: serializedState,
+            },
+          ],
+        },
+      ],
+    },
+  });
+
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
-    const serializedState = JSON.stringify({
-      version: STORAGE_VERSION,
-      state: SIMULATED_STATE,
-    });
-
-    await page.addInitScript(
-      ({ payload, storageKey }) => {
-        try {
-          const protocol = window.location.protocol;
-          const isHttpOrigin = protocol === 'http:' || protocol === 'https:';
-          if (!isHttpOrigin) {
-            return;
-          }
-
-          window.localStorage.clear();
-          window.localStorage.setItem(storageKey, payload);
-        } catch {
-          // Ignore storage access errors on about:blank or restricted contexts.
-        }
-      },
-      {
-        payload: serializedState,
-        storageKey: STORAGE_KEY,
-      },
-    );
-
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const heading = page.getByRole('heading', {
       name: 'Hollow Knight Damage Tracker',
