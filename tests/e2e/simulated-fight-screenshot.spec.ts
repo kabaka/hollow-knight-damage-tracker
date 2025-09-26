@@ -156,6 +156,28 @@ test.describe('Simulated fight screenshot', () => {
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
+    const shouldReseed = await page.evaluate(
+      ({ storageKey, expectedValue }) => {
+        try {
+          return window.localStorage.getItem(storageKey) !== expectedValue;
+        } catch {
+          return true;
+        }
+      },
+      { storageKey: STORAGE_KEY, expectedValue: serializedState },
+    );
+
+    if (shouldReseed) {
+      await page.evaluate(
+        ({ storageKey, value }) => {
+          window.localStorage.setItem(storageKey, value);
+        },
+        { storageKey: STORAGE_KEY, value: serializedState },
+      );
+
+      await page.reload({ waitUntil: 'domcontentloaded' });
+    }
+
     const heading = page.getByRole('heading', {
       name: 'Hollow Knight Damage Tracker',
     });
