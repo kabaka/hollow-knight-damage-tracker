@@ -28,6 +28,7 @@ const createFightState = (overrides: Partial<FightState> = {}): FightState => {
     sequenceIndex: 0,
     sequenceLogs: {},
     sequenceRedoStacks: {},
+    sequenceConditions: {},
   };
 
   return {

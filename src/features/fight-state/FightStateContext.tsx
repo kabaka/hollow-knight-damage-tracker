@@ -5,6 +5,7 @@ import {
   DEFAULT_CUSTOM_HP,
   bossMap,
   bossSequenceMap,
+  resolveSequenceEntries,
   strengthCharmIds,
 } from '../../data';
 import type { AttackInput, FightState, SpellLevel } from './fightReducer';
@@ -56,6 +57,11 @@ interface FightContextValue {
     setSequenceStage: (index: number) => void;
     advanceSequenceStage: () => void;
     rewindSequenceStage: () => void;
+    setSequenceCondition: (
+      sequenceId: string,
+      conditionId: string,
+      enabled: boolean,
+    ) => void;
   };
 }
 
@@ -109,7 +115,16 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }
 
     const sequence = bossSequenceMap.get(state.activeSequenceId);
-    if (!sequence || sequence.entries.length === 0) {
+    if (!sequence) {
+      return;
+    }
+
+    const resolvedEntries = resolveSequenceEntries(
+      sequence,
+      state.sequenceConditions[state.activeSequenceId] ?? undefined,
+    );
+
+    if (resolvedEntries.length === 0) {
       return;
     }
 
@@ -120,7 +135,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       return;
     }
 
-    if (state.sequenceIndex >= sequence.entries.length - 1) {
+    if (state.sequenceIndex >= resolvedEntries.length - 1) {
       return;
     }
 
@@ -140,6 +155,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     state.sequenceIndex,
     state.damageLog,
     derived.remainingHp,
+    state.sequenceConditions,
     dispatch,
   ]);
 
@@ -170,6 +186,13 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       setSequenceStage: (index) => dispatch({ type: 'setSequenceStage', index }),
       advanceSequenceStage: () => dispatch({ type: 'advanceSequence' }),
       rewindSequenceStage: () => dispatch({ type: 'rewindSequence' }),
+      setSequenceCondition: (sequenceId, conditionId, enabled) =>
+        dispatch({
+          type: 'setSequenceCondition',
+          sequenceId,
+          conditionId,
+          enabled,
+        }),
     }),
     [],
   );

@@ -83,6 +83,13 @@ describe('fight-state persistence', () => {
             },
           ],
         },
+        sequenceConditions: {
+          'pantheon-of-the-sage': {
+            'include-grey-prince-zote': 'true',
+            bogus: 'maybe',
+          },
+          broken: 'nope',
+        },
       } satisfies Record<string, unknown>,
       fallback,
     );
@@ -112,6 +119,11 @@ describe('fight-state persistence', () => {
       category: 'nail',
     });
     expect(merged.sequenceRedoStacks[stageKey]).toHaveLength(1);
+    expect(
+      merged.sequenceConditions['pantheon-of-the-sage']?.['include-grey-prince-zote'],
+    ).toBe(true);
+    const sageConditions = merged.sequenceConditions['pantheon-of-the-sage'] ?? {};
+    expect(Object.prototype.hasOwnProperty.call(sageConditions, 'bogus')).toBe(false);
   });
 
   it('restores persisted state from localStorage when payloads are valid', () => {
@@ -133,6 +145,7 @@ describe('fight-state persistence', () => {
         sequenceIndex: 0,
         sequenceLogs: {},
         sequenceRedoStacks: {},
+        sequenceConditions: {},
       },
     } satisfies Record<string, unknown>;
 

@@ -73,9 +73,25 @@ export interface BossTarget {
   version: BossVersion;
 }
 
+export type BossSequenceConditionMode = 'include' | 'replace';
+
+export interface BossSequenceCondition {
+  id: string;
+  label: string;
+  description?: string;
+  defaultEnabled: boolean;
+}
+
+export interface BossSequenceEntryCondition {
+  id: string;
+  mode: BossSequenceConditionMode;
+  replacementTarget?: BossTarget;
+}
+
 export interface BossSequenceEntry {
   id: string;
   target: BossTarget;
+  condition?: BossSequenceEntryCondition;
 }
 
 export interface BossSequence {
@@ -83,4 +99,5 @@ export interface BossSequence {
   name: string;
   category: string;
   entries: BossSequenceEntry[];
+  conditions: BossSequenceCondition[];
 }
