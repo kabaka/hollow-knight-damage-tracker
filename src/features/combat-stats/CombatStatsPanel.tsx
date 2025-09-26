@@ -1,7 +1,10 @@
 import type { FC } from 'react';
 
 import { useFightState } from '../fight-state/FightStateContext';
-import { Sparkline } from './Sparkline';
+import { Sparkline, type SparklinePoint } from './Sparkline';
+
+const FRAMES_PER_SECOND = 60;
+const FRAME_DURATION_MS = 1000 / FRAMES_PER_SECOND;
 
 const formatInteger = (value: number) => value.toLocaleString();
 
@@ -23,13 +26,66 @@ const formatDuration = (elapsedMs: number | null) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const buildCumulativeSeries = (values: number[]) => {
-  let runningTotal = 0;
-  return values.map((value) => {
-    runningTotal += value;
-    return runningTotal;
-  });
+interface TimelinePoint {
+  time: number;
+  cumulativeDamage: number;
+  remainingHp: number;
+  frameDamage: number;
+  dps: number;
+}
+
+const buildTimeline = (
+  damageLog: { timestamp: number; damage: number }[],
+  targetHp: number,
+): TimelinePoint[] => {
+  if (damageLog.length === 0) {
+    return [];
+  }
+
+  const startTime = damageLog[0]?.timestamp ?? 0;
+  const endTime = damageLog[damageLog.length - 1]?.timestamp ?? startTime;
+  const totalDuration = Math.max(FRAME_DURATION_MS, endTime - startTime);
+  const frameCount = Math.ceil(totalDuration / FRAME_DURATION_MS) + 1;
+
+  const timeline: TimelinePoint[] = [];
+  let cumulativeDamage = 0;
+  let eventIndex = 0;
+
+  for (let frame = 0; frame < frameCount; frame += 1) {
+    const elapsed = frame === frameCount - 1 ? totalDuration : frame * FRAME_DURATION_MS;
+    const frameTimestamp = startTime + elapsed;
+    let frameDamage = 0;
+
+    while (
+      eventIndex < damageLog.length &&
+      damageLog[eventIndex]?.timestamp <= frameTimestamp
+    ) {
+      const event = damageLog[eventIndex];
+      cumulativeDamage += event.damage;
+      frameDamage += event.damage;
+      eventIndex += 1;
+    }
+
+    const elapsedSeconds = elapsed / 1000;
+    const dps = elapsedSeconds > 0 ? cumulativeDamage / elapsedSeconds : 0;
+    const remainingHp = Math.max(0, targetHp - cumulativeDamage);
+    timeline.push({
+      time: elapsed,
+      cumulativeDamage,
+      remainingHp,
+      frameDamage,
+      dps,
+    });
+  }
+
+  return timeline;
 };
+
+const toSparklineSeries = (
+  timeline: TimelinePoint[],
+  selector: (point: TimelinePoint) => number,
+): SparklinePoint[] =>
+  timeline.map((point) => ({ time: point.time, value: selector(point) }));
 
 export const CombatStatsPanel: FC = () => {
   const {
@@ -47,26 +103,14 @@ export const CombatStatsPanel: FC = () => {
     },
   } = useFightState();
 
-  const damagePerHitSeries = damageLog.map((event) => event.damage);
-  const cumulativeDamageSeries = buildCumulativeSeries(damagePerHitSeries);
-  const remainingHpSeries = cumulativeDamageSeries.map((total) =>
-    Math.max(0, targetHp - total),
+  const timeline = buildTimeline(damageLog, targetHp);
+  const cumulativeDamageSeries = toSparklineSeries(
+    timeline,
+    (point) => point.cumulativeDamage,
   );
-  const dpsSeries = damageLog.map((event, index) => {
-    if (index === 0) {
-      return 0;
-    }
-
-    const startTimestamp = damageLog[0]?.timestamp ?? event.timestamp;
-    const elapsed = event.timestamp - startTimestamp;
-    const cumulativeDamage = cumulativeDamageSeries[index] ?? 0;
-
-    if (elapsed <= 0) {
-      return cumulativeDamage;
-    }
-
-    return cumulativeDamage / (elapsed / 1000);
-  });
+  const remainingHpSeries = toSparklineSeries(timeline, (point) => point.remainingHp);
+  const damagePerFrameSeries = toSparklineSeries(timeline, (point) => point.frameDamage);
+  const dpsSeries = toSparklineSeries(timeline, (point) => point.dps);
 
   const stats = [
     { label: 'Target HP', value: formatInteger(targetHp) },
@@ -75,7 +119,7 @@ export const CombatStatsPanel: FC = () => {
       value: formatInteger(totalDamage),
       trend: {
         data: cumulativeDamageSeries,
-        ariaLabel: 'Total damage dealt per attack',
+        ariaLabel: 'Total damage dealt over time',
       },
     },
     {
@@ -83,7 +127,7 @@ export const CombatStatsPanel: FC = () => {
       value: formatInteger(remainingHp),
       trend: {
         data: remainingHpSeries,
-        ariaLabel: 'Remaining health after each attack',
+        ariaLabel: 'Remaining health over time',
       },
     },
     { label: 'Attacks Logged', value: attacksLogged.toString() },
@@ -91,8 +135,8 @@ export const CombatStatsPanel: FC = () => {
       label: 'Average Damage',
       value: formatDecimal(averageDamage),
       trend: {
-        data: damagePerHitSeries,
-        ariaLabel: 'Damage dealt per logged attack',
+        data: damagePerFrameSeries,
+        ariaLabel: 'Damage dealt per logged attack over time',
       },
     },
     {
@@ -100,7 +144,7 @@ export const CombatStatsPanel: FC = () => {
       value: formatDecimal(dps),
       trend: {
         data: dpsSeries,
-        ariaLabel: 'Damage per second trend',
+        ariaLabel: 'Damage per second trend over time',
       },
     },
     { label: 'Actions / Min', value: formatDecimal(actionsPerMinute) },
