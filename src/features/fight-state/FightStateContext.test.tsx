@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CUSTOM_BOSS_ID, FightStateProvider, useFightState } from './FightStateContext';
+import { STORAGE_KEY } from './persistence';
 import { bossSequenceMap } from '../../data';
-
-const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
 
 describe('FightStateProvider persistence', () => {
   beforeEach(() => {
