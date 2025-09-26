@@ -9,7 +9,7 @@ import {
 } from './fightReducer';
 
 export const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
-export const STORAGE_VERSION = 2;
+export const STORAGE_VERSION = 3;
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -184,6 +184,60 @@ const sanitizeSequenceConditions = (
   return { ...fallback, ...sanitized };
 };
 
+const sanitizeOptionalTimestamp = (
+  value: unknown,
+  fallback: number | null,
+): number | null => {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const numeric = toFiniteNumber(value);
+  return numeric === null ? fallback : numeric;
+};
+
+const sanitizeSequenceTimestampMap = (
+  value: unknown,
+  fallback: Record<string, number | null>,
+): Record<string, number | null> => {
+  if (!isRecord(value)) {
+    return { ...fallback };
+  }
+
+  const sanitized: Record<string, number | null> = { ...fallback };
+  for (const [key, raw] of Object.entries(value)) {
+    sanitized[key] = sanitizeOptionalTimestamp(raw, fallback[key] ?? null);
+  }
+
+  return sanitized;
+};
+
+const sanitizeBooleanRecord = (
+  value: unknown,
+  fallback: Record<string, boolean>,
+): Record<string, boolean> => {
+  if (!isRecord(value)) {
+    return { ...fallback };
+  }
+
+  const sanitized: Record<string, boolean> = { ...fallback };
+  for (const [key, raw] of Object.entries(value)) {
+    if (typeof raw === 'boolean') {
+      sanitized[key] = raw;
+    } else if (raw === 'true') {
+      sanitized[key] = true;
+    } else if (raw === 'false') {
+      sanitized[key] = false;
+    }
+  }
+
+  return sanitized;
+};
+
 export const mergePersistedState = (
   persisted: Record<string, unknown>,
   fallback: FightState,
@@ -236,6 +290,22 @@ export const mergePersistedState = (
     persisted.sequenceConditions,
     fallback.sequenceConditions,
   );
+  const fightEndTimestamp = sanitizeOptionalTimestamp(
+    persisted.fightEndTimestamp,
+    fallback.fightEndTimestamp,
+  );
+  const fightManuallyEnded =
+    typeof persisted.fightManuallyEnded === 'boolean'
+      ? persisted.fightManuallyEnded
+      : fallback.fightManuallyEnded;
+  const sequenceFightEndTimestamps = sanitizeSequenceTimestampMap(
+    persisted.sequenceFightEndTimestamps,
+    fallback.sequenceFightEndTimestamps,
+  );
+  const sequenceManualEndFlags = sanitizeBooleanRecord(
+    persisted.sequenceManualEndFlags,
+    fallback.sequenceManualEndFlags,
+  );
 
   return ensureSequenceState(
     ensureSpellLevels({
@@ -254,6 +324,10 @@ export const mergePersistedState = (
       sequenceLogs,
       sequenceRedoStacks,
       sequenceConditions,
+      fightEndTimestamp,
+      fightManuallyEnded,
+      sequenceFightEndTimestamps,
+      sequenceManualEndFlags,
     }),
   );
 };

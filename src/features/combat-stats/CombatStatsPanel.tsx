@@ -37,14 +37,19 @@ interface TimelinePoint {
 const buildTimeline = (
   damageLog: { timestamp: number; damage: number }[],
   targetHp: number,
+  endTimestamp: number | null,
 ): TimelinePoint[] => {
   if (damageLog.length === 0) {
     return [];
   }
 
   const startTime = damageLog[0]?.timestamp ?? 0;
-  const endTime = damageLog[damageLog.length - 1]?.timestamp ?? startTime;
-  const totalDuration = Math.max(FRAME_DURATION_MS, endTime - startTime);
+  const lastEventTimestamp = damageLog[damageLog.length - 1]?.timestamp ?? startTime;
+  const resolvedEndTime = Math.max(
+    lastEventTimestamp,
+    endTimestamp ?? lastEventTimestamp,
+  );
+  const totalDuration = Math.max(FRAME_DURATION_MS, resolvedEndTime - startTime);
   const frameCount = Math.ceil(totalDuration / FRAME_DURATION_MS) + 1;
 
   const timeline: TimelinePoint[] = [];
@@ -100,10 +105,15 @@ export const CombatStatsPanel: FC = () => {
       actionsPerMinute,
       elapsedMs,
       estimatedTimeRemainingMs,
+      fightEndTimestamp,
+      fightStartTimestamp,
+      frameTimestamp,
     },
   } = useFightState();
 
-  const timeline = buildTimeline(damageLog, targetHp);
+  const timelineEndTimestamp =
+    fightEndTimestamp ?? (fightStartTimestamp != null ? frameTimestamp : null);
+  const timeline = buildTimeline(damageLog, targetHp, timelineEndTimestamp);
   const cumulativeDamageSeries = toSparklineSeries(
     timeline,
     (point) => point.cumulativeDamage,
