@@ -1,21 +1,54 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type StorageState } from '@playwright/test';
 
 import {
-  E2E_SCENARIO_QUERY_KEY,
   SIMULATED_FIGHT_EXPECTED_ATTACKS,
   SIMULATED_FIGHT_EXPECTED_TOTAL_DAMAGE,
   SIMULATED_FIGHT_SCENARIO_ID,
+  getScenarioFightState,
 } from '../../src/features/fight-state/testScenarios';
+import { STORAGE_KEY, STORAGE_VERSION } from '../../src/features/fight-state/persistence';
+import {
+  ensureSequenceState,
+  ensureSpellLevels,
+} from '../../src/features/fight-state/fightReducer';
 
 const screenshotDirectory = path.resolve('test-results/simulated-fight');
 
+const scenarioState = getScenarioFightState(SIMULATED_FIGHT_SCENARIO_ID);
+
+if (!scenarioState) {
+  throw new Error(
+    `Unable to load scenario "${SIMULATED_FIGHT_SCENARIO_ID}" for deterministic screenshots`,
+  );
+}
+
+const sanitizedScenarioState = ensureSequenceState(ensureSpellLevels(scenarioState));
+
+const storageState: StorageState = {
+  origins: [
+    {
+      origin: 'http://127.0.0.1:4173',
+      localStorage: [
+        {
+          name: STORAGE_KEY,
+          value: JSON.stringify({
+            version: STORAGE_VERSION,
+            state: sanitizedScenarioState,
+          }),
+        },
+      ],
+    },
+  ],
+};
+
+test.use({ storageState });
+
 test.describe('Simulated fight screenshot', () => {
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
-    const scenarioUrl = `/?${E2E_SCENARIO_QUERY_KEY}=${SIMULATED_FIGHT_SCENARIO_ID}`;
-    await page.goto(scenarioUrl);
+    await page.goto('/');
 
     const heading = page.getByRole('heading', {
       name: 'Hollow Knight Damage Tracker',
