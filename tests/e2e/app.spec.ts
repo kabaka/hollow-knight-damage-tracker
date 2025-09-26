@@ -17,13 +17,13 @@ test.describe('Landing page', () => {
     await page.goto('/');
 
     await page.selectOption('#boss-target', 'custom');
+    const customTargetInput = page.locator('#custom-target-hp');
+    await customTargetInput.fill('3333');
+
     await page.getByRole('button', { name: 'Player Loadout' }).click();
 
     const modal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(modal).toBeVisible();
-
-    const customTargetInput = modal.locator('#custom-target-hp');
-    await customTargetInput.fill('3333');
 
     await modal.locator('#nail-level').selectOption('pure-nail');
     await modal.getByRole('button', { name: 'Strength & Quick Slash' }).click();
@@ -41,12 +41,12 @@ test.describe('Landing page', () => {
     await page.reload();
 
     await expect(page.locator('#boss-target')).toHaveValue('custom');
+    await expect(page.locator('#custom-target-hp')).toHaveValue('3333');
 
     await page.getByRole('button', { name: 'Player Loadout' }).click();
     const reopenedModal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(reopenedModal).toBeVisible();
 
-    await expect(reopenedModal.locator('#custom-target-hp')).toHaveValue('3333');
     await expect(reopenedModal.locator('#nail-level')).toHaveValue('pure-nail');
     await expect(
       reopenedModal.getByRole('button', { name: /^Unbreakable Strength/ }),
