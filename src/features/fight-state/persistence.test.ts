@@ -15,10 +15,18 @@ import {
   persistStateToStorage,
   restorePersistedState,
 } from './persistence';
+import {
+  E2E_SCENARIO_QUERY_KEY,
+  SIMULATED_FIGHT_EXPECTED_ATTACKS,
+  SIMULATED_FIGHT_EXPECTED_TOTAL_DAMAGE,
+  SIMULATED_FIGHT_SCENARIO_ID,
+  getScenarioFightState,
+} from './testScenarios';
 
 describe('fight-state persistence', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.history.replaceState({}, '', '/');
   });
 
   it('sanitizes persisted payloads before merging them into state', () => {
@@ -178,6 +186,34 @@ describe('fight-state persistence', () => {
       JSON.stringify({ version: 99, state: { selectedBossId: 'broken' } }),
     );
     expect(restorePersistedState(fallback)).toEqual(fallback);
+  });
+
+  it('overrides persisted storage when an e2e scenario query parameter is present', () => {
+    const fallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
+    const scenario = getScenarioFightState(SIMULATED_FIGHT_SCENARIO_ID);
+    if (!scenario) {
+      throw new Error('Missing simulated fight scenario fixture');
+    }
+
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 2, state: { selectedBossId: 'broken' } }),
+    );
+
+    window.history.replaceState(
+      {},
+      '',
+      `/?${E2E_SCENARIO_QUERY_KEY}=${SIMULATED_FIGHT_SCENARIO_ID}`,
+    );
+
+    const restored = restorePersistedState(fallback);
+
+    expect(restored.selectedBossId).toBe('the-radiance__standard');
+    expect(restored.customTargetHp).toBe(3000);
+    expect(restored.damageLog).toHaveLength(SIMULATED_FIGHT_EXPECTED_ATTACKS);
+    const totalDamage = restored.damageLog.reduce((sum, event) => sum + event.damage, 0);
+    expect(totalDamage).toBe(SIMULATED_FIGHT_EXPECTED_TOTAL_DAMAGE);
+    expect(restored).toEqual(ensureSequenceState(ensureSpellLevels(scenario)));
   });
 
   it('persists serialized state payloads to localStorage', () => {

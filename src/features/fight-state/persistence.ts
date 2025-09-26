@@ -7,6 +7,7 @@ import {
   ensureSequenceState,
   ensureSpellLevels,
 } from './fightReducer';
+import { E2E_SCENARIO_QUERY_KEY, getScenarioFightState } from './testScenarios';
 
 export const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
 export const STORAGE_VERSION = 2;
@@ -264,6 +265,14 @@ export const restorePersistedState = (fallback: FightState): FightState => {
   }
 
   try {
+    const scenarioId = new URLSearchParams(window.location.search).get(
+      E2E_SCENARIO_QUERY_KEY,
+    );
+    const scenarioState = getScenarioFightState(scenarioId);
+    if (scenarioState) {
+      return ensureSequenceState(ensureSpellLevels(scenarioState));
+    }
+
     const serialized = window.localStorage.getItem(STORAGE_KEY);
     if (!serialized) {
       return fallback;

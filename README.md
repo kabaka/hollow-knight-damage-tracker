@@ -68,6 +68,7 @@ Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end 
 ## Automated simulated fight screenshots
 
 - Pull requests trigger a `screenshots` GitHub Actions job that executes `tests/e2e/simulated-fight-screenshot.spec.ts` against Chromium, Firefox, and WebKit. Each run hydrates a deterministic combat log, captures the resulting UI, and uploads a browser-specific PNG artifact.
+- Developers can reproduce the captured layout locally by opening `/?e2e-scenario=simulated-radiance-fight` in the dev server, which seeds the same deterministic fight state that the Playwright scenario exercises.
 
 ## Project Roadmap
 
