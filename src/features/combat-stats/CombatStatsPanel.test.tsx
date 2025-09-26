@@ -124,10 +124,64 @@ describe('CombatStatsPanel', () => {
     });
 
     expect(
-      screen.getByRole('img', { name: /total damage dealt per attack/i }),
+      screen.getByRole('img', { name: /total damage dealt over time/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('img', { name: /remaining health after each attack/i }),
+      screen.getByRole('img', { name: /remaining health over time/i }),
     ).toBeInTheDocument();
+  });
+
+  it('scales sparklines using elapsed fight time', async () => {
+    let logAttack: ((input: AttackInput) => void) | null = null;
+
+    renderWithFightProvider(
+      <>
+        <ActionRegistrar onReady={(logger) => (logAttack = logger)} />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(logAttack).not.toBeNull();
+    });
+
+    act(() => {
+      logAttack?.({
+        id: 'time-hit-1',
+        label: 'Test Hit',
+        damage: baseNailDamage,
+        category: 'nail',
+        timestamp: 0,
+      });
+      logAttack?.({
+        id: 'time-hit-2',
+        label: 'Test Hit',
+        damage: baseNailDamage,
+        category: 'nail',
+        timestamp: 1000,
+      });
+    });
+
+    const sparkline = screen.getByRole('img', {
+      name: /total damage dealt over time/i,
+    }) as SVGElement;
+    const polyline = sparkline.querySelector('polyline');
+
+    expect(polyline).not.toBeNull();
+
+    const pointsAttribute = polyline?.getAttribute('points');
+    expect(pointsAttribute).toBeTruthy();
+
+    const points = (pointsAttribute ?? '').trim().split(/\s+/).filter(Boolean);
+
+    expect(points.length).toBeGreaterThan(2);
+
+    const parseX = (point: string) => Number.parseFloat(point.split(',')[0] ?? '0');
+
+    const firstX = parseX(points[0] ?? '0,0');
+    const lastX = parseX(points[points.length - 1] ?? '0,0');
+
+    expect(firstX).toBeCloseTo(2, 1);
+    expect(lastX).toBeCloseTo(86, 1);
   });
 });

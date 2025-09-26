@@ -191,6 +191,9 @@ export const buildAttackGroups = (state: FightState): AttackGroup[] => {
 
   for (const spell of spells) {
     const level = build.spellLevels[spell.id] ?? 'base';
+    if (level === 'none') {
+      continue;
+    }
     const variant = level === 'upgrade' && spell.upgrade ? spell.upgrade : spell.base;
     let baseDamage = getVariantDamage(variant);
     const notes: string[] = [];
