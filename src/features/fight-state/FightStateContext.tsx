@@ -47,6 +47,7 @@ interface FightContextValue {
     setCustomTargetHp: (hp: number) => void;
     setNailUpgrade: (nailUpgradeId: string) => void;
     setActiveCharms: (charmIds: string[]) => void;
+    setCharmNotchLimit: (notchLimit: number) => void;
     setSpellLevel: (spellId: string, level: SpellLevel) => void;
     logAttack: (input: AttackInput) => void;
     undoLastAttack: () => void;
@@ -166,6 +167,8 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       setNailUpgrade: (nailUpgradeId) =>
         dispatch({ type: 'setNailUpgrade', nailUpgradeId }),
       setActiveCharms: (charmIds) => dispatch({ type: 'setActiveCharms', charmIds }),
+      setCharmNotchLimit: (notchLimit) =>
+        dispatch({ type: 'setCharmNotchLimit', notchLimit }),
       setSpellLevel: (spellId, level) =>
         dispatch({ type: 'setSpellLevel', spellId, level }),
       logAttack: ({ id, label, damage, category, soulCost, timestamp }) =>

@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AttackLogPanel } from './AttackLogPanel';
-import { BuildConfigPanel } from '../build-config/BuildConfigPanel';
+import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
 import { CombatStatsPanel } from '../combat-stats/CombatStatsPanel';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
@@ -38,7 +38,7 @@ describe('AttackLogPanel', () => {
 
     renderWithFightProvider(
       <>
-        <BuildConfigPanel />
+        <PlayerConfigModal isOpen onClose={() => {}} />
         <AttackLogPanel />
       </>,
     );
@@ -50,7 +50,7 @@ describe('AttackLogPanel', () => {
     await user.selectOptions(screen.getByLabelText(/nail upgrade/i), 'pure-nail');
     expect(damageDisplay).toHaveTextContent('21');
 
-    await user.click(screen.getByLabelText(/unbreakable strength/i));
+    await user.click(screen.getByRole('button', { name: /unbreakable strength/i }));
     expect(damageDisplay).toHaveTextContent('32');
   });
 
@@ -59,7 +59,7 @@ describe('AttackLogPanel', () => {
 
     renderWithFightProvider(
       <>
-        <BuildConfigPanel />
+        <PlayerConfigModal isOpen onClose={() => {}} />
         <AttackLogPanel />
       </>,
     );
@@ -189,13 +189,13 @@ describe('AttackLogPanel', () => {
 
     renderWithFightProvider(
       <>
-        <BuildConfigPanel />
+        <PlayerConfigModal isOpen onClose={() => {}} />
         <AttackLogPanel />
       </>,
     );
 
-    await user.click(screen.getByLabelText(/thorns of agony/i));
-    await user.click(screen.getByLabelText(/glowing womb/i));
+    await user.click(screen.getByRole('button', { name: /thorns of agony/i }));
+    await user.click(screen.getByRole('button', { name: /glowing womb/i }));
 
     expect(screen.getByRole('heading', { name: /charm effects/i })).toBeInTheDocument();
     expect(
@@ -209,7 +209,7 @@ describe('AttackLogPanel', () => {
 
     renderWithFightProvider(
       <>
-        <BuildConfigPanel />
+        <PlayerConfigModal isOpen onClose={() => {}} />
         <AttackLogPanel />
       </>,
     );
@@ -220,7 +220,7 @@ describe('AttackLogPanel', () => {
     const damageDisplay = within(vengefulSpiritButton).getByLabelText(/damage per hit/i);
     expect(damageDisplay).toHaveTextContent('15');
 
-    await user.click(screen.getByLabelText(/flukenest/i));
+    await user.click(screen.getByRole('button', { name: /flukenest/i }));
 
     expect(damageDisplay).toHaveTextContent('36');
     expect(vengefulSpiritButton).toHaveTextContent(/flukenest volley/i);

@@ -17,7 +17,7 @@ describe('FightStateProvider persistence', () => {
 
   it('hydrates state from localStorage when data is available', () => {
     const persistedState = {
-      version: 1,
+      version: 2,
       state: {
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: 3333.7,
@@ -27,6 +27,7 @@ describe('FightStateProvider persistence', () => {
           spellLevels: {
             'vengeful-spirit': 'upgrade',
           },
+          notchLimit: 6,
         },
         damageLog: [
           {
@@ -105,7 +106,7 @@ describe('FightStateProvider persistence', () => {
         version: number;
         state: { selectedBossId: string; customTargetHp: number };
       };
-      expect(parsed.version).toBe(1);
+      expect(parsed.version).toBe(2);
       expect(parsed.state.selectedBossId).toBe(CUSTOM_BOSS_ID);
       expect(parsed.state.customTargetHp).toBe(4321);
     });
