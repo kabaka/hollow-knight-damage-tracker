@@ -45,6 +45,8 @@ jobs:
         browser: [chromium, firefox, webkit]
     container:
       image: mcr.microsoft.com/playwright:v1.55.1-jammy
+    env:
+      HOME: /root
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
