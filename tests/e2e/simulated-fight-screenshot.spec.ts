@@ -130,7 +130,14 @@ const SIMULATED_STATE: FightState = {
 
 test.describe('Simulated fight screenshot', () => {
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
-    await page.addInitScript(
+    await page.goto('/');
+
+    const heading = page.getByRole('heading', {
+      name: 'Hollow Knight Damage Tracker',
+    });
+    await expect(heading).toBeVisible({ timeout: 15_000 });
+
+    await page.evaluate(
       ({ state, storageKey, storageVersion }) => {
         window.localStorage.clear();
         window.localStorage.setItem(
@@ -145,19 +152,15 @@ test.describe('Simulated fight screenshot', () => {
       },
     );
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    await expect(
-      page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
-    ).toBeVisible({ timeout: 15_000 });
+    await page.reload();
+    await expect(heading).toBeVisible({ timeout: 15_000 });
 
     await expect(
       page.getByText('Damage Logged').locator('..').locator('.data-list__value-text'),
-    ).toHaveText('649');
+    ).toHaveText('649', { timeout: 15_000 });
     await expect(
       page.getByText('Attacks Logged').locator('..').locator('.data-list__value-text'),
-    ).toHaveText('13');
+    ).toHaveText('13', { timeout: 15_000 });
 
     const screenshotDirectory = path.resolve('test-results/simulated-fight');
     await mkdir(screenshotDirectory, { recursive: true });
