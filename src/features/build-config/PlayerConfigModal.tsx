@@ -5,7 +5,6 @@ import type { Charm } from '../../data';
 
 import { MAX_NOTCH_LIMIT, MIN_NOTCH_LIMIT } from '../fight-state/fightReducer';
 import { charmGridLayout, useBuildConfiguration } from './useBuildConfiguration';
-import { CUSTOM_BOSS_ID } from '../fight-state/FightStateContext';
 
 const CHARM_PRESETS = [
   {
@@ -78,12 +77,6 @@ const getCharmAriaLabel = (charm: Charm) => {
 export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose }) => {
   const {
     state,
-    selectedBoss,
-    selectedTarget,
-    handleBossVersionChange,
-    handleCustomHpChange,
-    customTargetHp,
-    isSequenceActive,
     notchLimit,
     activeCharmIds,
     activeCharmCost,
@@ -96,15 +89,13 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
     spells,
     setSpellLevel,
     charmDetails,
-    sequenceConditionValues,
-    handleSequenceConditionToggle,
-    activeSequence,
+    isOvercharmed,
   } = useBuildConfiguration();
 
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const charmIconMap = useMemo(createCharmIconMap, []);
 
-  const { build, selectedBossId } = state;
+  const { build } = state;
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
   const equippedCharms = useMemo(
     () =>
@@ -126,7 +117,6 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
       }),
     [activeCharmCost, notchLimit],
   );
-  const isOvercharmed = activeCharmCost > notchLimit;
 
   useEffect(() => {
     if (!isOpen) {
@@ -202,7 +192,7 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
               inventory grid.
             </p>
             <div className="charm-workbench">
-              <aside className="charm-workbench__sidebar">
+              <div className="charm-workbench__overview">
                 <div className="equipped-panel">
                   <h4 className="equipped-panel__title">Equipped</h4>
                   <div className="equipped-panel__grid" role="list" aria-live="polite">
@@ -282,32 +272,15 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
                     that you are overcharmed.
                   </p>
                 </div>
-                <div className="preset-panel">
-                  <h4 className="preset-panel__title">Presets</h4>
-                  <p className="preset-panel__description">
-                    Apply quick loadouts or clear your charms with a single tap.
-                  </p>
-                  <div className="preset-buttons" role="group" aria-label="Charm presets">
-                    {CHARM_PRESETS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        className="preset-buttons__button"
-                        onClick={() => applyCharmPreset(preset.charmIds)}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="preset-buttons__button"
-                      onClick={() => applyCharmPreset([])}
-                    >
-                      Clear charms
-                    </button>
-                  </div>
+              </div>
+              {isOvercharmed ? (
+                <div className="overcharm-banner" role="status" aria-live="assertive">
+                  <span className="overcharm-banner__label">Overcharmed</span>
+                  <span className="overcharm-banner__message">
+                    You&apos;ll take double damage until you unequip a charm.
+                  </span>
                 </div>
-              </aside>
+              ) : null}
               <div className="charm-workbench__grid">
                 <div className="charm-grid" role="grid" aria-label="Charm inventory">
                   {charmGridLayout.map((row, rowIndex) => (
@@ -374,6 +347,31 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
                   ))}
                 </div>
               </div>
+              <div className="preset-panel">
+                <h4 className="preset-panel__title">Presets</h4>
+                <p className="preset-panel__description">
+                  Apply quick loadouts or clear your charms with a single tap.
+                </p>
+                <div className="preset-buttons" role="group" aria-label="Charm presets">
+                  {CHARM_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className="preset-buttons__button"
+                      onClick={() => applyCharmPreset(preset.charmIds)}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="preset-buttons__button"
+                    onClick={() => applyCharmPreset([])}
+                  >
+                    Clear charms
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -414,7 +412,7 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
 
           <section className="modal-section" aria-labelledby="equipment-heading">
             <div className="modal-section__header">
-              <h3 id="equipment-heading">Nail & Target</h3>
+              <h3 id="equipment-heading">Equipment Setup</h3>
             </div>
             <div className="form-grid">
               <label className="form-grid__field" htmlFor="nail-level">
@@ -431,95 +429,8 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
                   ))}
                 </select>
               </label>
-
-              {selectedBoss && !isSequenceActive && selectedBossId !== CUSTOM_BOSS_ID ? (
-                <label className="form-grid__field">
-                  <span>Boss version</span>
-                  <select
-                    value={state.selectedBossId}
-                    onChange={(event) => handleBossVersionChange(event.target.value)}
-                  >
-                    {selectedBoss.versions.map((version) => (
-                      <option key={version.targetId} value={version.targetId}>
-                        {version.title} • {version.hp.toLocaleString()} HP
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-
-              {selectedBossId === CUSTOM_BOSS_ID && !isSequenceActive ? (
-                <label className="form-grid__field" htmlFor="custom-target-hp">
-                  <span>Custom target HP</span>
-                  <input
-                    id="custom-target-hp"
-                    type="number"
-                    min={1}
-                    step={10}
-                    value={customTargetHp}
-                    onChange={(event) => handleCustomHpChange(event.target.value)}
-                  />
-                </label>
-              ) : null}
-
-              {selectedTarget ? (
-                <div className="form-grid__field" aria-live="polite">
-                  <span>Active target</span>
-                  <div className="form-grid__summary">
-                    <strong>{selectedTarget.bossName}</strong>
-                    <span>{selectedTarget.version.title}</span>
-                    <span>{selectedTarget.hp.toLocaleString()} HP</span>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </section>
-
-          {activeSequence && activeSequence.conditions.length > 0 ? (
-            <section
-              className="modal-section"
-              aria-labelledby="sequence-conditions-heading"
-            >
-              <div className="modal-section__header">
-                <h3 id="sequence-conditions-heading">Sequence Conditions</h3>
-              </div>
-              <div
-                className="sequence-conditions"
-                role="group"
-                aria-label="Sequence conditions"
-              >
-                {activeSequence.conditions.map((condition) => {
-                  const checkboxId = `${activeSequence.id}-${condition.id}`;
-                  const isEnabled = sequenceConditionValues[condition.id] ?? false;
-                  return (
-                    <label key={condition.id} className="sequence-condition">
-                      <input
-                        id={checkboxId}
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={(event) =>
-                          handleSequenceConditionToggle(
-                            condition.id,
-                            event.target.checked,
-                          )
-                        }
-                      />
-                      <span>
-                        <span className="sequence-condition__label">
-                          {condition.label}
-                        </span>
-                        {condition.description ? (
-                          <span className="sequence-condition__description">
-                            {condition.description}
-                          </span>
-                        ) : null}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
         </div>
       </div>
     </div>

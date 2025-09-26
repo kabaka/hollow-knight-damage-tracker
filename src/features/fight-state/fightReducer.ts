@@ -96,6 +96,7 @@ export const initialSpellLevels = (): Record<string, SpellLevel> => {
 
 export const MIN_NOTCH_LIMIT = 3;
 export const MAX_NOTCH_LIMIT = 11;
+export const MAX_OVERCHARM_OVERFLOW = 5;
 
 const clampNotchLimit = (value: number) =>
   Math.min(MAX_NOTCH_LIMIT, Math.max(MIN_NOTCH_LIMIT, Math.round(value)));
@@ -110,14 +111,20 @@ const clampCharmSelection = (charmIds: string[], notchLimit: number) => {
   const uniqueOrdered = charmIds.filter((id, index) => charmIds.indexOf(id) === index);
   const selected: string[] = [];
   let totalCost = 0;
+  let hasOverflow = false;
 
   for (const id of uniqueOrdered) {
     const cost = getCharmCost(id);
-    if (totalCost + cost > notchLimit) {
-      continue;
+    const nextCost = totalCost + cost;
+    if (nextCost > notchLimit) {
+      if (hasOverflow || nextCost > notchLimit + MAX_OVERCHARM_OVERFLOW) {
+        continue;
+      }
+      hasOverflow = true;
     }
+
     selected.push(id);
-    totalCost += cost;
+    totalCost = nextCost;
   }
 
   return selected;

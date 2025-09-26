@@ -15,6 +15,7 @@ type HeaderBarProps = {
 
 const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
   const {
+    state,
     bosses,
     bossSelectValue,
     handleBossChange,
@@ -31,6 +32,14 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
     currentSequenceEntry,
     isSequenceActive,
     selectedTarget,
+    selectedBoss,
+    selectedVersion,
+    handleBossVersionChange,
+    customTargetHp,
+    handleCustomHpChange,
+    activeSequence,
+    sequenceConditionValues,
+    handleSequenceConditionToggle,
     derived,
   } = useBuildConfiguration();
 
@@ -65,90 +74,176 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
 
   return (
     <header className="app-header">
-      <div className="app-header__row">
+      <div className="app-header__top">
         <div className="app-header__brand">
           <h1 className="app-header__title">Hollow Knight Damage Tracker</h1>
           <p className="app-header__subtitle">
-            Plan your build, record every strike, and monitor fight-ending stats in real
+            Plan your build, log every strike, and monitor fight-ending stats in real
             time.
           </p>
         </div>
-        <button type="button" className="header-button" onClick={onOpenModal}>
-          Player Loadout
-        </button>
+        <div className="app-header__actions">
+          <button type="button" className="header-button" onClick={onOpenModal}>
+            Player Loadout
+          </button>
+        </div>
       </div>
 
-      <div className="app-header__controls" role="group" aria-label="Encounter selection">
-        <label className="header-field">
-          <span className="header-field__label">Boss sequence</span>
-          <select
-            value={sequenceSelectValue}
-            onChange={(event) => handleSequenceChange(event.target.value)}
-          >
-            <option value="">Single target practice</option>
-            {bossSequences.map((sequence) => (
-              <option key={sequence.id} value={sequence.id}>
-                {sequence.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {isSequenceActive ? (
-          <div className="sequence-toolbar" role="group" aria-label="Sequence navigation">
-            <button
-              type="button"
-              className="sequence-toolbar__button"
-              onClick={handleRewindSequence}
-              disabled={!hasPreviousSequenceStage}
-              aria-keyshortcuts="["
+      <div className="app-header__filters" role="group" aria-label="Encounter selection">
+        <div className="header-stack">
+          <label className="header-field">
+            <span className="header-field__label">Boss sequence</span>
+            <select
+              value={sequenceSelectValue}
+              onChange={(event) => handleSequenceChange(event.target.value)}
             >
-              Prev
-            </button>
-            <label className="header-field header-field--compact">
-              <span className="header-field__label">Stage</span>
-              <select
-                value={String(cappedSequenceIndex)}
-                onChange={(event) =>
-                  handleSequenceStageChange(Number(event.target.value))
-                }
+              <option value="">Single target practice</option>
+              {bossSequences.map((sequence) => (
+                <option key={sequence.id} value={sequence.id}>
+                  {sequence.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {isSequenceActive ? (
+            <div
+              className="sequence-toolbar"
+              role="group"
+              aria-label="Sequence navigation"
+            >
+              <button
+                type="button"
+                className="sequence-toolbar__button"
+                onClick={handleRewindSequence}
+                disabled={!hasPreviousSequenceStage}
+                aria-keyshortcuts="["
               >
-                {sequenceEntries.map((entry, index) => (
-                  <option key={entry.id} value={index}>
-                    {`${String(index + 1).padStart(2, '0')} • ${entry.target.bossName}`}
+                Prev
+              </button>
+              <label className="header-field header-field--compact">
+                <span className="header-field__label">Stage</span>
+                <select
+                  value={String(cappedSequenceIndex)}
+                  onChange={(event) =>
+                    handleSequenceStageChange(Number(event.target.value))
+                  }
+                >
+                  {sequenceEntries.map((entry, index) => (
+                    <option key={entry.id} value={index}>
+                      {`${String(index + 1).padStart(2, '0')} • ${entry.target.bossName}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="sequence-toolbar__button"
+                onClick={handleAdvanceSequence}
+                disabled={!hasNextSequenceStage}
+                aria-keyshortcuts="]"
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="header-stack">
+          <label className="header-field">
+            <span className="header-field__label">Boss target</span>
+            <select
+              id="boss-target"
+              value={bossSelectValue}
+              onChange={(event) => handleBossChange(event.target.value)}
+              disabled={isSequenceActive}
+            >
+              {bosses.map((boss) => (
+                <option key={boss.id} value={boss.id}>
+                  {boss.name}
+                </option>
+              ))}
+              <option value={CUSTOM_BOSS_ID}>Custom target</option>
+            </select>
+          </label>
+
+          {!isSequenceActive &&
+          selectedBoss &&
+          state.selectedBossId !== CUSTOM_BOSS_ID ? (
+            <label className="header-field">
+              <span className="header-field__label">Boss version</span>
+              <select
+                value={state.selectedBossId}
+                onChange={(event) => handleBossVersionChange(event.target.value)}
+              >
+                {selectedBoss.versions.map((version) => (
+                  <option key={version.targetId} value={version.targetId}>
+                    {`${version.title} • ${version.hp.toLocaleString()} HP`}
                   </option>
                 ))}
               </select>
             </label>
-            <button
-              type="button"
-              className="sequence-toolbar__button"
-              onClick={handleAdvanceSequence}
-              disabled={!hasNextSequenceStage}
-              aria-keyshortcuts="]"
-            >
-              Next
-            </button>
-          </div>
-        ) : null}
+          ) : null}
 
-        <label className="header-field">
-          <span className="header-field__label">Boss target</span>
-          <select
-            id="boss-target"
-            value={bossSelectValue}
-            onChange={(event) => handleBossChange(event.target.value)}
-            disabled={isSequenceActive}
-          >
-            {bosses.map((boss) => (
-              <option key={boss.id} value={boss.id}>
-                {boss.name}
-              </option>
-            ))}
-            <option value={CUSTOM_BOSS_ID}>Custom target</option>
-          </select>
-        </label>
+          {!isSequenceActive && state.selectedBossId === CUSTOM_BOSS_ID ? (
+            <label className="header-field" htmlFor="custom-target-hp">
+              <span className="header-field__label">Custom target HP</span>
+              <input
+                id="custom-target-hp"
+                type="number"
+                min={1}
+                step={10}
+                value={customTargetHp}
+                onChange={(event) => handleCustomHpChange(event.target.value)}
+              />
+            </label>
+          ) : null}
+
+          {selectedTarget && selectedVersion ? (
+            <div className="header-summary" aria-live="polite">
+              <span className="header-summary__title">Active target</span>
+              <span className="header-summary__value">{selectedTarget.bossName}</span>
+              <span className="header-summary__meta">{selectedVersion.title}</span>
+            </div>
+          ) : null}
+        </div>
       </div>
+
+      {activeSequence && activeSequence.conditions.length > 0 ? (
+        <div className="app-header__conditions">
+          <h4 className="app-header__conditions-title">Sequence conditions</h4>
+          <div
+            className="sequence-conditions"
+            role="group"
+            aria-label="Sequence conditions"
+          >
+            {activeSequence.conditions.map((condition) => {
+              const checkboxId = `${activeSequence.id}-${condition.id}`;
+              const isEnabled = sequenceConditionValues[condition.id] ?? false;
+              return (
+                <label key={condition.id} className="sequence-condition">
+                  <input
+                    id={checkboxId}
+                    type="checkbox"
+                    checked={isEnabled}
+                    onChange={(event) =>
+                      handleSequenceConditionToggle(condition.id, event.target.checked)
+                    }
+                  />
+                  <span>
+                    <span className="sequence-condition__label">{condition.label}</span>
+                    {condition.description ? (
+                      <span className="sequence-condition__description">
+                        {condition.description}
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       <div className="app-header__summary" aria-live="polite">
         <div className="summary-tile">

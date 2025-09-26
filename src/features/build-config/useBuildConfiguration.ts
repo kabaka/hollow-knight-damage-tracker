@@ -5,6 +5,7 @@ import {
   useFightState,
   type SpellLevel,
 } from '../fight-state/FightStateContext';
+import { MAX_OVERCHARM_OVERFLOW } from '../fight-state/fightReducer';
 import type { Charm } from '../../data';
 import {
   bossMap,
@@ -165,6 +166,7 @@ export const useBuildConfiguration = () => {
     () => calculateCharmCost(activeCharmIds),
     [activeCharmIds],
   );
+  const isOvercharmed = activeCharmCost > notchLimit;
 
   const setNailUpgrade = useCallback(
     (nailUpgradeId: string) => {
@@ -225,14 +227,20 @@ export const useBuildConfiguration = () => {
       if (activeCharmIds.includes(charmId)) {
         return true;
       }
+
+      if (isOvercharmed) {
+        return false;
+      }
+
       const conflict = REPLACEABLE_CHARMS.get(charmId);
       const withoutConflict = conflict
         ? activeCharmIds.filter((id) => id !== conflict)
         : activeCharmIds;
       const candidate = [...withoutConflict, charmId];
-      return calculateCharmCost(candidate) <= notchLimit;
+      const cost = calculateCharmCost(candidate);
+      return cost <= notchLimit || cost <= notchLimit + MAX_OVERCHARM_OVERFLOW;
     },
-    [activeCharmIds, notchLimit],
+    [activeCharmIds, notchLimit, isOvercharmed],
   );
 
   const handleSequenceChange = useCallback(
@@ -365,5 +373,6 @@ export const useBuildConfiguration = () => {
     nailUpgrades,
     spells,
     charmDetails,
+    isOvercharmed,
   };
 };

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { charmMap } from '../../data';
 import {
   MAX_NOTCH_LIMIT,
+  MAX_OVERCHARM_OVERFLOW,
   MIN_NOTCH_LIMIT,
   createInitialState,
   fightReducer,
@@ -32,8 +33,15 @@ describe('fightReducer notch limits', () => {
       0,
     );
 
-    expect(totalCost).toBeLessThanOrEqual(5);
-    expect(tightened.build.activeCharmIds).toEqual(['shaman-stone', 'spell-twister']);
+    expect(totalCost).toBeLessThanOrEqual(5 + MAX_OVERCHARM_OVERFLOW);
+    expect(tightened.build.activeCharmIds).toEqual(richSelection);
+
+    const overstuffed = fightReducer(tightened, {
+      type: 'setActiveCharms',
+      charmIds: [...richSelection, 'lifeblood-heart'],
+    });
+
+    expect(overstuffed.build.activeCharmIds).toEqual(richSelection);
   });
 
   it('respects the minimum and maximum notch limits', () => {
