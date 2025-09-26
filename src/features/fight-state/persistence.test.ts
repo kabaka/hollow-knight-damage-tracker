@@ -37,6 +37,7 @@ describe('fight-state persistence', () => {
           activeCharmIds: ['shaman-stone', 'shaman-stone', 17],
           spellLevels: {
             'desolate-dive': 'upgrade',
+            'vengeful-spirit': 'none',
             invalid: 'nope',
           },
           notchLimit: 50,
@@ -101,6 +102,7 @@ describe('fight-state persistence', () => {
     expect(merged.build.activeCharmIds).toEqual(['shaman-stone']);
     expect(merged.build.notchLimit).toBe(MAX_NOTCH_LIMIT);
     expect(merged.build.spellLevels['desolate-dive']).toBe('upgrade');
+    expect(merged.build.spellLevels['vengeful-spirit']).toBe('none');
     expect(Object.values(merged.build.spellLevels)).toContain('base');
 
     expect(merged.damageLog).toHaveLength(1);

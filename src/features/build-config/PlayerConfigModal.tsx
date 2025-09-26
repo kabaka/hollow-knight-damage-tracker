@@ -383,6 +383,16 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
               {spells.map((spell) => (
                 <fieldset key={spell.id} className="spell-card">
                   <legend>{spell.name}</legend>
+                  <label className="spell-card__option spell-card__option--muted">
+                    <input
+                      type="radio"
+                      name={`spell-${spell.id}`}
+                      value="none"
+                      checked={build.spellLevels[spell.id] === 'none'}
+                      onChange={() => setSpellLevel(spell.id, 'none')}
+                    />
+                    <span>Not acquired</span>
+                  </label>
                   <label className="spell-card__option">
                     <input
                       type="radio"
