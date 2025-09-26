@@ -130,14 +130,7 @@ const SIMULATED_STATE: FightState = {
 
 test.describe('Simulated fight screenshot', () => {
   test('captures a deterministic combat overview', async ({ page }, testInfo) => {
-    await page.goto('/');
-
-    const heading = page.getByRole('heading', {
-      name: 'Hollow Knight Damage Tracker',
-    });
-    await expect(heading).toBeVisible({ timeout: 15_000 });
-
-    await page.evaluate(
+    await page.addInitScript(
       ({ state, storageKey, storageVersion }) => {
         window.localStorage.clear();
         window.localStorage.setItem(
@@ -152,7 +145,11 @@ test.describe('Simulated fight screenshot', () => {
       },
     );
 
-    await page.reload();
+    await page.goto('/');
+
+    const heading = page.getByRole('heading', {
+      name: 'Hollow Knight Damage Tracker',
+    });
     await expect(heading).toBeVisible({ timeout: 15_000 });
 
     await expect(
