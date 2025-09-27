@@ -4,6 +4,10 @@
     "description": "Slumbering mother of the gruzzers.",
     "location": "Forgotten Crossroads",
     "health": 90,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Gruz_Mother",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Gruz+Mother"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -24,6 +28,10 @@
     "description": "A maggot driven mad by a stolen hero's strength.",
     "location": "Forgotten Crossroads",
     "health": 415,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/False_Knight",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/False+Knight"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -44,6 +52,10 @@
     "description": "Dream variant of the False Knight.",
     "location": "Forgotten Crossroads",
     "health": 1080,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Failed_Champion",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Failed+Champion"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -64,6 +76,10 @@
     "description": "The patriarch of a vengefly colony.",
     "location": "Greenpath",
     "health": 90,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Vengefly_King",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Vengefly+King"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -84,6 +100,10 @@
     "description": "A creature of the ancient basin, maddened by infection.",
     "location": "Forgotten Crossroads",
     "health": 300,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Brooding_Mawlek",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Brooding+Mawlek"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -104,6 +124,10 @@
     "description": "A large moss creature that charges its foes.",
     "location": "Greenpath",
     "health": 100,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Massive_Moss_Charger",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Massive+Moss+Charger"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -124,6 +148,10 @@
     "description": "The agile protector of Hallownest's ruins.",
     "location": "Greenpath",
     "health": 225,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Hornet",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Hornet"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -144,6 +172,10 @@
     "description": "The three rulers of the Mantis Tribe.",
     "location": "Fungal Wastes",
     "health": 530,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Mantis_Lords",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Mantis+Lords"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -164,6 +196,10 @@
     "description": "A ghostly warrior of the Soul Sanctum.",
     "location": "Soul Sanctum",
     "health": 240,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Soul_Warrior",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Soul+Warrior"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -184,6 +220,10 @@
     "description": "The head of the Soul Sanctum, twisted by his research.",
     "location": "City of Tears",
     "health": 385,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Soul_Master",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Soul+Master"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -204,6 +244,10 @@
     "description": "Dream variant of the Soul Master.",
     "location": "City of Tears",
     "health": 1250,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Soul_Tyrant",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Soul+Tyrant"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -224,6 +268,10 @@
     "description": "A joyous and skilled warrior protecting a forgotten king.",
     "location": "Royal Waterways",
     "health": 700,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Dung_Defender",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Dung+Defender"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -244,6 +292,10 @@
     "description": "The mother of all flukes.",
     "location": "Royal Waterways",
     "health": 350,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Flukemarm",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Flukemarm"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -264,6 +316,10 @@
     "description": "A bug encased in crystal, guarding a bench.",
     "location": "Crystal Peak",
     "health": 280,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Crystal_Guardian",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Crystal+Guardian"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -284,6 +340,10 @@
     "description": "The Crystal Guardian, awakened and enraged.",
     "location": "Crystal Peak",
     "health": 450,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Enraged_Guardian",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Enraged+Guardian"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -304,6 +364,10 @@
     "description": "A discarded vessel animated by infection.",
     "location": "Ancient Basin",
     "health": 525,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Broken_Vessel",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Broken+Vessel"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -324,6 +388,10 @@
     "description": "Dream variant of the Broken Vessel.",
     "location": "Ancient Basin",
     "health": 1200,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Lost_Kin",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Lost+Kin"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -344,6 +412,10 @@
     "description": "A creature that mimics others to lure prey.",
     "location": "Deepnest",
     "health": 680,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Nosk",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Nosk"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -364,6 +436,10 @@
     "description": "A shadowy creature that preserves the creatures of Hallownest.",
     "location": "Tower of Love",
     "health": 750,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/The_Collector",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/The+Collector"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -384,6 +460,10 @@
     "description": "A warrior and her beast in the Colosseum of Fools.",
     "location": "Colosseum of Fools",
     "health": 1050,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/God_Tamer",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/God+Tamer"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -404,6 +484,10 @@
     "description": "A pair of flying, spitting husks.",
     "location": "Colosseum of Fools",
     "health": 720,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Oblobble",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Oblobbles"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -424,6 +508,10 @@
     "description": "A skilled warrior testing the Knight's strength.",
     "location": "Kingdom's Edge",
     "health": 700,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Hornet",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Hornet"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -444,6 +532,10 @@
     "description": "The exiled lord of the Mantis Tribe who embraced the infection.",
     "location": "Queen's Gardens",
     "health": 800,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Traitor_Lord",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Traitor+Lord"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -464,6 +556,10 @@
     "description": "A sentient jellyfish guarding Monomon the Teacher.",
     "location": "Fog Canyon",
     "health": 300,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Uumuu",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Uumuu"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -484,6 +580,10 @@
     "description": "A loyal protector of the Hive Queen.",
     "location": "The Hive",
     "health": 850,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Hive_Knight",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Hive+Knight"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -504,6 +604,10 @@
     "description": "Six armored bugs guarding Lurien the Watcher.",
     "location": "Watcher's Spire",
     "health": 1320,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Watcher_Knight",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Watcher+Knight"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -524,6 +628,10 @@
     "description": "The master of the Grimm Troupe.",
     "location": "Dirtmouth",
     "health": 1000,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Troupe_Master_Grimm",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Troupe+Master+Grimm"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -544,6 +652,10 @@
     "description": "The powerful, nightmarish heart of the Grimm Troupe.",
     "location": "Dirtmouth",
     "health": 1500,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Nightmare_King_Grimm",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Nightmare+King+Grimm"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -564,6 +676,10 @@
     "description": "A 'hero' from the imagination of Bretta.",
     "location": "Dirtmouth",
     "health": 1200,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Grey_Prince_Zote",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Grey+Prince+Zote"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -584,6 +700,10 @@
     "description": "Dream variant of the Dung Defender.",
     "location": "King's Passage",
     "health": 1600,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/White_Defender",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/White+Defender"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -604,6 +724,10 @@
     "description": "The Great Mind.",
     "location": "Howling Cliffs",
     "health": 570,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Gorb",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Gorb"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -624,6 +748,10 @@
     "description": "Warrior dream of a forgotten warrior.",
     "location": "Resting Grounds",
     "health": 570,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Xero",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Xero"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -644,6 +772,10 @@
     "description": "Warrior dream of a forgotten elder.",
     "location": "Fungal Wastes",
     "health": 650,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Elder_Hu",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Elder+Hu"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -664,6 +796,10 @@
     "description": "Warrior dream of a playful caterpillar.",
     "location": "Queen's Gardens",
     "health": 570,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Marmu",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Marmu"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -684,6 +820,10 @@
     "description": "Warrior dream of a tormented spirit.",
     "location": "Stone Sanctuary",
     "health": 570,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/No_Eyes",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/No+Eyes"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -704,6 +844,10 @@
     "description": "Warrior dream of a great warrior.",
     "location": "Deepnest",
     "health": 640,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Galien",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Galien"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -724,6 +868,10 @@
     "description": "Warrior dream of a moth warrior.",
     "location": "Kingdom's Edge",
     "health": 705,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Markoth",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Markoth"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -744,6 +892,10 @@
     "description": "The Nailmaster brothers.",
     "location": "Godhome",
     "health": 1550,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Brothers_Oro_%26_Mato",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Brothers+Oro+and+Mato"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -764,6 +916,10 @@
     "description": "The Nailmaster of arts.",
     "location": "Godhome",
     "health": 950,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Paintmaster_Sheo",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Paintmaster+Sheo"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -784,6 +940,10 @@
     "description": "The master of all Nailmasters.",
     "location": "Godhome",
     "health": 1050,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Great_Nailsage_Sly",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Great+Nailsage+Sly"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -804,6 +964,10 @@
     "description": "A Nosk that mimics Hornet.",
     "location": "Godhome",
     "health": 750,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Winged_Nosk",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Winged+Nosk"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -824,6 +988,10 @@
     "description": "Dream variant of the Mantis Lords.",
     "location": "Godhome",
     "health": 2000,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Sisters_of_Battle",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Sisters+of+Battle"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -844,6 +1012,10 @@
     "description": "The vessel chosen to seal away the Radiance.",
     "location": "Temple of the Black Egg",
     "health": 1250,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/The_Hollow_Knight",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/The+Hollow+Knight"
+    },
     "godhomeVersions": []
   },
   {
@@ -851,6 +1023,10 @@
     "description": "The Hollow Knight in its prime.",
     "location": "Godhome",
     "health": 1500,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Pure_Vessel",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Pure+Vessel"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -871,6 +1047,10 @@
     "description": "The ancient being that is the source of the infection.",
     "location": "Temple of the Black Egg",
     "health": 1700,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/The_Radiance",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/The+Radiance"
+    },
     "godhomeVersions": []
   },
   {
@@ -878,6 +1058,10 @@
     "description": "The Radiance at the peak of its power.",
     "location": "Godhome",
     "health": 2300,
+    "links": {
+      "fandom": "https://hollowknight.wiki/w/Absolute_Radiance",
+      "fextralife": "https://hollowknight.wiki.fextralife.com/Absolute+Radiance"
+    },
     "godhomeVersions": [
       {
         "title": "Attuned",
@@ -894,4 +1078,3 @@
     ]
   }
 ]
-
