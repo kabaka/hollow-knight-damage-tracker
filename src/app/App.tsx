@@ -16,8 +16,8 @@ type HeaderBarProps = {
 
 const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
   const {
-    state,
     bosses,
+    selectedBossId,
     bossSelectValue,
     handleBossChange,
     bossSequences,
@@ -172,13 +172,11 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
             </select>
           </label>
 
-          {!isSequenceActive &&
-          selectedBoss &&
-          state.selectedBossId !== CUSTOM_BOSS_ID ? (
+          {!isSequenceActive && selectedBoss && selectedBossId !== CUSTOM_BOSS_ID ? (
             <label className="toolbar-field">
               <span className="toolbar-field__label">Boss version</span>
               <select
-                value={state.selectedBossId}
+                value={selectedBossId}
                 onChange={(event) => handleBossVersionChange(event.target.value)}
               >
                 {selectedBoss.versions.map((version) => (
@@ -190,7 +188,7 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
             </label>
           ) : null}
 
-          {!isSequenceActive && state.selectedBossId === CUSTOM_BOSS_ID ? (
+          {!isSequenceActive && selectedBossId === CUSTOM_BOSS_ID ? (
             <label className="toolbar-field" htmlFor="custom-target-hp">
               <span className="toolbar-field__label">Custom target HP</span>
               <input

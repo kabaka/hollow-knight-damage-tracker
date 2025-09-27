@@ -78,7 +78,6 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   onClose,
 }) => {
   const {
-    state,
     notchLimit,
     activeCharmIds,
     activeCharmCost,
@@ -92,12 +91,12 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
     setSpellLevel,
     charmDetails,
     isOvercharmed,
+    build,
   } = useBuildConfiguration();
 
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const charmIconMap = useMemo(createCharmIconMap, []);
 
-  const { build } = state;
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
   const equippedCharms = useMemo(
     () =>

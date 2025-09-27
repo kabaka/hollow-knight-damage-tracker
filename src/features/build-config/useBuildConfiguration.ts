@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import {
   CUSTOM_BOSS_ID,
-  useFightState,
+  useFightActions,
+  useFightStateSelector,
   type SpellLevel,
 } from '../fight-state/FightStateContext';
 import { MAX_OVERCHARM_OVERFLOW } from '../fight-state/fightReducer';
@@ -96,15 +97,13 @@ export const charmGridLayout = [
 ] as const;
 
 export const useBuildConfiguration = () => {
-  const { state, actions } = useFightState();
-  const {
-    selectedBossId,
-    customTargetHp,
-    build,
-    activeSequenceId,
-    sequenceIndex,
-    sequenceConditions,
-  } = state;
+  const actions = useFightActions();
+  const selectedBossId = useFightStateSelector((state) => state.selectedBossId);
+  const customTargetHp = useFightStateSelector((state) => state.customTargetHp);
+  const build = useFightStateSelector((state) => state.build);
+  const activeSequenceId = useFightStateSelector((state) => state.activeSequenceId);
+  const sequenceIndex = useFightStateSelector((state) => state.sequenceIndex);
+  const sequenceConditions = useFightStateSelector((state) => state.sequenceConditions);
 
   const selectedTarget = useMemo(() => bossMap.get(selectedBossId), [selectedBossId]);
 
@@ -332,8 +331,8 @@ export const useBuildConfiguration = () => {
   }, []);
 
   return {
-    state,
     actions,
+    selectedBossId,
     bosses,
     bossMap,
     bossSequences,
@@ -359,6 +358,7 @@ export const useBuildConfiguration = () => {
     handleCustomHpChange,
     customTargetHp,
     isSequenceActive,
+    build,
     notchLimit,
     activeCharmIds,
     activeCharmCost,

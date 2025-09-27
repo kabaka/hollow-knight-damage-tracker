@@ -55,39 +55,42 @@ export interface DerivedStats {
   frameTimestamp: number;
 }
 
-interface FightContextValue {
-  state: FightState;
-  actions: {
-    selectBoss: (bossId: string) => void;
-    setCustomTargetHp: (hp: number) => void;
-    setNailUpgrade: (nailUpgradeId: string) => void;
-    setActiveCharms: (charmIds: string[]) => void;
-    setCharmNotchLimit: (notchLimit: number) => void;
-    setSpellLevel: (spellId: string, level: SpellLevel) => void;
-    logAttack: (input: AttackInput) => void;
-    undoLastAttack: () => void;
-    redoLastAttack: () => void;
-    resetLog: () => void;
-    endFight: (timestamp?: number) => void;
-    startSequence: (sequenceId: string) => void;
-    stopSequence: () => void;
-    setSequenceStage: (index: number) => void;
-    advanceSequenceStage: () => void;
-    rewindSequenceStage: () => void;
-    setSequenceCondition: (
-      sequenceId: string,
-      conditionId: string,
-      enabled: boolean,
-    ) => void;
-  };
-}
+type FightActions = {
+  selectBoss: (bossId: string) => void;
+  setCustomTargetHp: (hp: number) => void;
+  setNailUpgrade: (nailUpgradeId: string) => void;
+  setActiveCharms: (charmIds: string[]) => void;
+  setCharmNotchLimit: (notchLimit: number) => void;
+  setSpellLevel: (spellId: string, level: SpellLevel) => void;
+  logAttack: (input: AttackInput) => void;
+  undoLastAttack: () => void;
+  redoLastAttack: () => void;
+  resetLog: () => void;
+  endFight: (timestamp?: number) => void;
+  startSequence: (sequenceId: string) => void;
+  stopSequence: () => void;
+  setSequenceStage: (index: number) => void;
+  advanceSequenceStage: () => void;
+  rewindSequenceStage: () => void;
+  setSequenceCondition: (
+    sequenceId: string,
+    conditionId: string,
+    enabled: boolean,
+  ) => void;
+};
 
 interface DerivedStatsStore {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => DerivedStats;
 }
 
-const FightStateContext = createContext<FightContextValue | undefined>(undefined);
+interface FightStateStore {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => FightState;
+}
+
+const FightStateStoreContext = createContext<FightStateStore | undefined>(undefined);
+const FightActionsContext = createContext<FightActions | undefined>(undefined);
 const FightDerivedStatsContext = createContext<DerivedStatsStore | undefined>(undefined);
 
 const useIsomorphicLayoutEffect =
@@ -188,16 +191,22 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   const derivedRef = useRef<DerivedStats>(
     calculateDerivedStats(state, frameTimestampRef.current),
   );
-  const listenersRef = useRef<Set<() => void>>(new Set());
+  const stateListenersRef = useRef<Set<() => void>>(new Set());
+  const derivedListenersRef = useRef<Set<() => void>>(new Set());
   const derivedStoreRef = useRef<DerivedStatsStore | null>(null);
+  const stateStoreRef = useRef<FightStateStore | null>(null);
   const cancelPersistRef = useRef<(() => void) | null>(null);
+
+  const notifyState = useCallback(() => {
+    stateListenersRef.current.forEach((listener) => listener());
+  }, []);
 
   const notifyDerived = useCallback(() => {
     derivedRef.current = calculateDerivedStats(
       stateRef.current,
       frameTimestampRef.current,
     );
-    listenersRef.current.forEach((listener) => listener());
+    derivedListenersRef.current.forEach((listener) => listener());
   }, []);
 
   const flushPersist = useCallback(() => {
@@ -217,13 +226,25 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     );
   }, []);
 
+  if (!stateStoreRef.current) {
+    stateStoreRef.current = {
+      getSnapshot: () => stateRef.current,
+      subscribe: (listener) => {
+        stateListenersRef.current.add(listener);
+        return () => {
+          stateListenersRef.current.delete(listener);
+        };
+      },
+    } satisfies FightStateStore;
+  }
+
   if (!derivedStoreRef.current) {
     derivedStoreRef.current = {
       getSnapshot: () => derivedRef.current,
       subscribe: (listener) => {
-        listenersRef.current.add(listener);
+        derivedListenersRef.current.add(listener);
         return () => {
-          listenersRef.current.delete(listener);
+          derivedListenersRef.current.delete(listener);
         };
       },
     } satisfies DerivedStatsStore;
@@ -231,9 +252,10 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
 
   useIsomorphicLayoutEffect(() => {
     stateRef.current = state;
+    notifyState();
     schedulePersist();
     notifyDerived();
-  }, [state, notifyDerived, schedulePersist]);
+  }, [state, notifyDerived, notifyState, schedulePersist]);
 
   const shouldAnimate = state.damageLog.length > 0 && state.fightEndTimestamp == null;
 
@@ -365,7 +387,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     dispatch,
   ]);
 
-  const actions = useMemo<FightContextValue['actions']>(
+  const actions = useMemo<FightActions>(
     () => ({
       selectBoss: (bossId) => dispatch({ type: 'selectBoss', bossId }),
       setCustomTargetHp: (hp) => dispatch({ type: 'setCustomTargetHp', hp }),
@@ -406,27 +428,92 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }),
     [],
   );
-
-  const value = useMemo<FightContextValue>(() => ({ state, actions }), [state, actions]);
   const derivedStore = derivedStoreRef.current;
+  const stateStore = stateStoreRef.current;
 
-  if (!derivedStore) {
+  if (!stateStore || !derivedStore) {
     throw new Error('FightStateProvider failed to initialize derived stats store');
   }
 
   return (
-    <FightDerivedStatsContext.Provider value={derivedStore}>
-      <FightStateContext.Provider value={value}>{children}</FightStateContext.Provider>
-    </FightDerivedStatsContext.Provider>
+    <FightActionsContext.Provider value={actions}>
+      <FightStateStoreContext.Provider value={stateStore}>
+        <FightDerivedStatsContext.Provider value={derivedStore}>
+          {children}
+        </FightDerivedStatsContext.Provider>
+      </FightStateStoreContext.Provider>
+    </FightActionsContext.Provider>
   );
 };
 
-export const useFightState = () => {
-  const context = useContext(FightStateContext);
-  if (!context) {
-    throw new Error('useFightState must be used within a FightStateProvider');
+export const useFightActions = () => {
+  const actions = useContext(FightActionsContext);
+  if (!actions) {
+    throw new Error('useFightActions must be used within a FightStateProvider');
   }
-  return context;
+  return actions;
+};
+
+export const useFightStateSelector = <Selected,>(
+  selector: (state: FightState) => Selected,
+  equalityFn: (previous: Selected, next: Selected) => boolean = Object.is,
+) => {
+  const store = useContext(FightStateStoreContext);
+  if (!store) {
+    throw new Error('useFightStateSelector must be used within a FightStateProvider');
+  }
+
+  const selectorRef = useRef(selector);
+  const equalityFnRef = useRef(equalityFn);
+  const selectedRef = useRef<Selected>();
+  const hasSnapshotRef = useRef(false);
+
+  if (selectorRef.current !== selector) {
+    selectorRef.current = selector;
+  }
+
+  if (equalityFnRef.current !== equalityFn) {
+    equalityFnRef.current = equalityFn;
+  }
+
+  const getSnapshot = useCallback(() => {
+    const nextSelected = selectorRef.current(store.getSnapshot());
+    const previousSelected = selectedRef.current;
+    if (
+      !hasSnapshotRef.current ||
+      !equalityFnRef.current(previousSelected as Selected, nextSelected)
+    ) {
+      hasSnapshotRef.current = true;
+      selectedRef.current = nextSelected;
+      return nextSelected;
+    }
+    return previousSelected as Selected;
+  }, [store]);
+
+  const subscribe = useCallback(
+    (notify: () => void) =>
+      store.subscribe(() => {
+        const nextSelected = selectorRef.current(store.getSnapshot());
+        const previousSelected = selectedRef.current;
+        if (
+          !hasSnapshotRef.current ||
+          !equalityFnRef.current(previousSelected as Selected, nextSelected)
+        ) {
+          hasSnapshotRef.current = true;
+          selectedRef.current = nextSelected;
+          notify();
+        }
+      }),
+    [store],
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+};
+
+export const useFightState = () => {
+  const actions = useFightActions();
+  const state = useFightStateSelector((value) => value);
+  return useMemo(() => ({ state, actions }), [state, actions]);
 };
 
 export const useFightDerivedStats = () => {
