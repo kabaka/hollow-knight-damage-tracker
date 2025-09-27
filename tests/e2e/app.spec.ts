@@ -1,9 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Landing page', () => {
-  test('displays the core sections', async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
 
+    const initialStateScreenshot = await page.screenshot({ fullPage: true });
+    await testInfo.attach(`initial-state-${testInfo.project.name}`, {
+      body: initialStateScreenshot,
+      contentType: 'image/png',
+    });
+  });
+
+  test('displays the core sections', async ({ page }) => {
     await expect(
       page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
     ).toBeVisible();
@@ -14,8 +22,6 @@ test.describe('Landing page', () => {
   });
 
   test('restores build configuration and logs after a reload', async ({ page }) => {
-    await page.goto('/');
-
     await page.selectOption('#boss-target', 'custom');
     const customTargetInput = page.locator('#custom-target-hp');
     await customTargetInput.fill('3333');
