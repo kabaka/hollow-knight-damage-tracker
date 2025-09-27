@@ -5,16 +5,46 @@
     "category": "Godhome Pantheons",
     "conditions": [],
     "entries": [
-      { "boss": "Vengefly King", "version": "Attuned" },
-      { "boss": "Gruz Mother", "version": "Attuned" },
-      { "boss": "False Knight", "version": "Attuned" },
-      { "boss": "Massive Moss Charger", "version": "Attuned" },
-      { "boss": "Hornet (Protector)", "version": "Attuned" },
-      { "boss": "Gorb", "version": "Attuned" },
-      { "boss": "Dung Defender", "version": "Attuned" },
-      { "boss": "Soul Warrior", "version": "Attuned" },
-      { "boss": "Brooding Mawlek", "version": "Attuned" },
-      { "boss": "Brothers Oro & Mato", "version": "Attuned" }
+      {
+        "boss": "Vengefly King",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Gruz Mother",
+        "version": "Attuned"
+      },
+      {
+        "boss": "False Knight",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Massive Moss Charger",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Hornet (Protector)",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Gorb",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Dung Defender",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Soul Warrior",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Brooding Mawlek",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Brothers Oro & Mato",
+        "version": "Attuned"
+      }
     ]
   },
   {
@@ -23,16 +53,46 @@
     "category": "Godhome Pantheons",
     "conditions": [],
     "entries": [
-      { "boss": "Xero", "version": "Attuned" },
-      { "boss": "Crystal Guardian", "version": "Attuned" },
-      { "boss": "Soul Master", "version": "Attuned" },
-      { "boss": "Oblobbles", "version": "Attuned" },
-      { "boss": "Mantis Lords", "version": "Attuned" },
-      { "boss": "Marmu", "version": "Attuned" },
-      { "boss": "Nosk", "version": "Attuned" },
-      { "boss": "Flukemarm", "version": "Attuned" },
-      { "boss": "Broken Vessel", "version": "Attuned" },
-      { "boss": "Paintmaster Sheo", "version": "Attuned" }
+      {
+        "boss": "Xero",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Crystal Guardian",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Soul Master",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Oblobbles",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Mantis Lords",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Marmu",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Nosk",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Flukemarm",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Broken Vessel",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Paintmaster Sheo",
+        "version": "Attuned"
+      }
     ]
   },
   {
@@ -48,12 +108,30 @@
       }
     ],
     "entries": [
-      { "boss": "Hive Knight", "version": "Attuned" },
-      { "boss": "Elder Hu", "version": "Attuned" },
-      { "boss": "The Collector", "version": "Attuned" },
-      { "boss": "God Tamer", "version": "Attuned" },
-      { "boss": "Troupe Master Grimm", "version": "Attuned" },
-      { "boss": "Galien", "version": "Attuned" },
+      {
+        "boss": "Hive Knight",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Elder Hu",
+        "version": "Attuned"
+      },
+      {
+        "boss": "The Collector",
+        "version": "Attuned"
+      },
+      {
+        "boss": "God Tamer",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Troupe Master Grimm",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Galien",
+        "version": "Attuned"
+      },
       {
         "boss": "Grey Prince Zote",
         "version": "Attuned",
@@ -62,9 +140,18 @@
           "mode": "include"
         }
       },
-      { "boss": "Uumuu", "version": "Attuned" },
-      { "boss": "Hornet (Sentinel)", "version": "Attuned" },
-      { "boss": "Great Nailsage Sly", "version": "Attuned" }
+      {
+        "boss": "Uumuu",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Hornet (Sentinel)",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Great Nailsage Sly",
+        "version": "Attuned"
+      }
     ]
   },
   {
@@ -73,16 +160,46 @@
     "category": "Godhome Pantheons",
     "conditions": [],
     "entries": [
-      { "boss": "Enraged Guardian", "version": "Attuned" },
-      { "boss": "Lost Kin", "version": "Attuned" },
-      { "boss": "No Eyes", "version": "Attuned" },
-      { "boss": "Traitor Lord", "version": "Attuned" },
-      { "boss": "White Defender", "version": "Attuned" },
-      { "boss": "Failed Champion", "version": "Attuned" },
-      { "boss": "Markoth", "version": "Attuned" },
-      { "boss": "Watcher Knight", "version": "Attuned" },
-      { "boss": "Soul Tyrant", "version": "Attuned" },
-      { "boss": "Pure Vessel", "version": "Attuned" }
+      {
+        "boss": "Enraged Guardian",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Lost Kin",
+        "version": "Attuned"
+      },
+      {
+        "boss": "No Eyes",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Traitor Lord",
+        "version": "Attuned"
+      },
+      {
+        "boss": "White Defender",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Failed Champion",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Markoth",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Watcher Knight",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Soul Tyrant",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Pure Vessel",
+        "version": "Attuned"
+      }
     ]
   },
   {
@@ -104,40 +221,118 @@
       }
     ],
     "entries": [
-      { "boss": "Vengefly King", "version": "Attuned" },
-      { "boss": "Gruz Mother", "version": "Attuned" },
-      { "boss": "False Knight", "version": "Attuned" },
-      { "boss": "Massive Moss Charger", "version": "Attuned" },
-      { "boss": "Hornet (Protector)", "version": "Attuned" },
-      { "boss": "Gorb", "version": "Attuned" },
-      { "boss": "Dung Defender", "version": "Attuned" },
-      { "boss": "Soul Warrior", "version": "Attuned" },
-      { "boss": "Brooding Mawlek", "version": "Attuned" },
-      { "boss": "Brothers Oro & Mato", "version": "Attuned" },
-      { "boss": "Xero", "version": "Attuned" },
-      { "boss": "Crystal Guardian", "version": "Attuned" },
-      { "boss": "Soul Master", "version": "Attuned" },
-      { "boss": "Oblobbles", "version": "Attuned" },
+      {
+        "boss": "Vengefly King",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Gruz Mother",
+        "version": "Attuned"
+      },
+      {
+        "boss": "False Knight",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Massive Moss Charger",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Hornet (Protector)",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Gorb",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Dung Defender",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Soul Warrior",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Brooding Mawlek",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Brothers Oro & Mato",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Xero",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Crystal Guardian",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Soul Master",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Oblobbles",
+        "version": "Attuned"
+      },
       {
         "boss": "Mantis Lords",
         "version": "Attuned",
         "condition": {
           "id": "replace-mantis-lords",
           "mode": "replace",
-          "replacement": { "boss": "Sisters of Battle", "version": "Attuned" }
+          "replacement": {
+            "boss": "Sisters of Battle",
+            "version": "Attuned"
+          }
         }
       },
-      { "boss": "Marmu", "version": "Attuned" },
-      { "boss": "Nosk", "version": "Attuned" },
-      { "boss": "Flukemarm", "version": "Attuned" },
-      { "boss": "Broken Vessel", "version": "Attuned" },
-      { "boss": "Paintmaster Sheo", "version": "Attuned" },
-      { "boss": "Hive Knight", "version": "Attuned" },
-      { "boss": "Elder Hu", "version": "Attuned" },
-      { "boss": "The Collector", "version": "Attuned" },
-      { "boss": "God Tamer", "version": "Attuned" },
-      { "boss": "Troupe Master Grimm", "version": "Attuned" },
-      { "boss": "Galien", "version": "Attuned" },
+      {
+        "boss": "Marmu",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Nosk",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Flukemarm",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Broken Vessel",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Paintmaster Sheo",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Hive Knight",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Elder Hu",
+        "version": "Attuned"
+      },
+      {
+        "boss": "The Collector",
+        "version": "Attuned"
+      },
+      {
+        "boss": "God Tamer",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Troupe Master Grimm",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Galien",
+        "version": "Attuned"
+      },
       {
         "boss": "Grey Prince Zote",
         "version": "Attuned",
@@ -146,21 +341,66 @@
           "mode": "include"
         }
       },
-      { "boss": "Uumuu", "version": "Attuned" },
-      { "boss": "Hornet (Sentinel)", "version": "Attuned" },
-      { "boss": "Great Nailsage Sly", "version": "Attuned" },
-      { "boss": "Winged Nosk", "version": "Attuned" },
-      { "boss": "Lost Kin", "version": "Attuned" },
-      { "boss": "No Eyes", "version": "Attuned" },
-      { "boss": "Traitor Lord", "version": "Attuned" },
-      { "boss": "White Defender", "version": "Attuned" },
-      { "boss": "Watcher Knight", "version": "Attuned" },
-      { "boss": "Soul Tyrant", "version": "Attuned" },
-      { "boss": "Markoth", "version": "Attuned" },
-      { "boss": "Failed Champion", "version": "Attuned" },
-      { "boss": "Nightmare King Grimm", "version": "Attuned" },
-      { "boss": "Pure Vessel", "version": "Attuned" },
-      { "boss": "Absolute Radiance", "version": "Final Boss" }
+      {
+        "boss": "Uumuu",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Hornet (Sentinel)",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Great Nailsage Sly",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Winged Nosk",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Lost Kin",
+        "version": "Attuned"
+      },
+      {
+        "boss": "No Eyes",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Traitor Lord",
+        "version": "Attuned"
+      },
+      {
+        "boss": "White Defender",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Watcher Knight",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Soul Tyrant",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Markoth",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Failed Champion",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Nightmare King Grimm",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Pure Vessel",
+        "version": "Attuned"
+      },
+      {
+        "boss": "Absolute Radiance",
+        "version": "Final Boss"
+      }
     ]
   },
   {
@@ -176,7 +416,10 @@
       }
     ],
     "entries": [
-      { "boss": "The Hollow Knight", "version": "Standard" },
+      {
+        "boss": "The Hollow Knight",
+        "version": "Standard"
+      },
       {
         "boss": "The Radiance",
         "version": "Standard",
