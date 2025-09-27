@@ -270,6 +270,36 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }
   }, [state.fightEndTimestamp, flushPersist]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        flushPersist();
+      }
+    };
+
+    const handlePageHide = () => {
+      flushPersist();
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+  }, [flushPersist]);
+
   useIsomorphicLayoutEffect(
     () => () => {
       flushPersist();

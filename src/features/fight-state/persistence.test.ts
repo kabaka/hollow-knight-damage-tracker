@@ -327,4 +327,72 @@ describe('fight-state persistence', () => {
       persistSpy.mockRestore();
     }
   });
+
+  it('flushes pending persistence when the page is hidden or unloading', () => {
+    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+    vi.useFakeTimers();
+
+    const originalVisibility = Object.getOwnPropertyDescriptor(
+      document,
+      'visibilityState',
+    );
+
+    const setVisibilityState = (value: DocumentVisibilityState) => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => value,
+      });
+    };
+
+    try {
+      const { result } = renderHook(() => useFightState(), {
+        wrapper: FightStateProvider,
+      });
+
+      act(() => {
+        result.current.actions.logAttack({
+          id: 'nail-hit',
+          label: 'Nail Hit',
+          damage: 10,
+          category: 'nail',
+          timestamp: Date.now(),
+        });
+      });
+
+      expect(persistSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        setVisibilityState('hidden');
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      expect(persistSpy).toHaveBeenCalledTimes(1);
+
+      persistSpy.mockClear();
+
+      act(() => {
+        result.current.actions.setCustomTargetHp(7777);
+      });
+
+      expect(persistSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        setVisibilityState('visible');
+        window.dispatchEvent(new Event('pagehide'));
+      });
+
+      expect(persistSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+      persistSpy.mockRestore();
+      if (originalVisibility) {
+        Object.defineProperty(document, 'visibilityState', originalVisibility);
+      } else {
+        Object.defineProperty(document, 'visibilityState', {
+          configurable: true,
+          get: () => 'visible',
+        });
+      }
+    }
+  });
 });
