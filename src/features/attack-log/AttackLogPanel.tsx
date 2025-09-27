@@ -1,4 +1,4 @@
-import type { FC, MouseEvent as ReactMouseEvent } from 'react';
+import type { FC } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
@@ -12,11 +12,11 @@ type AttackParticleEffect = 'nail' | 'spell-spirit' | 'spell-dive' | 'spell-wrai
 type ParticleEffect = AttackParticleEffect | 'control';
 
 const PARTICLE_DURATIONS: Record<ParticleEffect, number> = {
-  nail: 220,
-  'spell-spirit': 360,
-  'spell-dive': 320,
-  'spell-wraith': 340,
-  control: 280,
+  nail: 200,
+  'spell-spirit': 220,
+  'spell-dive': 230,
+  'spell-wraith': 230,
+  control: 150,
 };
 
 const getParticleEffectForAttack = (attack: AttackWithMetadata): AttackParticleEffect => {
@@ -72,39 +72,14 @@ export const AttackLogPanel: FC = () => {
     derived.remainingHp,
   );
 
+  const panelRef = useRef<HTMLDivElement>(null);
   const particleTimeoutsRef = useRef<Map<HTMLElement, number>>(new Map());
 
   const triggerParticleEffect = useCallback(
-    (
-      element: HTMLElement | null,
-      effect: ParticleEffect,
-      event?: ReactMouseEvent<HTMLButtonElement>,
-    ) => {
+    (element: HTMLElement | null, effect: ParticleEffect) => {
       if (!element) {
         return;
       }
-
-      const rect = element.getBoundingClientRect();
-      const clientX = event?.clientX ?? rect.left + rect.width / 2;
-      const clientY = event?.clientY ?? rect.top + rect.height / 2;
-      const xPercent = rect.width > 0 ? ((clientX - rect.left) / rect.width) * 100 : 50;
-      let yPercent = rect.height > 0 ? ((clientY - rect.top) / rect.height) * 100 : 50;
-
-      if (effect === 'spell-dive') {
-        yPercent = 95;
-      } else if (effect === 'spell-wraith') {
-        yPercent = 5;
-      }
-
-      const clampedX = Math.min(100, Math.max(0, xPercent));
-      const clampedY = Math.min(100, Math.max(0, yPercent));
-
-      element.style.setProperty('--press-x', `${clampedX}%`);
-      element.style.setProperty('--press-y', `${clampedY}%`);
-      element.dataset.particleEffect = effect;
-      element.classList.remove('is-particle-active');
-      void element.offsetWidth;
-      element.classList.add('is-particle-active');
 
       const timeouts = particleTimeoutsRef.current;
       const previousTimeout = timeouts.get(element);
@@ -112,12 +87,21 @@ export const AttackLogPanel: FC = () => {
         window.clearTimeout(previousTimeout);
       }
 
-      const duration = PARTICLE_DURATIONS[effect] ?? 260;
-      const timeoutId = window.setTimeout(() => {
-        element.classList.remove('is-particle-active');
-        timeouts.delete(element);
-      }, duration + 80);
-      timeouts.set(element, timeoutId);
+      element.classList.remove('is-particle-active');
+
+      const activate = () => {
+        element.classList.add('is-particle-active');
+        const duration = PARTICLE_DURATIONS[effect] ?? 200;
+        const timeoutId = window.setTimeout(() => {
+          element.classList.remove('is-particle-active');
+          timeouts.delete(element);
+        }, duration);
+        timeouts.set(element, timeoutId);
+      };
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(activate);
+      });
     },
     [],
   );
@@ -156,6 +140,12 @@ export const AttackLogPanel: FC = () => {
       if (key === 'Enter' && canEndFight) {
         event.preventDefault();
         actions.endFight();
+        triggerParticleEffect(
+          panelRef.current?.querySelector<HTMLButtonElement>(
+            "[data-control='end-fight']",
+          ),
+          'control',
+        );
         return;
       }
 
@@ -166,6 +156,12 @@ export const AttackLogPanel: FC = () => {
           }
           event.preventDefault();
           actions.resetSequence();
+          triggerParticleEffect(
+            panelRef.current?.querySelector<HTMLButtonElement>(
+              "[data-control='reset-sequence']",
+            ),
+            'control',
+          );
           return;
         }
 
@@ -174,6 +170,12 @@ export const AttackLogPanel: FC = () => {
         }
         event.preventDefault();
         actions.resetLog();
+        triggerParticleEffect(
+          panelRef.current?.querySelector<HTMLButtonElement>(
+            "[data-control='reset-log']",
+          ),
+          'control',
+        );
         return;
       }
 
@@ -191,6 +193,12 @@ export const AttackLogPanel: FC = () => {
           category: attack.category,
           soulCost: attack.soulCost,
         });
+        triggerParticleEffect(
+          panelRef.current?.querySelector<HTMLButtonElement>(
+            `[data-attack-id='${attack.id}']`,
+          ),
+          getParticleEffectForAttack(attack),
+        );
       }
     };
 
@@ -203,10 +211,11 @@ export const AttackLogPanel: FC = () => {
     state.redoStack.length,
     canEndFight,
     canResetSequence,
+    triggerParticleEffect,
   ]);
 
   return (
-    <div>
+    <div ref={panelRef}>
       <p className="section__description">
         Log each successful hit to reduce the boss health target. Use the buttons below to
         record nail strikes, nail arts, spells, and charm effects with the appropriate
@@ -217,8 +226,9 @@ export const AttackLogPanel: FC = () => {
           type="button"
           className="quick-actions__button"
           data-particle-effect="control"
+          data-control="undo"
           onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control', event);
+            triggerParticleEffect(event.currentTarget, 'control');
             actions.undoLastAttack();
           }}
           disabled={damageLog.length === 0}
@@ -229,8 +239,9 @@ export const AttackLogPanel: FC = () => {
           type="button"
           className="quick-actions__button"
           data-particle-effect="control"
+          data-control="redo"
           onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control', event);
+            triggerParticleEffect(event.currentTarget, 'control');
             actions.redoLastAttack();
           }}
           disabled={redoStack.length === 0}
@@ -241,8 +252,9 @@ export const AttackLogPanel: FC = () => {
           type="button"
           className="quick-actions__button"
           data-particle-effect="control"
+          data-control="reset-log"
           onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control', event);
+            triggerParticleEffect(event.currentTarget, 'control');
             actions.resetLog();
           }}
           aria-keyshortcuts="Esc"
@@ -255,8 +267,9 @@ export const AttackLogPanel: FC = () => {
             type="button"
             className="quick-actions__button"
             data-particle-effect="control"
+            data-control="reset-sequence"
             onClick={(event) => {
-              triggerParticleEffect(event.currentTarget, 'control', event);
+              triggerParticleEffect(event.currentTarget, 'control');
               actions.resetSequence();
             }}
             aria-keyshortcuts={RESET_SEQUENCE_SHORTCUT}
@@ -269,8 +282,9 @@ export const AttackLogPanel: FC = () => {
           type="button"
           className="quick-actions__button"
           data-particle-effect="control"
+          data-control="end-fight"
           onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control', event);
+            triggerParticleEffect(event.currentTarget, 'control');
             actions.endFight();
           }}
           aria-keyshortcuts="Enter"
@@ -296,7 +310,7 @@ export const AttackLogPanel: FC = () => {
                     data-attack-id={attack.id}
                     data-particle-effect={particleEffect}
                     onClick={(event) => {
-                      triggerParticleEffect(event.currentTarget, particleEffect, event);
+                      triggerParticleEffect(event.currentTarget, particleEffect);
                       actions.logAttack({
                         id: attack.id,
                         label: attack.label,
