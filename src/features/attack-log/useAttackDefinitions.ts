@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { charmMap, nailUpgrades, shamanStoneMultipliers, spells } from '../../data';
+import { NAIL_ARTS } from './attackData';
 import {
   hasStrengthCharm,
   type AttackCategory,
@@ -78,12 +79,6 @@ export const KEY_SEQUENCE = [
 
 export const RESET_SHORTCUT_KEY = 'Escape';
 
-const NAIL_ART_MULTIPLIERS: Record<string, number> = {
-  'great-slash': 2.5,
-  'dash-slash': 2,
-  'cyclone-slash-hit': 1,
-};
-
 export const FURY_MULTIPLIER = 1.75;
 const GRUBBERFLY_BEAM_MULTIPLIER = 0.5;
 
@@ -97,13 +92,6 @@ const toNumberArray = (value: unknown): number[] | null =>
   Array.isArray(value) && value.every((item) => typeof item === 'number')
     ? (value as number[])
     : null;
-
-const getNailArtLabel = (id: string) =>
-  id === 'cyclone-slash-hit'
-    ? 'Cyclone Slash (per hit)'
-    : id === 'dash-slash'
-      ? 'Dash Slash'
-      : 'Great Slash';
 
 const getCharmEffect = (charmId: string, effectType: string) =>
   charmMap.get(charmId)?.effects.find((effect) => effect.type === effectType);
@@ -161,15 +149,11 @@ export const buildAttackGroups = (state: FightState): AttackGroup[] => {
     },
   ];
 
-  const advancedAttacks: AttackDefinition[] = Object.entries(NAIL_ART_MULTIPLIERS).map(
-    ([id, multiplier]) => {
-      const baseLabel = getNailArtLabel(id);
-      const notes: string[] = [];
-      if (id === 'cyclone-slash-hit') {
-        notes.push('Log each Cyclone Slash hit individually.');
-      } else {
-        notes.push('Nail Art damage.');
-      }
+  const nailArtLabelMap = new Map(NAIL_ARTS.map((art) => [art.id, art.label] as const));
+
+  const nailArtAttacks: AttackDefinition[] = NAIL_ARTS.map(
+    ({ id, label, multiplier, baseDescription }) => {
+      const notes: string[] = [baseDescription];
       if (hasStrength) {
         notes.push('Includes Strength charm bonus.');
       }
@@ -178,16 +162,15 @@ export const buildAttackGroups = (state: FightState): AttackGroup[] => {
       }
       return {
         id,
-        label: baseLabel,
+        label,
         damage: Math.round(nailDamageExact * multiplier),
-        category: 'advanced',
+        category: 'nail-art',
         description: notes.join(' '),
       };
     },
   );
 
   const spellAttacks: AttackDefinition[] = [];
-  const spellUpgrades: AttackDefinition[] = [];
 
   for (const spell of spells) {
     const level = build.spellLevels[spell.id] ?? 'base';
@@ -243,13 +226,6 @@ export const buildAttackGroups = (state: FightState): AttackGroup[] => {
       description: notes.length > 0 ? notes.join(' ') : undefined,
     };
     spellAttacks.push(attack);
-
-    if (level === 'upgrade' && spell.upgrade) {
-      spellUpgrades.push({
-        ...attack,
-        category: 'advanced',
-      });
-    }
   }
 
   const charmAttacks: AttackDefinition[] = [];
@@ -299,10 +275,10 @@ export const buildAttackGroups = (state: FightState): AttackGroup[] => {
             description: 'Requires 1 HP for Fury of the Fallen to trigger.',
           });
 
-          for (const [artId, multiplier] of Object.entries(NAIL_ART_MULTIPLIERS)) {
+          for (const { id: artId, multiplier } of NAIL_ARTS) {
             addCharmAttack({
               id: `${artId}-fury`,
-              label: `${getNailArtLabel(artId)} (Fury)`,
+              label: `${nailArtLabelMap.get(artId) ?? artId} (Fury)`,
               damage: Math.round(nailDamageExact * multiplier * furyMultiplier),
               category: 'charm',
               description: 'Requires 1 HP for Fury of the Fallen to trigger.',
@@ -476,12 +452,8 @@ export const buildAttackGroups = (state: FightState): AttackGroup[] => {
 
   const groups: AttackGroup[] = [
     { id: 'nail-attacks', label: 'Nail Attacks', attacks: nailAttacks },
+    { id: 'nail-arts', label: 'Nail Arts', attacks: nailArtAttacks },
     { id: 'spellcasting', label: 'Spells', attacks: spellAttacks },
-    {
-      id: 'advanced-techniques',
-      label: 'Advanced Techniques',
-      attacks: [...advancedAttacks, ...spellUpgrades],
-    },
   ];
 
   if (charmAttacks.length > 0) {

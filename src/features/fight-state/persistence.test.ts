@@ -14,11 +14,39 @@ import {
   mergePersistedState,
   persistStateToStorage,
   restorePersistedState,
+  sanitizeAttackEvents,
 } from './persistence';
 
 describe('fight-state persistence', () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  it('converts legacy advanced categories to modern equivalents', () => {
+    const events = sanitizeAttackEvents(
+      [
+        {
+          id: 'great-slash',
+          label: 'Great Slash',
+          damage: 100,
+          category: 'advanced',
+          timestamp: 1,
+        },
+        {
+          id: 'vengeful-spirit-upgrade',
+          label: 'Shade Soul',
+          damage: 30,
+          category: 'advanced',
+          timestamp: 2,
+        },
+      ],
+      [],
+    );
+
+    expect(events).toEqual([
+      expect.objectContaining({ id: 'great-slash', category: 'nail-art' }),
+      expect.objectContaining({ id: 'vengeful-spirit-upgrade', category: 'spell' }),
+    ]);
   });
 
   it('sanitizes persisted payloads before merging them into state', () => {

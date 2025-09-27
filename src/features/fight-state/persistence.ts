@@ -1,4 +1,5 @@
 import {
+  AttackCategory,
   AttackEvent,
   FightState,
   MAX_NOTCH_LIMIT,
@@ -7,6 +8,10 @@ import {
   ensureSequenceState,
   ensureSpellLevels,
 } from './fightReducer';
+import { NAIL_ART_IDS } from '../attack-log/attackData';
+import type { NailArtId } from '../attack-log/attackData';
+
+const isNailArtId = (id: string): id is NailArtId => NAIL_ART_IDS.has(id as NailArtId);
 
 export const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
 export const STORAGE_VERSION = 3;
@@ -109,12 +114,19 @@ export const sanitizeAttackEvents = (
       continue;
     }
 
+    let sanitizedCategory: AttackCategory | null = null;
     if (
-      category !== 'nail' &&
-      category !== 'spell' &&
-      category !== 'advanced' &&
-      category !== 'charm'
+      category === 'nail' ||
+      category === 'spell' ||
+      category === 'nail-art' ||
+      category === 'charm'
     ) {
+      sanitizedCategory = category;
+    } else if (category === 'advanced') {
+      sanitizedCategory = isNailArtId(id) ? 'nail-art' : 'spell';
+    }
+
+    if (!sanitizedCategory) {
       continue;
     }
 
@@ -126,7 +138,7 @@ export const sanitizeAttackEvents = (
       id,
       label,
       damage,
-      category,
+      category: sanitizedCategory,
       timestamp,
       soulCost,
     });
