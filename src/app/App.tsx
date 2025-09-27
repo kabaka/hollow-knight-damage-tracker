@@ -197,6 +197,12 @@ const TargetSelector: FC<TargetSelectorProps> = ({
   const [isOptionsOpen, setOptionsOpen] = useState(false);
   const toggleOptions = () => setOptionsOpen((open) => !open);
 
+  useEffect(() => {
+    if (selectedBossId === CUSTOM_BOSS_ID) {
+      setOptionsOpen(true);
+    }
+  }, [selectedBossId]);
+
   return (
     <section className="target-selector" aria-label="Target selection">
       <div className="target-selector__primary">

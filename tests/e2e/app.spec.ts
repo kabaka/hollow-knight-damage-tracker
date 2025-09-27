@@ -21,12 +21,12 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('button', { name: 'Player Loadout' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Attack Log' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Combat Overview' })).toBeVisible();
-    await expect(page.getByRole('group', { name: 'Encounter selection' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Target selection' })).toBeVisible();
   });
 
   test('restores build configuration and logs after a reload', async ({ page }) => {
-    await page.selectOption('#boss-target', 'custom');
-    const customTargetInput = page.locator('#custom-target-hp');
+    await page.getByRole('radio', { name: 'Custom' }).click();
+    const customTargetInput = page.getByLabel(/custom target hp/i);
     await customTargetInput.fill('3333');
 
     await page.getByRole('button', { name: 'Player Loadout' }).click();
@@ -49,8 +49,12 @@ test.describe('Landing page', () => {
 
     await page.reload();
 
-    await expect(page.locator('#boss-target')).toHaveValue('custom');
-    await expect(page.locator('#custom-target-hp')).toHaveValue('3333');
+    const restoredCustomOption = page.getByRole('radio', {
+      name: 'Custom',
+      checked: true,
+    });
+    await expect(restoredCustomOption).toBeVisible();
+    await expect(page.getByLabel(/custom target hp/i)).toHaveValue('3333');
 
     await page.getByRole('button', { name: 'Player Loadout' }).click();
     const reopenedModal = page.getByRole('dialog', { name: 'Player Loadout' });
