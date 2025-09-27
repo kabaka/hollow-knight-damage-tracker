@@ -546,6 +546,10 @@ h6 {
   font-family: var(--font-display);
   font-size: var(--font-size-title);
   letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  text-align: right;
+  min-width: 7ch;
 }
 
 .encounter-setup {
