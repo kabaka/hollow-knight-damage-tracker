@@ -4,12 +4,39 @@ import { useEffect } from 'react';
 import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
 import { RESET_SHORTCUT_KEY, useAttackDefinitions } from './useAttackDefinitions';
 
+const RESET_SEQUENCE_SHORTCUT = 'Shift+Escape';
+
 export const AttackLogPanel: FC = () => {
   const fight = useFightState();
   const derived = useFightDerivedStats();
   const { actions, state } = fight;
   const { damageLog, redoStack } = state;
   const canEndFight = derived.fightStartTimestamp != null && !derived.isFightComplete;
+  const isSequenceActive = state.activeSequenceId != null;
+
+  const sequenceKeyPrefix = state.activeSequenceId ? `${state.activeSequenceId}#` : null;
+
+  const hasStoredSequenceProgress = sequenceKeyPrefix
+    ? Object.entries(state.sequenceLogs).some(
+        ([key, log]) => key.startsWith(sequenceKeyPrefix) && log.length > 0,
+      ) ||
+      Object.entries(state.sequenceRedoStacks).some(
+        ([key, stack]) => key.startsWith(sequenceKeyPrefix) && stack.length > 0,
+      ) ||
+      Object.entries(state.sequenceFightEndTimestamps).some(
+        ([key, timestamp]) => key.startsWith(sequenceKeyPrefix) && timestamp != null,
+      ) ||
+      Object.entries(state.sequenceManualEndFlags).some(
+        ([key, ended]) => key.startsWith(sequenceKeyPrefix) && ended,
+      )
+    : false;
+
+  const canResetSequence =
+    isSequenceActive &&
+    (damageLog.length > 0 ||
+      redoStack.length > 0 ||
+      state.sequenceIndex !== 0 ||
+      hasStoredSequenceProgress);
 
   const { groupsWithMetadata, shortcutMap } = useAttackDefinitions(
     state,
@@ -45,6 +72,15 @@ export const AttackLogPanel: FC = () => {
       }
 
       if (key === RESET_SHORTCUT_KEY) {
+        if (event.shiftKey) {
+          if (!canResetSequence) {
+            return;
+          }
+          event.preventDefault();
+          actions.resetSequence();
+          return;
+        }
+
         if (state.damageLog.length === 0 && state.redoStack.length === 0) {
           return;
         }
@@ -72,7 +108,14 @@ export const AttackLogPanel: FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [actions, shortcutMap, state.damageLog.length, state.redoStack.length, canEndFight]);
+  }, [
+    actions,
+    shortcutMap,
+    state.damageLog.length,
+    state.redoStack.length,
+    canEndFight,
+    canResetSequence,
+  ]);
 
   return (
     <div>
@@ -107,6 +150,17 @@ export const AttackLogPanel: FC = () => {
         >
           Quick reset (Esc)
         </button>
+        {isSequenceActive ? (
+          <button
+            type="button"
+            className="quick-actions__button"
+            onClick={actions.resetSequence}
+            aria-keyshortcuts={RESET_SEQUENCE_SHORTCUT}
+            disabled={!canResetSequence}
+          >
+            Reset sequence (Shift+Esc)
+          </button>
+        ) : null}
         <button
           type="button"
           className="quick-actions__button"

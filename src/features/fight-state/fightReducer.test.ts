@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { bossMap, charmMap, DEFAULT_BOSS_ID } from '../../data';
+import { bossMap, bossSequenceMap, charmMap, DEFAULT_BOSS_ID } from '../../data';
 import {
   MAX_NOTCH_LIMIT,
   MAX_OVERCHARM_OVERFLOW,
@@ -110,5 +110,82 @@ describe('fightReducer fight completion tracking', () => {
 
     expect(resumed.fightEndTimestamp).toBeNull();
     expect(resumed.fightManuallyEnded).toBe(false);
+  });
+});
+
+describe('fightReducer sequence management', () => {
+  const masterSequence = bossSequenceMap.get('pantheon-of-the-master');
+
+  if (!masterSequence) {
+    throw new Error('Expected pantheon-of-the-master sequence to be defined for tests');
+  }
+
+  const firstStage = masterSequence.entries[0];
+  const secondStage = masterSequence.entries[1];
+
+  if (!firstStage || !secondStage) {
+    throw new Error('Expected pantheon-of-the-master sequence to have multiple stages');
+  }
+
+  it('clears progress across all stages when resetting the sequence', () => {
+    let state = createInitialState();
+
+    state = fightReducer(state, {
+      type: 'startSequence',
+      sequenceId: masterSequence.id,
+    });
+
+    state = fightReducer(state, {
+      type: 'logAttack',
+      id: 'stage-0-hit',
+      label: 'Stage 0 Hit',
+      damage: Math.max(1, Math.floor(firstStage.target.hp / 2)),
+      category: 'nail',
+      timestamp: 1_000,
+    });
+
+    state = fightReducer(state, { type: 'advanceSequence' });
+
+    state = fightReducer(state, {
+      type: 'logAttack',
+      id: 'stage-1-hit',
+      label: 'Stage 1 Hit',
+      damage: Math.max(1, Math.floor(secondStage.target.hp / 3)),
+      category: 'nail',
+      timestamp: 2_000,
+    });
+
+    expect(state.sequenceIndex).toBe(1);
+    expect(state.damageLog).toHaveLength(1);
+    expect(state.activeSequenceId).toBe(masterSequence.id);
+
+    const reset = fightReducer(state, { type: 'resetSequence' });
+
+    expect(reset.activeSequenceId).toBe(masterSequence.id);
+    expect(reset.sequenceIndex).toBe(0);
+    expect(reset.damageLog).toHaveLength(0);
+    expect(reset.redoStack).toHaveLength(0);
+    expect(reset.fightEndTimestamp).toBeNull();
+    expect(reset.fightManuallyEnded).toBe(false);
+    expect(reset.selectedBossId).toBe(firstStage.target.id);
+
+    const sequencePrefix = `${masterSequence.id}#`;
+
+    expect(
+      Object.keys(reset.sequenceLogs).some((key) => key.startsWith(sequencePrefix)),
+    ).toBe(false);
+    expect(
+      Object.keys(reset.sequenceRedoStacks).some((key) => key.startsWith(sequencePrefix)),
+    ).toBe(false);
+    expect(
+      Object.keys(reset.sequenceFightEndTimestamps).some((key) =>
+        key.startsWith(sequencePrefix),
+      ),
+    ).toBe(false);
+    expect(
+      Object.keys(reset.sequenceManualEndFlags).some((key) =>
+        key.startsWith(sequencePrefix),
+      ),
+    ).toBe(false);
   });
 });
