@@ -212,8 +212,9 @@ export const CombatStatsPanel: FC = () => {
   );
 
   const stats = [
-    { label: 'Target HP', value: formatInteger(targetHp) },
+    { id: 'target-hp', label: 'Target HP', value: formatInteger(targetHp) },
     {
+      id: 'damage-logged',
       label: 'Damage Logged',
       value: formatInteger(totalDamage),
       trend: {
@@ -222,6 +223,7 @@ export const CombatStatsPanel: FC = () => {
       },
     },
     {
+      id: 'remaining-hp',
       label: 'Remaining HP',
       value: formatInteger(remainingHp),
       trend: {
@@ -230,8 +232,9 @@ export const CombatStatsPanel: FC = () => {
         valueDomain: [0, targetHp],
       },
     },
-    { label: 'Attacks Logged', value: attacksLogged.toString() },
+    { id: 'attacks-logged', label: 'Attacks Logged', value: attacksLogged.toString() },
     {
+      id: 'average-damage',
       label: 'Average Damage',
       value: formatDecimal(averageDamage),
       trend: {
@@ -240,14 +243,21 @@ export const CombatStatsPanel: FC = () => {
       },
     },
     {
+      id: 'dps',
       label: 'DPS',
       trend: {
         data: dpsSeries,
         ariaLabel: 'Damage per second trend',
       },
     },
-    { label: 'Actions / Min', value: formatDecimal(actionsPerMinute) },
+    {
+      id: 'actions-per-minute',
+      label: 'Actions / Min',
+      value: formatDecimal(actionsPerMinute),
+    },
   ];
+
+  const isLowHealth = targetHp > 0 && remainingHp > 0 && remainingHp / targetHp <= 0.25;
 
   return (
     <div className="data-list" aria-live="polite">
@@ -256,11 +266,18 @@ export const CombatStatsPanel: FC = () => {
         can close the gap before enrage timers or stagger opportunities end.
       </p>
       {stats.map((stat) => (
-        <div key={stat.label} className="data-list__item">
+        <div key={stat.id} className="data-list__item" data-stat-id={stat.id}>
           <span className="data-list__label">{stat.label}</span>
           <span className="data-list__value">
             {stat.value != null ? (
-              <span className="data-list__value-text">{stat.value}</span>
+              <span
+                className="data-list__value-text"
+                data-low-health={
+                  stat.id === 'remaining-hp' && isLowHealth ? 'true' : undefined
+                }
+              >
+                {stat.value}
+              </span>
             ) : null}
             {stat.trend && stat.trend.data.length >= 2 ? (
               <Sparkline

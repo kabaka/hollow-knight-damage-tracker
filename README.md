@@ -95,6 +95,12 @@ When extending the UI, lean on these tokens before introducing bespoke colors so
 - Buttons and toggles use polygonal `clip-path` treatments to emulate charm slots and tablet corners instead of rounded pills.
 - Modals and panels layer subtle noise above the gradients, preventing modern flatness while keeping readability high.
 
+### Atmosphere & Interactivity
+
+- **Dimmed cavern glow:** The global background now layers deep blue-grey gradients, a gentle vignette, and a faint hex lattice so the interface feels like a relic lit within a Godhome chamber.
+- **Tactile controls:** Buttons and selects compress with a brief soul-white flash, while nail, spell, and control buttons trigger themed CSS particle bursts to make every click feel like a strike.
+- **State-aware cues:** Combat panels pulse when a fight begins or ends, and the Remaining HP readout glows softly under 25% to telegraph danger and victory without stealing focus.
+
 Contributors can inspect the implementations inside `src/styles/global.css`—mirroring these primitives will keep future components steeped in the same ancient elegance.
 
 ## Tech Stack
