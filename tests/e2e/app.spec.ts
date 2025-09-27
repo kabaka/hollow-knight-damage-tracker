@@ -18,13 +18,15 @@ test.describe('Landing page', () => {
     await expect(
       page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
     ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Change Encounter' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Player Loadout' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Attack Log' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Combat Overview' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Target selection' })).toBeVisible();
+    await expect(page.getByRole('progressbar', { name: 'Boss HP' })).toBeVisible();
   });
 
   test('restores build configuration and logs after a reload', async ({ page }) => {
+    await page.getByRole('button', { name: 'Change Encounter' }).click();
     await page.getByRole('radio', { name: 'Custom' }).click();
     const customTargetInput = page.getByLabel(/custom target hp/i);
     await customTargetInput.fill('3333');
@@ -49,6 +51,7 @@ test.describe('Landing page', () => {
 
     await page.reload();
 
+    await page.getByRole('button', { name: 'Change Encounter' }).click();
     const restoredCustomOption = page.getByRole('radio', {
       name: 'Custom',
       checked: true,

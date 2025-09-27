@@ -12,7 +12,7 @@ describe('App', () => {
     window.localStorage.clear();
   });
 
-  it('renders the modern header and panels', () => {
+  it('renders the HUD banner and panels', () => {
     render(<App />);
 
     expect(
@@ -23,43 +23,48 @@ describe('App', () => {
       screen.getByRole('heading', { name: /combat overview/i, level: 2 }),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: /player loadout/i })).toBeVisible();
+    const changeEncounter = screen.getByRole('button', { name: /change encounter/i });
+    expect(changeEncounter).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('progressbar', { name: /boss hp/i })).toBeInTheDocument();
   });
 
-  it('allows selecting a custom boss target and updating HP from the header', async () => {
+  it('allows selecting a custom boss target and updating HP from the HUD', async () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(screen.getByRole('button', { name: /change encounter/i }));
     const optionsToggle = screen.getByRole('button', {
-      name: /advanced target options/i,
+      name: /toggle advanced target options/i,
     });
     await user.click(optionsToggle);
     await user.click(screen.getByRole('radio', { name: /custom/i }));
     const hpInput = await screen.findByLabelText(/custom target hp/i);
-    await user.clear(hpInput);
+    await user.click(hpInput);
+    await user.keyboard('{Control>}a{/Control}');
+    await user.keyboard('{Backspace}');
     await user.type(hpInput, '500');
 
-    const targetMetric = screen
-      .getByText(/target hp/i, { selector: '.scoreboard-metric__label' })
-      .closest('.scoreboard-metric');
-    expect(targetMetric).toHaveTextContent('500');
+    expect(
+      within(screen.getByRole('banner')).getByText(/500\s*\/\s*500/),
+    ).toBeInTheDocument();
   });
 
   it('switches boss versions to reflect Godhome health pools', async () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(screen.getByRole('button', { name: /change encounter/i }));
     await user.click(screen.getByRole('radio', { name: /gruz mother/i }));
     const optionsToggle = screen.getByRole('button', {
-      name: /advanced target options/i,
+      name: /toggle advanced target options/i,
     });
     await user.click(optionsToggle);
     const versionSelect = await screen.findByLabelText(/boss version/i);
     await user.selectOptions(versionSelect, 'gruz-mother__ascended');
 
-    const targetMetric = screen
-      .getByText(/target hp/i, { selector: '.scoreboard-metric__label' })
-      .closest('.scoreboard-metric');
-    expect(targetMetric).toHaveTextContent('945');
+    expect(
+      within(screen.getByRole('banner')).getByText(/945\s*\/\s*945/),
+    ).toBeInTheDocument();
   });
 
   it('applies charm presets and enforces overcharm limits', async () => {
@@ -99,11 +104,12 @@ describe('App', () => {
     expect(fragileStrengthButton).toBeDisabled();
   });
 
-  it('surfaces sequence conditions in the header when selecting a pantheon', async () => {
+  it('surfaces sequence conditions in the setup tray when selecting a pantheon', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.selectOptions(screen.getByLabelText(/encounter/i), 'pantheon-of-the-sage');
+    await user.click(screen.getByRole('button', { name: /change encounter/i }));
+    await user.selectOptions(screen.getByLabelText(/mode/i), 'pantheon-of-the-sage');
 
     const conditionsGroup = await screen.findByRole('group', {
       name: /sequence conditions/i,

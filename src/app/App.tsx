@@ -10,34 +10,21 @@ import {
   useFightDerivedStats,
 } from '../features/fight-state/FightStateContext';
 
-type EncounterBrandProps = {
-  readonly onOpenModal: () => void;
+const formatNumber = (value: number) => value.toLocaleString();
+
+const formatDecimal = (value: number | null, fractionDigits = 1) => {
+  if (value == null || Number.isNaN(value)) {
+    return '—';
+  }
+  return value.toLocaleString(undefined, {
+    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: fractionDigits,
+  });
 };
 
-const EncounterBrand: FC<EncounterBrandProps> = ({ onOpenModal }) => (
-  <div className="hud-brand">
-    <div className="hud-brand__copy">
-      <h1 className="hud-brand__title">Hollow Knight Damage Tracker</h1>
-      <p className="hud-brand__subtitle">
-        Plan your build, log every strike, and monitor fight-ending stats in real time.
-      </p>
-    </div>
-    <div className="hud-brand__actions">
-      <button type="button" className="header-button" onClick={onOpenModal}>
-        Player Loadout
-      </button>
-    </div>
-  </div>
-);
-
 type StageTimelineProps = {
-  readonly bossSequences: ReturnType<typeof useBuildConfiguration>['bossSequences'];
-  readonly sequenceSelectValue: string;
-  readonly onSequenceChange: (value: string) => void;
-  readonly isSequenceActive: boolean;
-  readonly sequenceEntries: ReturnType<typeof useBuildConfiguration>['sequenceEntries'];
-  readonly cappedSequenceIndex: number;
-  readonly onStageSelect: (index: number) => void;
+  readonly stageLabel: string | null;
+  readonly stageProgress: { current: number; total: number } | null;
   readonly onAdvance: () => void;
   readonly onRewind: () => void;
   readonly hasNext: boolean;
@@ -45,133 +32,207 @@ type StageTimelineProps = {
 };
 
 const StageTimeline: FC<StageTimelineProps> = ({
-  bossSequences,
-  sequenceSelectValue,
-  onSequenceChange,
-  isSequenceActive,
-  sequenceEntries,
-  cappedSequenceIndex,
-  onStageSelect,
+  stageLabel,
+  stageProgress,
   onAdvance,
   onRewind,
   hasNext,
   hasPrevious,
-}) => (
-  <section className="stage-timeline" aria-label="Stage navigation">
-    <label className="stage-timeline__select">
-      <span className="stage-timeline__label">Encounter</span>
-      <select
-        value={sequenceSelectValue}
-        onChange={(event) => onSequenceChange(event.target.value)}
-      >
-        <option value="">Single target practice</option>
-        {bossSequences.map((sequence) => (
-          <option key={sequence.id} value={sequence.id}>
-            {sequence.name}
-          </option>
-        ))}
-      </select>
-    </label>
+}) => {
+  if (!stageProgress) {
+    return null;
+  }
 
-    {isSequenceActive ? (
-      <div className="stage-timeline__rail">
-        <button
-          type="button"
-          className="stage-timeline__nav"
-          onClick={onRewind}
-          disabled={!hasPrevious}
-          aria-keyshortcuts="["
-        >
-          Prev
-        </button>
-        <ol className="stage-timeline__stages">
-          {sequenceEntries.map((entry, index) => {
-            const isCurrent = index === cappedSequenceIndex;
-            return (
-              <li key={entry.id} className="stage-timeline__stage">
-                <button
-                  type="button"
-                  onClick={() => onStageSelect(index)}
-                  className="stage-timeline__stage-button"
-                  aria-current={isCurrent ? 'step' : undefined}
-                  aria-pressed={isCurrent}
-                >
-                  <span className="stage-timeline__stage-index">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span className="stage-timeline__stage-name">
-                    {entry.target.bossName}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-        <button
-          type="button"
-          className="stage-timeline__nav"
-          onClick={onAdvance}
-          disabled={!hasNext}
-          aria-keyshortcuts="]"
-        >
-          Next
-        </button>
-      </div>
-    ) : (
-      <p className="stage-timeline__empty" aria-live="polite">
-        Practice a single target or switch to a Godhome sequence to plan multi-fight runs.
-      </p>
-    )}
-  </section>
+  const stageTitle = stageLabel ?? 'Current stage';
+  const stagePosition = `${stageProgress.current}/${stageProgress.total}`;
+
+  return (
+    <div className="hud-timeline" role="group" aria-label="Stage navigation">
+      <button
+        type="button"
+        className="hud-timeline__control"
+        onClick={onRewind}
+        disabled={!hasPrevious}
+      >
+        <span aria-hidden="true">‹</span>
+        <span className="sr-only">Previous stage</span>
+      </button>
+      <span className="hud-timeline__label" aria-live="polite">
+        <span className="hud-timeline__title">{stageTitle}</span>
+        <span className="hud-timeline__progress">{stagePosition}</span>
+      </span>
+      <button
+        type="button"
+        className="hud-timeline__control"
+        onClick={onAdvance}
+        disabled={!hasNext}
+      >
+        <span aria-hidden="true">›</span>
+        <span className="sr-only">Next stage</span>
+      </button>
+    </div>
+  );
+};
+
+type EncounterBrandProps = {
+  readonly encounterName: string;
+  readonly versionLabel: string | null;
+  readonly arenaLabel: string | null;
+};
+
+const EncounterBrand: FC<EncounterBrandProps> = ({
+  encounterName,
+  versionLabel,
+  arenaLabel,
+}) => (
+  <div className="hud-brand" aria-live="polite">
+    <h1 className="hud-brand__title">Hollow Knight Damage Tracker</h1>
+    <div className="hud-brand__context">
+      <span className="hud-brand__divider" aria-hidden="true">
+        ◆
+      </span>
+      <span className="hud-brand__encounter">
+        {encounterName}
+        {versionLabel ? (
+          <span className="hud-brand__version">({versionLabel})</span>
+        ) : null}
+      </span>
+      {arenaLabel ? (
+        <>
+          <span className="hud-brand__divider" aria-hidden="true">
+            ◆
+          </span>
+          <span className="hud-brand__arena">{arenaLabel}</span>
+        </>
+      ) : null}
+    </div>
+  </div>
 );
 
 type TargetScoreboardProps = {
-  readonly targetHp: number;
-  readonly totalDamage: number;
-  readonly remainingHp: number;
-  readonly currentStageName: string | null;
-  readonly arenaName: string | null;
+  readonly derived: ReturnType<typeof useFightDerivedStats>;
 };
 
-const TargetScoreboard: FC<TargetScoreboardProps> = ({
-  targetHp,
-  totalDamage,
-  remainingHp,
-  currentStageName,
-  arenaName,
-}) => {
+const TargetScoreboard: FC<TargetScoreboardProps> = ({ derived }) => {
+  const { targetHp, remainingHp, totalDamage, attacksLogged, averageDamage, dps } =
+    derived;
+  const percentRemaining = targetHp > 0 ? Math.max(0, remainingHp / targetHp) : 0;
+
   const metrics = useMemo(
-    () =>
-      [
-        { label: 'Target HP', value: targetHp.toLocaleString() },
-        { label: 'Damage Logged', value: totalDamage.toLocaleString() },
-        { label: 'Remaining', value: remainingHp.toLocaleString() },
-        currentStageName
-          ? { label: 'Current Stage', value: currentStageName }
-          : arenaName
-            ? { label: 'Arena', value: arenaName }
-            : null,
-      ].filter((metric): metric is { label: string; value: string } => metric !== null),
-    [arenaName, currentStageName, remainingHp, targetHp, totalDamage],
+    () => [
+      { label: 'Damage', value: formatNumber(totalDamage) },
+      { label: 'Attacks', value: formatNumber(attacksLogged) },
+      { label: 'Avg Hit', value: formatDecimal(averageDamage) },
+      { label: 'DPS', value: formatDecimal(dps) },
+    ],
+    [attacksLogged, averageDamage, dps, totalDamage],
   );
 
   return (
-    <section className="target-scoreboard" aria-live="polite">
-      {metrics.map((metric) => (
-        <div key={metric.label} className="scoreboard-metric">
-          <span className="scoreboard-metric__label">{metric.label}</span>
-          <span className="scoreboard-metric__value">{metric.value}</span>
+    <section className="hud-scoreboard" aria-label="Encounter scoreboard">
+      <div className="hud-health" role="group" aria-label="Boss HP">
+        <span className="hud-health__label">HP</span>
+        <div
+          className="hud-health__track"
+          role="progressbar"
+          aria-label="Boss HP"
+          aria-valuemin={0}
+          aria-valuemax={targetHp}
+          aria-valuenow={remainingHp}
+        >
+          <div
+            className="hud-health__fill"
+            style={{ width: `${Math.round(percentRemaining * 100)}%` }}
+            aria-hidden="true"
+          />
         </div>
-      ))}
+        <span className="hud-health__value">
+          {formatNumber(remainingHp)} / {formatNumber(targetHp)}
+        </span>
+      </div>
+      <dl className="hud-metrics">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="hud-metrics__item">
+            <dt className="hud-metrics__label">{metric.label}</dt>
+            <dd className="hud-metrics__value">{metric.value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 };
+
+type HeaderBarProps = {
+  readonly derived: ReturnType<typeof useFightDerivedStats>;
+  readonly encounterName: string;
+  readonly versionLabel: string | null;
+  readonly arenaLabel: string | null;
+  readonly onToggleSetup: () => void;
+  readonly onOpenLoadout: () => void;
+  readonly isSetupOpen: boolean;
+  readonly stageLabel: string | null;
+  readonly stageProgress: { current: number; total: number } | null;
+  readonly onAdvanceStage: () => void;
+  readonly onRewindStage: () => void;
+  readonly hasNextStage: boolean;
+  readonly hasPreviousStage: boolean;
+};
+
+const HeaderBar: FC<HeaderBarProps> = ({
+  derived,
+  encounterName,
+  versionLabel,
+  arenaLabel,
+  onToggleSetup,
+  onOpenLoadout,
+  isSetupOpen,
+  stageLabel,
+  stageProgress,
+  onAdvanceStage,
+  onRewindStage,
+  hasNextStage,
+  hasPreviousStage,
+}) => (
+  <header className="encounter-hud" role="banner">
+    <div className="encounter-hud__primary">
+      <EncounterBrand
+        encounterName={encounterName}
+        versionLabel={versionLabel}
+        arenaLabel={arenaLabel}
+      />
+      <StageTimeline
+        stageLabel={stageLabel}
+        stageProgress={stageProgress}
+        onAdvance={onAdvanceStage}
+        onRewind={onRewindStage}
+        hasNext={hasNextStage}
+        hasPrevious={hasPreviousStage}
+      />
+      <div className="hud-actions">
+        <button
+          type="button"
+          className="hud-actions__button"
+          onClick={onToggleSetup}
+          aria-expanded={isSetupOpen}
+          aria-controls="encounter-setup"
+        >
+          <span aria-hidden="true">⚙️</span>
+          <span className="hud-actions__label">Change Encounter</span>
+        </button>
+        <button type="button" className="hud-actions__button" onClick={onOpenLoadout}>
+          <span aria-hidden="true">👤</span>
+          <span className="hud-actions__label">Player Loadout</span>
+        </button>
+      </div>
+    </div>
+    <TargetScoreboard derived={derived} />
+  </header>
+);
 
 type TargetSelectorProps = {
   readonly bosses: ReturnType<typeof useBuildConfiguration>['bosses'];
   readonly bossSelectValue: string;
   readonly onBossChange: (value: string) => void;
-  readonly isSequenceActive: boolean;
   readonly selectedBoss: ReturnType<typeof useBuildConfiguration>['selectedBoss'];
   readonly selectedBossId: string | null;
   readonly onBossVersionChange: (value: string) => void;
@@ -185,7 +246,6 @@ const TargetSelector: FC<TargetSelectorProps> = ({
   bosses,
   bossSelectValue,
   onBossChange,
-  isSequenceActive,
   selectedBoss,
   selectedBossId,
   onBossVersionChange,
@@ -195,7 +255,7 @@ const TargetSelector: FC<TargetSelectorProps> = ({
   onCustomHpChange,
 }) => {
   const [isOptionsOpen, setOptionsOpen] = useState(false);
-  const toggleOptions = () => setOptionsOpen((open) => !open);
+  const [customHpDraft, setCustomHpDraft] = useState(() => customTargetHp.toString());
 
   useEffect(() => {
     if (selectedBossId === CUSTOM_BOSS_ID) {
@@ -203,69 +263,71 @@ const TargetSelector: FC<TargetSelectorProps> = ({
     }
   }, [selectedBossId]);
 
-  return (
-    <section className="target-selector" aria-label="Target selection">
-      <div className="target-selector__primary">
-        <div className="target-selector__header">
-          <span className="target-selector__label">Boss target</span>
-          <button
-            type="button"
-            className="target-selector__options-toggle"
-            onClick={toggleOptions}
-            aria-expanded={isOptionsOpen}
-            aria-controls="target-advanced-options"
-          >
-            ⚙️
-            <span className="sr-only">Advanced target options</span>
-          </button>
-        </div>
-        <div
-          className="segmented-control"
-          role="radiogroup"
-          aria-label="Boss target"
-          aria-disabled={isSequenceActive}
-        >
-          {bosses.map((boss) => {
-            const isSelected = bossSelectValue === boss.id;
-            return (
-              <button
-                key={boss.id}
-                type="button"
-                className="segmented-control__option"
-                data-selected={isSelected}
-                onClick={() => onBossChange(boss.id)}
-                disabled={isSequenceActive}
-                role="radio"
-                aria-checked={isSelected}
-              >
-                {boss.name}
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            className="segmented-control__option"
-            data-selected={bossSelectValue === CUSTOM_BOSS_ID}
-            onClick={() => onBossChange(CUSTOM_BOSS_ID)}
-            disabled={isSequenceActive}
-            role="radio"
-            aria-checked={bossSelectValue === CUSTOM_BOSS_ID}
-          >
-            Custom
-          </button>
-        </div>
-      </div>
+  useEffect(() => {
+    setCustomHpDraft(customTargetHp.toString());
+  }, [customTargetHp]);
 
+  const handleCustomHpDraftChange = (value: string) => {
+    const sanitized = value.replace(/[^0-9]/g, '');
+    setCustomHpDraft(sanitized);
+    if (sanitized !== '') {
+      onCustomHpChange(sanitized);
+    }
+  };
+
+  return (
+    <section className="target-selector" aria-labelledby="target-selector-heading">
+      <div className="target-selector__header">
+        <h3 id="target-selector-heading">Boss Target</h3>
+        <button
+          type="button"
+          className="target-selector__options-toggle"
+          onClick={() => setOptionsOpen((open) => !open)}
+          aria-expanded={isOptionsOpen}
+          aria-controls="target-selector-options"
+        >
+          ⚙️
+          <span className="sr-only">Toggle advanced target options</span>
+        </button>
+      </div>
+      <div className="segmented-control" role="radiogroup" aria-label="Boss target">
+        {bosses.map((boss) => {
+          const isSelected = bossSelectValue === boss.id;
+          return (
+            <button
+              key={boss.id}
+              type="button"
+              className="segmented-control__option"
+              data-selected={isSelected}
+              onClick={() => onBossChange(boss.id)}
+              role="radio"
+              aria-checked={isSelected}
+            >
+              {boss.name}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          className="segmented-control__option"
+          data-selected={bossSelectValue === CUSTOM_BOSS_ID}
+          onClick={() => onBossChange(CUSTOM_BOSS_ID)}
+          role="radio"
+          aria-checked={bossSelectValue === CUSTOM_BOSS_ID}
+        >
+          Custom
+        </button>
+      </div>
       <div
-        id="target-advanced-options"
+        id="target-selector-options"
         className="target-selector__tray"
         hidden={!isOptionsOpen}
       >
-        {!isSequenceActive && selectedBoss && selectedBossId !== CUSTOM_BOSS_ID ? (
+        {selectedBoss && selectedBossId !== CUSTOM_BOSS_ID ? (
           <label className="target-selector__field">
             <span className="target-selector__field-label">Boss version</span>
             <select
-              value={selectedBossId ?? ''}
+              value={selectedTarget?.id ?? selectedBoss.versions[0]?.targetId ?? ''}
               onChange={(event) => onBossVersionChange(event.target.value)}
             >
               {selectedBoss.versions.map((version) => (
@@ -277,16 +339,21 @@ const TargetSelector: FC<TargetSelectorProps> = ({
           </label>
         ) : null}
 
-        {!isSequenceActive && selectedBossId === CUSTOM_BOSS_ID ? (
+        {selectedBossId === CUSTOM_BOSS_ID ? (
           <label className="target-selector__field" htmlFor="custom-target-hp">
             <span className="target-selector__field-label">Custom target HP</span>
             <input
               id="custom-target-hp"
-              type="number"
-              min={1}
-              step={10}
-              value={customTargetHp}
-              onChange={(event) => onCustomHpChange(event.target.value)}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={customHpDraft}
+              onChange={(event) => handleCustomHpDraftChange(event.target.value)}
+              onBlur={() => {
+                if (customHpDraft === '') {
+                  setCustomHpDraft(customTargetHp.toString());
+                }
+              }}
             />
           </label>
         ) : null}
@@ -305,38 +372,214 @@ const TargetSelector: FC<TargetSelectorProps> = ({
   );
 };
 
-type HeaderBarProps = {
-  readonly onOpenModal: () => void;
+type SequenceSelectorProps = {
+  readonly bossSequences: ReturnType<typeof useBuildConfiguration>['bossSequences'];
+  readonly sequenceSelectValue: string;
+  readonly onSequenceChange: (value: string) => void;
+  readonly sequenceEntries: ReturnType<typeof useBuildConfiguration>['sequenceEntries'];
+  readonly cappedSequenceIndex: number;
+  readonly onStageSelect: (index: number) => void;
 };
 
-const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
+const SequenceSelector: FC<SequenceSelectorProps> = ({
+  bossSequences,
+  sequenceSelectValue,
+  onSequenceChange,
+  sequenceEntries,
+  cappedSequenceIndex,
+  onStageSelect,
+}) => (
+  <section className="sequence-selector" aria-labelledby="sequence-selector-heading">
+    <div className="sequence-selector__header">
+      <h3 id="sequence-selector-heading">Encounter Stage</h3>
+    </div>
+    <label className="sequence-selector__field">
+      <span className="sequence-selector__field-label">Mode</span>
+      <select
+        value={sequenceSelectValue}
+        onChange={(event) => onSequenceChange(event.target.value)}
+      >
+        <option value="">Single target practice</option>
+        {bossSequences.map((sequence) => (
+          <option key={sequence.id} value={sequence.id}>
+            {sequence.name}
+          </option>
+        ))}
+      </select>
+    </label>
+    {sequenceEntries.length > 0 ? (
+      <ol className="sequence-selector__stages">
+        {sequenceEntries.map((entry, index) => {
+          const isCurrent = index === cappedSequenceIndex;
+          return (
+            <li key={entry.id}>
+              <button
+                type="button"
+                className="sequence-selector__stage"
+                onClick={() => onStageSelect(index)}
+                aria-current={isCurrent ? 'true' : undefined}
+              >
+                <span className="sequence-selector__stage-index">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="sequence-selector__stage-name">
+                  {entry.target.bossName}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    ) : (
+      <p className="sequence-selector__empty" aria-live="polite">
+        Select a Godhome sequence to practice multi-fight runs.
+      </p>
+    )}
+  </section>
+);
+
+type EncounterSetupPanelProps = {
+  readonly isOpen: boolean;
+  readonly bosses: ReturnType<typeof useBuildConfiguration>['bosses'];
+  readonly bossSelectValue: string;
+  readonly onBossChange: (value: string) => void;
+  readonly selectedBoss: ReturnType<typeof useBuildConfiguration>['selectedBoss'];
+  readonly selectedBossId: string | null;
+  readonly onBossVersionChange: (value: string) => void;
+  readonly selectedTarget: ReturnType<typeof useBuildConfiguration>['selectedTarget'];
+  readonly selectedVersion: ReturnType<typeof useBuildConfiguration>['selectedVersion'];
+  readonly customTargetHp: number;
+  readonly onCustomHpChange: (value: string) => void;
+  readonly bossSequences: ReturnType<typeof useBuildConfiguration>['bossSequences'];
+  readonly sequenceSelectValue: string;
+  readonly onSequenceChange: (value: string) => void;
+  readonly sequenceEntries: ReturnType<typeof useBuildConfiguration>['sequenceEntries'];
+  readonly cappedSequenceIndex: number;
+  readonly onStageSelect: (index: number) => void;
+  readonly activeSequence: ReturnType<typeof useBuildConfiguration>['activeSequence'];
+  readonly sequenceConditionValues: ReturnType<
+    typeof useBuildConfiguration
+  >['sequenceConditionValues'];
+  readonly onConditionToggle: (conditionId: string, enabled: boolean) => void;
+};
+
+const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
+  isOpen,
+  bosses,
+  bossSelectValue,
+  onBossChange,
+  selectedBoss,
+  selectedBossId,
+  onBossVersionChange,
+  selectedTarget,
+  selectedVersion,
+  customTargetHp,
+  onCustomHpChange,
+  bossSequences,
+  sequenceSelectValue,
+  onSequenceChange,
+  sequenceEntries,
+  cappedSequenceIndex,
+  onStageSelect,
+  activeSequence,
+  sequenceConditionValues,
+  onConditionToggle,
+}) => (
+  <section
+    id="encounter-setup"
+    className="encounter-setup"
+    aria-label="Encounter setup"
+    hidden={!isOpen}
+  >
+    <div className="encounter-setup__grid">
+      <TargetSelector
+        bosses={bosses}
+        bossSelectValue={bossSelectValue}
+        onBossChange={onBossChange}
+        selectedBoss={selectedBoss}
+        selectedBossId={selectedBossId}
+        onBossVersionChange={onBossVersionChange}
+        selectedTarget={selectedTarget}
+        selectedVersion={selectedVersion}
+        customTargetHp={customTargetHp}
+        onCustomHpChange={onCustomHpChange}
+      />
+      <SequenceSelector
+        bossSequences={bossSequences}
+        sequenceSelectValue={sequenceSelectValue}
+        onSequenceChange={onSequenceChange}
+        sequenceEntries={sequenceEntries}
+        cappedSequenceIndex={cappedSequenceIndex}
+        onStageSelect={onStageSelect}
+      />
+    </div>
+    {activeSequence && activeSequence.conditions.length > 0 ? (
+      <section
+        className="sequence-conditions"
+        aria-label="Sequence conditions"
+        role="group"
+      >
+        <h4 className="sequence-conditions__title">Sequence conditions</h4>
+        <div className="sequence-conditions__grid">
+          {activeSequence.conditions.map((condition) => {
+            const isEnabled = sequenceConditionValues[condition.id] ?? false;
+            return (
+              <label key={condition.id} className="sequence-conditions__option">
+                <input
+                  type="checkbox"
+                  checked={isEnabled}
+                  onChange={(event) =>
+                    onConditionToggle(condition.id, event.target.checked)
+                  }
+                />
+                <span>
+                  <span className="sequence-conditions__label">{condition.label}</span>
+                  {condition.description ? (
+                    <span className="sequence-conditions__description">
+                      {condition.description}
+                    </span>
+                  ) : null}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </section>
+    ) : null}
+  </section>
+);
+
+const AppContent: FC = () => {
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isSetupOpen, setSetupOpen] = useState(false);
+
   const {
     bosses,
-    selectedBossId,
     bossSelectValue,
     handleBossChange,
+    selectedBoss,
+    selectedBossId,
+    handleBossVersionChange,
+    selectedTarget,
+    selectedVersion,
+    customTargetHp,
+    handleCustomHpChange,
     bossSequences,
     sequenceSelectValue,
     handleSequenceChange,
     sequenceEntries,
     cappedSequenceIndex,
     handleSequenceStageChange,
-    hasNextSequenceStage,
-    hasPreviousSequenceStage,
     handleAdvanceSequence,
     handleRewindSequence,
-    currentSequenceEntry,
-    isSequenceActive,
-    selectedTarget,
-    selectedBoss,
-    selectedVersion,
-    handleBossVersionChange,
-    customTargetHp,
-    handleCustomHpChange,
+    hasNextSequenceStage,
+    hasPreviousSequenceStage,
     activeSequence,
     sequenceConditionValues,
     handleSequenceConditionToggle,
+    currentSequenceEntry,
   } = useBuildConfiguration();
+
   const derived = useFightDerivedStats();
 
   useEffect(() => {
@@ -368,39 +611,40 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
     hasPreviousSequenceStage,
   ]);
 
-  const arenaName = selectedTarget?.location ?? null;
+  const encounterName = selectedTarget?.bossName ?? 'Custom target';
+  const versionLabel = selectedVersion?.title ?? null;
+  const arenaLabel = selectedTarget?.location ?? null;
+  const stageProgress = activeSequence
+    ? {
+        current: cappedSequenceIndex + 1,
+        total: sequenceEntries.length,
+      }
+    : null;
+  const stageLabel = currentSequenceEntry?.target.bossName ?? null;
 
   return (
-    <div className="encounter-header">
-      <div className="encounter-hud">
-        <EncounterBrand onOpenModal={onOpenModal} />
-        <StageTimeline
-          bossSequences={bossSequences}
-          sequenceSelectValue={sequenceSelectValue}
-          onSequenceChange={handleSequenceChange}
-          isSequenceActive={isSequenceActive}
-          sequenceEntries={sequenceEntries}
-          cappedSequenceIndex={cappedSequenceIndex}
-          onStageSelect={handleSequenceStageChange}
-          onAdvance={handleAdvanceSequence}
-          onRewind={handleRewindSequence}
-          hasNext={hasNextSequenceStage}
-          hasPrevious={hasPreviousSequenceStage}
-        />
-        <TargetScoreboard
-          targetHp={derived.targetHp}
-          totalDamage={derived.totalDamage}
-          remainingHp={derived.remainingHp}
-          currentStageName={currentSequenceEntry?.target.bossName ?? null}
-          arenaName={arenaName}
-        />
-      </div>
+    <div className="app-shell">
+      <HeaderBar
+        derived={derived}
+        encounterName={encounterName}
+        versionLabel={versionLabel}
+        arenaLabel={arenaLabel}
+        onToggleSetup={() => setSetupOpen((open) => !open)}
+        onOpenLoadout={() => setModalOpen(true)}
+        isSetupOpen={isSetupOpen}
+        stageLabel={stageLabel}
+        stageProgress={stageProgress}
+        onAdvanceStage={handleAdvanceSequence}
+        onRewindStage={handleRewindSequence}
+        hasNextStage={hasNextSequenceStage}
+        hasPreviousStage={hasPreviousSequenceStage}
+      />
 
-      <TargetSelector
+      <EncounterSetupPanel
+        isOpen={isSetupOpen}
         bosses={bosses}
         bossSelectValue={bossSelectValue}
         onBossChange={handleBossChange}
-        isSequenceActive={isSequenceActive}
         selectedBoss={selectedBoss}
         selectedBossId={selectedBossId}
         onBossVersionChange={handleBossVersionChange}
@@ -408,53 +652,17 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
         selectedVersion={selectedVersion}
         customTargetHp={customTargetHp}
         onCustomHpChange={handleCustomHpChange}
+        bossSequences={bossSequences}
+        sequenceSelectValue={sequenceSelectValue}
+        onSequenceChange={handleSequenceChange}
+        sequenceEntries={sequenceEntries}
+        cappedSequenceIndex={cappedSequenceIndex}
+        onStageSelect={handleSequenceStageChange}
+        activeSequence={activeSequence}
+        sequenceConditionValues={sequenceConditionValues}
+        onConditionToggle={handleSequenceConditionToggle}
       />
 
-      {activeSequence && activeSequence.conditions.length > 0 ? (
-        <section className="sequence-conditions-panel">
-          <h4 className="sequence-conditions-panel__title">Sequence conditions</h4>
-          <div
-            className="sequence-conditions"
-            role="group"
-            aria-label="Sequence conditions"
-          >
-            {activeSequence.conditions.map((condition) => {
-              const checkboxId = `${activeSequence.id}-${condition.id}`;
-              const isEnabled = sequenceConditionValues[condition.id] ?? false;
-              return (
-                <label key={condition.id} className="sequence-condition">
-                  <input
-                    id={checkboxId}
-                    type="checkbox"
-                    checked={isEnabled}
-                    onChange={(event) =>
-                      handleSequenceConditionToggle(condition.id, event.target.checked)
-                    }
-                  />
-                  <span>
-                    <span className="sequence-condition__label">{condition.label}</span>
-                    {condition.description ? (
-                      <span className="sequence-condition__description">
-                        {condition.description}
-                      </span>
-                    ) : null}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-    </div>
-  );
-};
-
-const AppContent: FC = () => {
-  const [isModalOpen, setModalOpen] = useState(false);
-
-  return (
-    <div className="app-shell">
-      <HeaderBar onOpenModal={() => setModalOpen(true)} />
       <main className="app-main">
         <section className="app-panel" aria-labelledby="attack-log-heading">
           <div className="app-panel__header">
@@ -483,6 +691,7 @@ const AppContent: FC = () => {
           </div>
         </section>
       </main>
+
       <PlayerConfigModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
