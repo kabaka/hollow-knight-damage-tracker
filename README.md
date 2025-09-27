@@ -5,11 +5,67 @@
 [![CodeQL](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/github-code-scanning/codeql)
 [![Deploy](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/deploy.yml)
 
-Hollow Knight Damage Tracker is a responsive web application designed to help players measure and analyze the damage they deal during boss fights. Users will be able to configure their build, pick a fight or specify a damage target, and log every hit in real time to monitor their progress toward victory.
+> **Never lose track of a nail strike again—log every blow from the Crossroads to the Radiance.**
+
+Hollow Knight Damage Tracker is a responsive companion app that captures your Knight's build, every swing, spell, and summon, and translates them into real-time boss progress. Whether you're practicing Godhome pantheons, routing a speedrun, or finally toppling the Pure Vessel, the tracker keeps you focused on the fight.
+
+[![Demo of Hollow Knight Damage Tracker in action](https://placehold.co/1200x675/0b0b16/ffffff.png?text=Demo+GIF+Coming+Soon)](#)
+
+**Live Demo:** [kabaka.github.io/hollow-knight-damage-tracker](https://kabaka.github.io/hollow-knight-damage-tracker/)
+
+## Features
+
+### For the Hardcore Player 🛡️
+
+- **Pantheon pacing:** Queue Godhome pantheons or the Black Egg Temple rush and the tracker will advance to the next foe as soon as their mask counter hits zero.
+- **Conditional encounters:** Toggle optional bosses like Grey Prince Zote, Sisters of Battle, or The Radiance so every sequence mirrors your save file.
+- **Keyboard-first logging:** Memorize the number-row + QWERTY shortcuts (or tap <kbd>Esc</kbd> / <kbd>Shift</kbd>+<kbd>Esc</kbd>) and keep your fingers free for your controller.
+
+### For the Strategist 🧠
+
+- **Your Knight's build:** Combine nail upgrades, spell levels, and charms—including retaliatory vines, minions, and spell conversions—to instantly see tuned damage presets.
+- **Boss presets & custom targets:** Swap between Hallownest's fiercest foes, Godhome variants (Attuned, Ascended, Radiant), or set a custom HP pool for practice sessions.
+- **Attack grid mastery:** Log nail strikes, spells, and charm effects with undo/redo support. Each button shows how many more hits of that move would finish the fight.
+
+### For the Analyst 📊
+
+- **Live combat analytics:** Track remaining HP, DPS, average damage, and actions per minute with silky 60 FPS updates and sparkline charts.
+- **Session persistence:** Your build choices, attack history, and pantheon progress survive browser refreshes and accidental restarts.
+- **CI-backed reliability:** Automated linting, unit tests, e2e tests, and deployments run on every push so the tracker is always ready for battle.
+
+## Project Goals
+
+- Support desktop and mobile layouts for quick access during gameplay.
+- Allow users to configure their active charms, nail upgrades, spell upgrades, and other modifiers that influence damage values.
+- Provide quick buttons for every relevant attack type (nail swings, abilities, spells, and charm interactions) so damage can be recorded with a single tap.
+- Offer boss presets or custom targets where each logged hit reduces the remaining health until it reaches zero.
+- Display live combat statistics such as DPS, average damage per action, and actions per second.
+- Automate deployment to GitHub Pages via GitHub Actions.
+- Enforce high code quality with linting, unit tests, integration tests, and pre-commit checks.
+
+## How It Works
+
+The UI now wires together real-time combat calculations driven by typed data models:
+
+- `src/data/` stores structured JSON for charms, nail upgrades, spells, and boss health pools, along with helpers that expose typed lookups.
+- `FightStateProvider` (under `src/features/fight-state/`) centralizes build configuration, attack logs, and derived combat statistics that power the UI.
+- `BuildConfigPanel`, `AttackLogPanel`, and `CombatStatsPanel` consume the shared state to surface boss presets, configurable damage presets, and running metrics.
+- Shared layout primitives live in `src/components/` and global theming resides in `src/styles/`.
+
+Vitest (unit tests) and Playwright (e2e tests) validate that core sections render correctly and that critical interactions—such as selecting bosses or logging attacks—update derived statistics as expected.
+
+Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
+
+## Tech Stack
+
+- [Vite](https://vitejs.dev/) for lightning-fast builds and previews.
+- [React](https://react.dev/) with TypeScript for a robust, type-safe UI.
+- [Vitest](https://vitest.dev/) and [Playwright](https://playwright.dev/) for unit and end-to-end coverage.
+- [pnpm](https://pnpm.io/) to manage dependencies, scripts, and pre-commit hooks.
 
 ## Getting Started
 
-The project is built with [Vite](https://vitejs.dev/) and [React](https://react.dev/) using TypeScript. Development tooling is orchestrated with `pnpm`.
+The project is built with Vite + React + TypeScript and uses `pnpm` for every workflow.
 
 ### Prerequisites
 
@@ -22,67 +78,42 @@ The project is built with [Vite](https://vitejs.dev/) and [React](https://react.
 pnpm install
 ```
 
-### Available scripts
+### Essential scripts
 
-- `pnpm dev` – start the development server with hot reloading.
-- `pnpm build` – type-check the project and generate a production build.
-- `pnpm preview` – preview the production build locally.
-- `pnpm lint` – run ESLint and Stylelint.
-- `pnpm format` / `pnpm format:check` – apply or verify Prettier formatting.
-- `pnpm test` – execute Vitest in CI mode with coverage reporting.
-- `pnpm test:watch` – run unit tests in watch mode.
-- `pnpm test:e2e` – execute Playwright end-to-end tests.
+| Command                             | Purpose                                                            |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| `pnpm dev`                          | Launch the Vite dev server with hot module reloading.              |
+| `pnpm build`                        | Type-check the project and produce an optimized production bundle. |
+| `pnpm preview`                      | Serve the built app locally for final checks before deployment.    |
+| `pnpm lint`                         | Run ESLint and Stylelint to enforce code style and best practices. |
+| `pnpm format` / `pnpm format:check` | Apply or verify Prettier formatting across the repo.               |
+| `pnpm test`                         | Execute Vitest in CI mode with coverage reporting.                 |
+| `pnpm test:watch`                   | Watch unit tests while iterating on features.                      |
+| `pnpm test:e2e`                     | Run Playwright end-to-end tests.                                   |
 
-A `pre-commit` hook ensures formatting, linting, and unit tests run before each commit. The hook is configured through [`simple-git-hooks`](https://github.com/toplenboren/simple-git-hooks) and installs automatically when dependencies are installed.
-
-## Project Goals
-
-- Support desktop and mobile layouts for quick access during gameplay.
-- Allow users to configure their active charms, nail upgrades, spell upgrades, and other modifiers that influence damage values.
-- Provide quick buttons for every relevant attack type (nail swings, abilities, spells, and charm interactions) so damage can be recorded with a single tap.
-- Offer boss presets or custom targets where each logged hit reduces the remaining health until it reaches zero.
-- Display live combat statistics such as DPS, average damage per action, and actions per second.
-- Automate deployment to GitHub Pages via GitHub Actions.
-- Enforce high code quality with linting, unit tests, integration tests, and pre-commit checks.
-
-## Current Architecture
-
-The UI now wires together real-time combat calculations driven by typed data models:
-
-- `src/data/` stores structured JSON for charms, nail upgrades, spells, and boss health pools, along with helpers that expose typed lookups.
-- `FightStateProvider` (under `src/features/fight-state/`) centralizes build configuration, attack logs, and derived combat statistics that power the UI.
-- `BuildConfigPanel`, `AttackLogPanel`, and `CombatStatsPanel` consume the shared state to surface boss presets, configurable damage presets, and running metrics.
-- Shared layout primitives live in `src/components/` and global theming resides in `src/styles/`.
-
-Vitest (unit tests) and Playwright (e2e tests) validate that core sections render correctly and that critical interactions—such as selecting bosses or logging attacks—update derived statistics as expected.
-
-### Feature Highlights
-
-- **Boss presets, Godhome variants, and custom targets:** Quickly switch between Hallownest encounters, Godhome trials (Attuned, Ascended, Radiant), or specify any target for practice sessions.
-- **Pantheon and rush tracking:** Queue up Godhome pantheons or the Black Egg Temple rush, automatically advance to the next boss when HP hits zero, and revisit previous stages with bracket-key shortcuts or on-screen navigation.
-- **Conditional pantheon fights:** Enable or exclude bosses like Grey Prince Zote, Sisters of Battle, or The Radiance with inline toggles so each sequence mirrors the encounters available in your save file.
-- **Data-driven build controls with charm presets:** Choose nail upgrades, toggle influential charms—including retaliatory vines, summons, and spell conversions—and apply popular loadouts with one click while declaring which spell upgrades are available to tune damage presets.
-- **Charm effects and summons surfaced in combat:** Activating charms such as Flukenest, Thorns of Agony, Sharp Shadow, or Glowing Womb automatically exposes dedicated attack buttons so every damage source (including minions and Fury variants) can be logged accurately.
-- **Categorized attack logging with undo/redo:** A compact grid organizes nail strikes, spell casts, advanced techniques, and charm effects with readable damage summaries that respect build modifiers like Unbreakable Strength or Shaman Stone, while undo/redo controls make correcting mistakes effortless.
-- **Keyboard shortcuts and finishing guidance:** Each attack button surfaces the remaining hits required to reach zero HP if you relied solely on that move, and keyboard shortcuts (number row followed by QWERTY order) allow spectators to log attacks, press <kbd>Esc</kbd> for a quick reset, hit <kbd>Enter</kbd> to end a fight early without leaving the action, or use <kbd>Shift</kbd>+<kbd>Esc</kbd> to restart an entire boss sequence.
-- **Live combat analytics:** Remaining HP, DPS, average damage, actions per minute, and sparklines refresh at 60 frames per second while a fight is active, providing smooth, real-time feedback on pacing.
-- **Automatic session persistence:** Build selections, logged attacks, and boss progress are stored locally so the tracker survives accidental refreshes or browser restarts.
-
-Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
+A `pre-commit` hook powered by [`simple-git-hooks`](https://github.com/toplenboren/simple-git-hooks) automatically runs formatting, linting, and unit tests before every commit.
 
 ## Project Roadmap
 
-1. **Scaffolding:** Initialize the frontend project, configure TypeScript, linting, formatting, and unit test tooling.
-2. **Design system:** Establish global styles, responsive layout patterns, and reusable UI components.
-3. **Core tracking features:** Implement build configuration inputs, attack logging buttons, and damage calculations.
-4. **Boss presets and customization:** Add data for major bosses and allow user-defined targets.
-5. **Analytics:** Compute DPS, actions per second, streak tracking, and exportable session summaries.
-6. **Persistence and sharing:** Store configurations locally and explore shareable fight links.
-7. **Polish:** Accessibility review, localization support, performance tuning, and cross-browser testing.
+- ✅ **Scaffolding:** Initialize the frontend project, configure TypeScript, linting, formatting, and unit test tooling.
+- ✅ **Design system:** Establish global styles, responsive layout patterns, and reusable UI components.
+- ✅ **Core tracking features:** Implement build configuration inputs, attack logging buttons, and damage calculations.
+- ✅ **Boss presets and customization:** Add data for major bosses and allow user-defined targets.
+- 🛠️ **Analytics:** Compute DPS, actions per second, streak tracking, and exportable session summaries.
+- 🛠️ **Persistence and sharing:** Store configurations locally and explore shareable fight links.
+- 🌙 **Polish:** Accessibility review, localization support, performance tuning, and cross-browser testing.
 
 ## Contributing
 
-Project structure and contribution guidelines will be documented once the application scaffolding is in place. Until then, see `AGENTS.md` for repository-specific instructions.
+We welcome fellow Knights, lore-keepers, and UI artisans! Feel free to [open an issue](https://github.com/kabaka/hollow-knight-damage-tracker/issues) to discuss new features, tricky bugs, or UX polish.
+
+1. Fork the repository and create a feature branch.
+2. Run `pnpm install` to pull dependencies and auto-install the pre-commit hook.
+3. Make your changes, keeping tests, linting, and accessibility in mind.
+4. Run the relevant scripts (lint, tests, e2e if applicable) before opening a pull request.
+5. Submit a PR with context, screenshots or clips if the UI changed, and reference any related issues.
+
+For repository-specific expectations, consult [`AGENTS.md`](AGENTS.md).
 
 ## License
 
