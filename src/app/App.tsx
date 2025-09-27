@@ -47,7 +47,11 @@ const StageTimeline: FC<StageTimelineProps> = ({
   const stagePosition = `${stageProgress.current}/${stageProgress.total}`;
 
   return (
-    <div className="hud-timeline" role="group" aria-label="Stage navigation">
+    <div
+      className="hud-timeline summary-chip summary-chip--toolbar"
+      role="group"
+      aria-label="Stage navigation"
+    >
       <button
         type="button"
         className="hud-timeline__control"
@@ -130,7 +134,11 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({ derived }) => {
 
   return (
     <section className="hud-scoreboard" aria-label="Encounter scoreboard">
-      <div className="hud-health" role="group" aria-label="Boss HP">
+      <div
+        className="hud-health summary-chip summary-chip--accent"
+        role="group"
+        aria-label="Boss HP"
+      >
         <span className="hud-health__label">HP</span>
         <div
           className="hud-health__track"
@@ -193,7 +201,7 @@ const HeaderBar: FC<HeaderBarProps> = ({
   hasNextStage,
   hasPreviousStage,
 }) => (
-  <header className="encounter-hud" role="banner">
+  <header className="encounter-hud app-navbar" role="banner">
     <div className="encounter-hud__primary">
       <EncounterBrand
         encounterName={encounterName}
@@ -217,11 +225,11 @@ const HeaderBar: FC<HeaderBarProps> = ({
           aria-controls="encounter-setup"
         >
           <span aria-hidden="true">⚙️</span>
-          <span className="hud-actions__label">Change Encounter</span>
+          <span className="hud-actions__label">Change encounter</span>
         </button>
         <button type="button" className="hud-actions__button" onClick={onOpenLoadout}>
           <span aria-hidden="true">👤</span>
-          <span className="hud-actions__label">Player Loadout</span>
+          <span className="hud-actions__label">Player loadout</span>
         </button>
       </div>
     </div>
@@ -278,7 +286,7 @@ const TargetSelector: FC<TargetSelectorProps> = ({
   return (
     <section className="target-selector" aria-labelledby="target-selector-heading">
       <div className="target-selector__header">
-        <h3 id="target-selector-heading">Boss Target</h3>
+        <h3 id="target-selector-heading">Boss target</h3>
         <button
           type="button"
           className="target-selector__options-toggle"
@@ -359,7 +367,7 @@ const TargetSelector: FC<TargetSelectorProps> = ({
         ) : null}
 
         {selectedTarget && selectedVersion ? (
-          <div className="target-selector__summary">
+          <div className="target-selector__summary summary-chip">
             <span className="target-selector__summary-title">Active target</span>
             <span className="target-selector__summary-value">
               {selectedTarget.bossName}
@@ -391,7 +399,7 @@ const SequenceSelector: FC<SequenceSelectorProps> = ({
 }) => (
   <section className="sequence-selector" aria-labelledby="sequence-selector-heading">
     <div className="sequence-selector__header">
-      <h3 id="sequence-selector-heading">Encounter Stage</h3>
+      <h3 id="sequence-selector-heading">Encounter stage</h3>
     </div>
     <label className="sequence-selector__field">
       <span className="sequence-selector__field-label">Mode</span>

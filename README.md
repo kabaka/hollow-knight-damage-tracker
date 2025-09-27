@@ -58,6 +58,45 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
+## 🎨 Design Philosophy
+
+The tracker’s interface now mirrors the relics, reliquaries, and parchment that define Hallownest’s menus. Rather than glass panels, every surface feels etched from ancient stone or hammered metal, with soft enamel highlights that echo the Hunter’s Journal and the nailmaster tablets.
+
+### Materiality & Texture
+
+- **Stone-dark foundations:** `--color-bg`, `--color-bg-deep`, and `--color-surface` establish the cavernous midnight blues seen throughout Godhome. Layer radial gradients with `var(--texture-vein)` and `var(--texture-noise)` to keep new panels mottled and weathered instead of flat.
+- **Carved silhouettes:** `--shape-tablet` and etched shadow tokens (`--frame-outline`, `--frame-etch`, `--frame-highlight`) deliver sharp, chamfered edges reminiscent of charm plaques and Royal Waterways signage.
+
+### Ornate framing & reusable pieces
+
+- `.app-navbar`, `.app-panel`, `.summary-chip`, and `.modal__content` all clip to `var(--shape-tablet)` and apply the shared etching stack so new layouts inherit the same chiseled border treatment.
+- `.summary-chip--toolbar`, `.hud-actions__button`, and the segmented controls trade pill buttons for faceted lozenges that glow with SOUL-blue light on hover.
+- The player loadout now features a **charm notch bracelet**: `.notch-panel__bracelet` draws the metal strap and `.notch-dot` renders the circular sockets, filling with pale soullight when equipped and pulsing magenta when overcharmed.
+
+### Typographic voice
+
+- Headings, HUD badges, and ceremonial labels use [Cinzel](https://fonts.google.com/specimen/Cinzel) (`var(--font-display)`) for a carved, gothic cadence similar to the game’s official UI.
+- Body copy, tooltips, and stat labels rely on [Source Sans 3](https://fonts.google.com/specimen/Source+Sans+3) for clarity during frantic fights.
+- The existing type scale variables (`--font-size-display` through `--font-size-caption`) still govern hierarchy; prefer sentence case microcopy to match the in-game Hunter’s Journal tone.
+
+### Hallownest palette
+
+- `--color-bg` `#04060d` – cavern walls and Godhome’s night sky.
+- `--color-surface` / `--color-surface-raised` – oxidized steel tablets for primary panels and chips.
+- `--color-border` / `--color-border-soft` – bone-white engraving highlights that define carved edges.
+- `--color-accent` – the pale cyan soul glimmer used for hover glows, progress meters, and timeline glyphs.
+- `--color-accent-ember` – a warm ember reserved for lore callouts or warning states alongside the long-lived overcharm pink.
+
+When extending the UI, lean on these tokens before introducing bespoke colors so every addition stays anchored to Hallownest’s palette.
+
+### Interactive highlights
+
+- Hover states replace modern drop shadows with rune-like glows (`rgb(215 245 255 / 35%)`) that mirror the SOUL meter charge.
+- Buttons and toggles use polygonal `clip-path` treatments to emulate charm slots and tablet corners instead of rounded pills.
+- Modals and panels layer subtle noise above the gradients, preventing modern flatness while keeping readability high.
+
+Contributors can inspect the implementations inside `src/styles/global.css`—mirroring these primitives will keep future components steeped in the same ancient elegance.
+
 ## Tech Stack
 
 - [Vite](https://vitejs.dev/) for lightning-fast builds and previews.
