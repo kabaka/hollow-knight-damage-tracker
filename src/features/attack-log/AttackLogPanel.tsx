@@ -1,12 +1,13 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
 
-import { useFightState } from '../fight-state/FightStateContext';
+import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
 import { RESET_SHORTCUT_KEY, useAttackDefinitions } from './useAttackDefinitions';
 
 export const AttackLogPanel: FC = () => {
   const fight = useFightState();
-  const { actions, state, derived } = fight;
+  const derived = useFightDerivedStats();
+  const { actions, state } = fight;
   const { damageLog, redoStack } = state;
   const canEndFight = derived.fightStartTimestamp != null && !derived.isFightComplete;
 
