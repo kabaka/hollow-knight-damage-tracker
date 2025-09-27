@@ -74,7 +74,9 @@ const getCharmAriaLabel = (charm: Charm) => {
   return detail ? `${base} ${detail}` : base;
 };
 
-export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose }) => {
+const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
+  onClose,
+}) => {
   const {
     state,
     notchLimit,
@@ -119,10 +121,6 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
   );
 
   useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -142,11 +140,7 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) {
-    return null;
-  }
+  }, [onClose]);
 
   return (
     <div
@@ -445,4 +439,12 @@ export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose 
       </div>
     </div>
   );
+};
+
+export const PlayerConfigModal: FC<PlayerConfigModalProps> = ({ isOpen, onClose }) => {
+  if (!isOpen) {
+    return null;
+  }
+
+  return <PlayerConfigModalContent onClose={onClose} />;
 };
