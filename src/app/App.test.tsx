@@ -29,29 +29,37 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.selectOptions(screen.getByLabelText(/boss target/i), 'custom');
-    const hpInput = screen.getByLabelText(/custom target hp/i);
+    const optionsToggle = screen.getByRole('button', {
+      name: /advanced target options/i,
+    });
+    await user.click(optionsToggle);
+    await user.click(screen.getByRole('radio', { name: /custom/i }));
+    const hpInput = await screen.findByLabelText(/custom target hp/i);
     await user.clear(hpInput);
     await user.type(hpInput, '500');
 
-    const targetTile = screen
-      .getByText(/target hp/i, { selector: '.summary-chip__label' })
-      .closest('.summary-chip');
-    expect(targetTile).toHaveTextContent('500');
+    const targetMetric = screen
+      .getByText(/target hp/i, { selector: '.scoreboard-metric__label' })
+      .closest('.scoreboard-metric');
+    expect(targetMetric).toHaveTextContent('500');
   });
 
   it('switches boss versions to reflect Godhome health pools', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.selectOptions(screen.getByLabelText(/boss target/i), 'gruz-mother');
+    await user.click(screen.getByRole('radio', { name: /gruz mother/i }));
+    const optionsToggle = screen.getByRole('button', {
+      name: /advanced target options/i,
+    });
+    await user.click(optionsToggle);
     const versionSelect = await screen.findByLabelText(/boss version/i);
     await user.selectOptions(versionSelect, 'gruz-mother__ascended');
 
-    const targetTile = screen
-      .getByText(/target hp/i, { selector: '.summary-chip__label' })
-      .closest('.summary-chip');
-    expect(targetTile).toHaveTextContent('945');
+    const targetMetric = screen
+      .getByText(/target hp/i, { selector: '.scoreboard-metric__label' })
+      .closest('.scoreboard-metric');
+    expect(targetMetric).toHaveTextContent('945');
   });
 
   it('applies charm presets and enforces overcharm limits', async () => {
@@ -95,10 +103,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.selectOptions(
-      screen.getByLabelText(/boss sequence/i),
-      'pantheon-of-the-sage',
-    );
+    await user.selectOptions(screen.getByLabelText(/encounter/i), 'pantheon-of-the-sage');
 
     const conditionsGroup = await screen.findByRole('group', {
       name: /sequence conditions/i,
