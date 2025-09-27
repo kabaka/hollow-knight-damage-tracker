@@ -22,6 +22,25 @@ const formatDecimal = (value: number | null, fractionDigits = 1) => {
   });
 };
 
+const formatStopwatch = (value: number | null) => {
+  if (value == null || Number.isNaN(value)) {
+    return '—';
+  }
+
+  if (value <= 0) {
+    return '0:00.00';
+  }
+
+  const hundredths = Math.floor(value / 10);
+  const minutes = Math.floor(hundredths / 6000);
+  const seconds = Math.floor((hundredths / 100) % 60);
+  const remainingHundredths = hundredths % 100;
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}.${remainingHundredths
+    .toString()
+    .padStart(2, '0')}`;
+};
+
 type StageTimelineProps = {
   readonly stageLabel: string | null;
   readonly stageProgress: { current: number; total: number } | null;
@@ -115,48 +134,70 @@ const EncounterBrand: FC<EncounterBrandProps> = ({
 
 type TargetScoreboardProps = {
   readonly derived: ReturnType<typeof useFightDerivedStats>;
+  readonly stageLabel: string | null;
+  readonly stageProgress: { current: number; total: number } | null;
+  readonly onAdvanceStage: () => void;
+  readonly onRewindStage: () => void;
+  readonly hasNextStage: boolean;
+  readonly hasPreviousStage: boolean;
 };
 
-const TargetScoreboard: FC<TargetScoreboardProps> = ({ derived }) => {
-  const { targetHp, remainingHp, totalDamage, attacksLogged, averageDamage, dps } =
-    derived;
+const TargetScoreboard: FC<TargetScoreboardProps> = ({
+  derived,
+  stageLabel,
+  stageProgress,
+  onAdvanceStage,
+  onRewindStage,
+  hasNextStage,
+  hasPreviousStage,
+}) => {
+  const { targetHp, remainingHp, dps, elapsedMs, estimatedTimeRemainingMs } = derived;
   const percentRemaining = targetHp > 0 ? Math.max(0, remainingHp / targetHp) : 0;
 
   const metrics = useMemo(
     () => [
-      { label: 'Damage', value: formatNumber(totalDamage) },
-      { label: 'Attacks', value: formatNumber(attacksLogged) },
-      { label: 'Avg Hit', value: formatDecimal(averageDamage) },
+      { label: 'Elapsed', value: formatStopwatch(elapsedMs) },
+      { label: 'Est. Remaining', value: formatStopwatch(estimatedTimeRemainingMs) },
       { label: 'DPS', value: formatDecimal(dps) },
     ],
-    [attacksLogged, averageDamage, dps, totalDamage],
+    [dps, elapsedMs, estimatedTimeRemainingMs],
   );
 
   return (
     <section className="hud-scoreboard" aria-label="Encounter scoreboard">
-      <div
-        className="hud-health summary-chip summary-chip--accent"
-        role="group"
-        aria-label="Boss HP"
-      >
-        <span className="hud-health__label">HP</span>
+      <div className="hud-scoreboard__status">
         <div
-          className="hud-health__track"
-          role="progressbar"
+          className="hud-health summary-chip summary-chip--accent"
+          role="group"
           aria-label="Boss HP"
-          aria-valuemin={0}
-          aria-valuemax={targetHp}
-          aria-valuenow={remainingHp}
         >
+          <span className="hud-health__label">HP</span>
           <div
-            className="hud-health__fill"
-            style={{ width: `${Math.round(percentRemaining * 100)}%` }}
-            aria-hidden="true"
-          />
+            className="hud-health__track"
+            role="progressbar"
+            aria-label="Boss HP"
+            aria-valuemin={0}
+            aria-valuemax={targetHp}
+            aria-valuenow={remainingHp}
+          >
+            <div
+              className="hud-health__fill"
+              style={{ width: `${Math.round(percentRemaining * 100)}%` }}
+              aria-hidden="true"
+            />
+          </div>
+          <span className="hud-health__value">
+            {formatNumber(remainingHp)} / {formatNumber(targetHp)}
+          </span>
         </div>
-        <span className="hud-health__value">
-          {formatNumber(remainingHp)} / {formatNumber(targetHp)}
-        </span>
+        <StageTimeline
+          stageLabel={stageLabel}
+          stageProgress={stageProgress}
+          onAdvance={onAdvanceStage}
+          onRewind={onRewindStage}
+          hasNext={hasNextStage}
+          hasPrevious={hasPreviousStage}
+        />
       </div>
       <dl className="hud-metrics">
         {metrics.map((metric) => (
@@ -208,14 +249,6 @@ const HeaderBar: FC<HeaderBarProps> = ({
         versionLabel={versionLabel}
         arenaLabel={arenaLabel}
       />
-      <StageTimeline
-        stageLabel={stageLabel}
-        stageProgress={stageProgress}
-        onAdvance={onAdvanceStage}
-        onRewind={onRewindStage}
-        hasNext={hasNextStage}
-        hasPrevious={hasPreviousStage}
-      />
       <div className="hud-actions">
         <button
           type="button"
@@ -233,7 +266,15 @@ const HeaderBar: FC<HeaderBarProps> = ({
         </button>
       </div>
     </div>
-    <TargetScoreboard derived={derived} />
+    <TargetScoreboard
+      derived={derived}
+      stageLabel={stageLabel}
+      stageProgress={stageProgress}
+      onAdvanceStage={onAdvanceStage}
+      onRewindStage={onRewindStage}
+      hasNextStage={hasNextStage}
+      hasPreviousStage={hasPreviousStage}
+    />
   </header>
 );
 

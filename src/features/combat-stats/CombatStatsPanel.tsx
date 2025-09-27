@@ -12,21 +12,6 @@ const formatInteger = (value: number) => value.toLocaleString();
 const formatDecimal = (value: number | null, fractionDigits = 1) =>
   value == null ? '—' : value.toFixed(fractionDigits);
 
-const formatDuration = (elapsedMs: number | null) => {
-  if (elapsedMs == null) {
-    return '—';
-  }
-
-  if (elapsedMs <= 0) {
-    return '0:00';
-  }
-
-  const totalSeconds = Math.floor(elapsedMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
-
 interface TimelinePoint {
   time: number;
   cumulativeDamage: number;
@@ -93,30 +78,52 @@ const toSparklineSeries = (
 ): SparklinePoint[] =>
   timeline.map((point) => ({ time: point.time, value: selector(point) }));
 
-const appendSparklinePoint = (
-  series: SparklinePoint[],
-  livePoint: TimelinePoint | null,
-  selector: (point: TimelinePoint) => number,
-): SparklinePoint[] => {
-  if (!livePoint) {
-    return series;
+const buildDamagePerHitSeries = (
+  damageLog: { timestamp: number; damage: number }[],
+): SparklinePoint[] =>
+  damageLog.map((event, index) => ({ time: index + 1, value: event.damage }));
+
+const buildDpsBucketSeries = (timeline: TimelinePoint[]): SparklinePoint[] => {
+  if (timeline.length === 0) {
+    return [];
   }
 
-  const appendedPoint: SparklinePoint = {
-    time: livePoint.time,
-    value: selector(livePoint),
-  };
-  const lastPoint = series[series.length - 1];
+  const series: SparklinePoint[] = [];
+  let currentBucketIndex = 0;
+  let bucketStart = 0;
+  let bucketDamage = 0;
 
-  if (
-    lastPoint &&
-    lastPoint.time === appendedPoint.time &&
-    lastPoint.value === appendedPoint.value
-  ) {
-    return series;
+  for (const point of timeline) {
+    const pointBucketIndex = Math.floor(point.time / 1000);
+
+    while (currentBucketIndex < pointBucketIndex) {
+      const bucketDurationSeconds = 1;
+      series.push({
+        time: (currentBucketIndex + 1) * 1000,
+        value: bucketDurationSeconds > 0 ? bucketDamage / bucketDurationSeconds : 0,
+      });
+      currentBucketIndex += 1;
+      bucketStart = currentBucketIndex * 1000;
+      bucketDamage = 0;
+    }
+
+    bucketDamage += point.frameDamage;
+
+    const elapsedInBucket = point.time - bucketStart;
+
+    if (elapsedInBucket <= 0) {
+      series.push({ time: point.time, value: bucketDamage });
+      continue;
+    }
+
+    const bucketDurationSeconds = Math.min(elapsedInBucket, 1000) / 1000;
+    series.push({
+      time: point.time,
+      value: bucketDurationSeconds > 0 ? bucketDamage / bucketDurationSeconds : 0,
+    });
   }
 
-  return [...series, appendedPoint];
+  return series;
 };
 
 export const CombatStatsPanel: FC = () => {
@@ -129,10 +136,7 @@ export const CombatStatsPanel: FC = () => {
     remainingHp,
     attacksLogged,
     averageDamage,
-    dps,
     actionsPerMinute,
-    elapsedMs,
-    estimatedTimeRemainingMs,
     fightEndTimestamp,
     fightStartTimestamp,
     frameTimestamp,
@@ -171,53 +175,40 @@ export const CombatStatsPanel: FC = () => {
     } satisfies TimelinePoint;
   }, [timeline, fightEndTimestamp, fightStartTimestamp, frameTimestamp, targetHp]);
 
-  const baseCumulativeDamageSeries = useMemo(
-    () => toSparklineSeries(timeline, (point) => point.cumulativeDamage),
-    [timeline],
-  );
-  const baseRemainingHpSeries = useMemo(
-    () => toSparklineSeries(timeline, (point) => point.remainingHp),
-    [timeline],
-  );
-  const baseDamagePerFrameSeries = useMemo(
-    () => toSparklineSeries(timeline, (point) => point.frameDamage),
-    [timeline],
-  );
-  const baseDpsSeries = useMemo(
-    () => toSparklineSeries(timeline, (point) => point.dps),
-    [timeline],
-  );
+  const timelineWithLive = useMemo(() => {
+    if (!liveTimelinePoint) {
+      return timeline;
+    }
+
+    const lastPoint = timeline[timeline.length - 1];
+
+    if (
+      lastPoint &&
+      lastPoint.time === liveTimelinePoint.time &&
+      lastPoint.cumulativeDamage === liveTimelinePoint.cumulativeDamage &&
+      lastPoint.remainingHp === liveTimelinePoint.remainingHp
+    ) {
+      return timeline;
+    }
+
+    return [...timeline, liveTimelinePoint];
+  }, [timeline, liveTimelinePoint]);
 
   const cumulativeDamageSeries = useMemo(
-    () =>
-      appendSparklinePoint(
-        baseCumulativeDamageSeries,
-        liveTimelinePoint,
-        (point) => point.cumulativeDamage,
-      ),
-    [baseCumulativeDamageSeries, liveTimelinePoint],
+    () => toSparklineSeries(timelineWithLive, (point) => point.cumulativeDamage),
+    [timelineWithLive],
   );
   const remainingHpSeries = useMemo(
-    () =>
-      appendSparklinePoint(
-        baseRemainingHpSeries,
-        liveTimelinePoint,
-        (point) => point.remainingHp,
-      ),
-    [baseRemainingHpSeries, liveTimelinePoint],
+    () => toSparklineSeries(timelineWithLive, (point) => point.remainingHp),
+    [timelineWithLive],
   );
-  const damagePerFrameSeries = useMemo(
-    () =>
-      appendSparklinePoint(
-        baseDamagePerFrameSeries,
-        liveTimelinePoint,
-        (point) => point.frameDamage,
-      ),
-    [baseDamagePerFrameSeries, liveTimelinePoint],
+  const damagePerHitSeries = useMemo(
+    () => buildDamagePerHitSeries(damageLog),
+    [damageLog],
   );
   const dpsSeries = useMemo(
-    () => appendSparklinePoint(baseDpsSeries, liveTimelinePoint, (point) => point.dps),
-    [baseDpsSeries, liveTimelinePoint],
+    () => buildDpsBucketSeries(timelineWithLive),
+    [timelineWithLive],
   );
 
   const stats = [
@@ -236,6 +227,7 @@ export const CombatStatsPanel: FC = () => {
       trend: {
         data: remainingHpSeries,
         ariaLabel: 'Remaining health over time',
+        valueDomain: [0, targetHp],
       },
     },
     { label: 'Attacks Logged', value: attacksLogged.toString() },
@@ -243,24 +235,18 @@ export const CombatStatsPanel: FC = () => {
       label: 'Average Damage',
       value: formatDecimal(averageDamage),
       trend: {
-        data: damagePerFrameSeries,
-        ariaLabel: 'Damage dealt per logged attack over time',
+        data: damagePerHitSeries,
+        ariaLabel: 'Damage dealt per logged attack',
       },
     },
     {
       label: 'DPS',
-      value: formatDecimal(dps),
       trend: {
         data: dpsSeries,
-        ariaLabel: 'Damage per second trend over time',
+        ariaLabel: 'Damage per second trend',
       },
     },
     { label: 'Actions / Min', value: formatDecimal(actionsPerMinute) },
-    { label: 'Elapsed', value: formatDuration(elapsedMs) },
-    {
-      label: 'Estimated Time Remaining',
-      value: formatDuration(estimatedTimeRemainingMs),
-    },
   ];
 
   return (
@@ -273,9 +259,15 @@ export const CombatStatsPanel: FC = () => {
         <div key={stat.label} className="data-list__item">
           <span className="data-list__label">{stat.label}</span>
           <span className="data-list__value">
-            <span className="data-list__value-text">{stat.value}</span>
+            {stat.value != null ? (
+              <span className="data-list__value-text">{stat.value}</span>
+            ) : null}
             {stat.trend && stat.trend.data.length >= 2 ? (
-              <Sparkline data={stat.trend.data} ariaLabel={stat.trend.ariaLabel} />
+              <Sparkline
+                data={stat.trend.data}
+                ariaLabel={stat.trend.ariaLabel}
+                valueDomain={stat.trend.valueDomain}
+              />
             ) : null}
           </span>
         </div>

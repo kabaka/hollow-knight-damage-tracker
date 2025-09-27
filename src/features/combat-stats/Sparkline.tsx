@@ -12,6 +12,7 @@ interface SparklineProps {
   width?: number;
   height?: number;
   padding?: number;
+  valueDomain?: readonly [number, number];
 }
 
 const buildPolylinePoints = (
@@ -19,6 +20,7 @@ const buildPolylinePoints = (
   width: number,
   height: number,
   padding: number,
+  valueDomain?: readonly [number, number],
 ) => {
   const size = data.length;
 
@@ -46,7 +48,9 @@ const buildPolylinePoints = (
     }
   }
 
-  const valueRange = maxValue - minValue;
+  const resolvedMinValue = valueDomain ? valueDomain[0] : minValue;
+  const resolvedMaxValue = valueDomain ? valueDomain[1] : maxValue;
+  const valueRange = resolvedMaxValue - resolvedMinValue;
   const timeRange = maxTime - minTime;
 
   const innerWidth = width - padding * 2;
@@ -57,7 +61,8 @@ const buildPolylinePoints = (
   }
 
   const points = data.map(({ time, value }) => {
-    const normalizedValue = valueRange === 0 ? 0.5 : (value - minValue) / valueRange;
+    const normalizedValue =
+      valueRange === 0 ? 0.5 : (value - resolvedMinValue) / valueRange;
     const normalizedTime = timeRange === 0 ? 0 : (time - minTime) / timeRange;
     const x = padding + normalizedTime * innerWidth;
     const y = padding + (1 - normalizedValue) * innerHeight;
@@ -89,12 +94,13 @@ export const Sparkline: FC<SparklineProps> = ({
   width = 88,
   height = 28,
   padding = 2,
+  valueDomain,
 }) => {
   if (data.length < 2) {
     return null;
   }
 
-  const polyline = buildPolylinePoints(data, width, height, padding);
+  const polyline = buildPolylinePoints(data, width, height, padding, valueDomain);
 
   if (!polyline) {
     return null;
