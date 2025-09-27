@@ -9,6 +9,8 @@
 
 Hollow Knight Damage Tracker is a responsive companion app that captures your Knight's build, every swing, spell, and summon, and translates them into real-time boss progress. Whether you're practicing Godhome pantheons, routing a speedrun, or finally toppling the Pure Vessel, the tracker keeps you focused on the fight.
 
+> ✨ Designed for co-pilots, commentators, and VOD reviewers—let a trusted spectator log hits live or replay the action later while you stay locked in on the battle.
+
 [![Demo of Hollow Knight Damage Tracker in action](https://placehold.co/1200x675/0b0b16/ffffff.png?text=Demo+GIF+Coming+Soon)](#)
 
 **Live Demo:** [kabaka.github.io/hollow-knight-damage-tracker](https://kabaka.github.io/hollow-knight-damage-tracker/)
