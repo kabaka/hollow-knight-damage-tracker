@@ -114,9 +114,7 @@ const getVariantDamage = (variant: (typeof spells)[number]['base']) => {
   return 0;
 };
 
-export const buildAttackGroups = (state: FightState): AttackGroup[] => {
-  const { build } = state;
-
+export const buildAttackGroups = (build: FightState['build']): AttackGroup[] => {
   const nailUpgrade =
     nailUpgrades.find((upgrade) => upgrade.id === build.nailUpgradeId) ?? nailUpgrades[0];
   const hasStrength = hasStrengthCharm(build.activeCharmIds);
@@ -497,8 +495,8 @@ export const buildAttackMetadata = (
   return { groupsWithMetadata, shortcutMap };
 };
 
-export const useAttackDefinitions = (state: FightState, remainingHp: number) =>
+export const useAttackDefinitions = ({ build }: FightState, remainingHp: number) =>
   useMemo(() => {
-    const groups = buildAttackGroups(state);
+    const groups = buildAttackGroups(build);
     return buildAttackMetadata(groups, remainingHp);
-  }, [state, remainingHp]);
+  }, [build, remainingHp]);

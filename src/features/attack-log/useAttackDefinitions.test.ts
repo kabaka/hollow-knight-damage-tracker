@@ -1,3 +1,4 @@
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { nailUpgrades, spells } from '../../data';
@@ -7,6 +8,7 @@ import {
   KEY_SEQUENCE,
   buildAttackGroups,
   buildAttackMetadata,
+  useAttackDefinitions,
 } from './useAttackDefinitions';
 
 const DEFAULT_SPELL_LEVELS = Object.fromEntries(
@@ -55,7 +57,7 @@ describe('useAttackDefinitions helpers', () => {
       },
     });
 
-    const groups = buildAttackGroups(state);
+    const groups = buildAttackGroups(state.build);
     const charmGroup = groups.find((group) => group.id === 'charm-effects');
     expect(charmGroup).toBeDefined();
 
@@ -81,7 +83,7 @@ describe('useAttackDefinitions helpers', () => {
       },
     });
 
-    const groups = buildAttackGroups(state);
+    const groups = buildAttackGroups(state.build);
     const spellsGroup = groups.find((group) => group.id === 'spellcasting');
     const vengefulSpirit = spellsGroup?.attacks.find(
       (attack) => attack.id === 'vengeful-spirit-vengefulSpirit',
@@ -95,7 +97,7 @@ describe('useAttackDefinitions helpers', () => {
   it('groups nail arts separately from standard nail attacks', () => {
     const state = createFightState();
 
-    const groups = buildAttackGroups(state);
+    const groups = buildAttackGroups(state.build);
     const nailArtsGroup = groups.find((group) => group.id === 'nail-arts');
 
     expect(nailArtsGroup).toBeDefined();
@@ -120,7 +122,7 @@ describe('useAttackDefinitions helpers', () => {
       },
     });
 
-    const groups = buildAttackGroups(state);
+    const groups = buildAttackGroups(state.build);
     const spellsGroup = groups.find((group) => group.id === 'spellcasting');
     const attackIds = spellsGroup?.attacks.map((attack) => attack.id) ?? [];
 
@@ -129,7 +131,7 @@ describe('useAttackDefinitions helpers', () => {
 
   it('builds shortcut metadata including hits remaining for each attack', () => {
     const state = createFightState();
-    const groups = buildAttackGroups(state);
+    const groups = buildAttackGroups(state.build);
     const { groupsWithMetadata, shortcutMap } = buildAttackMetadata(groups, 100);
 
     const firstGroup = groupsWithMetadata[0];
@@ -139,5 +141,36 @@ describe('useAttackDefinitions helpers', () => {
     expect(firstAttack.hitsRemaining).toBe(Math.ceil(100 / firstAttack.damage));
 
     expect(shortcutMap.get(KEY_SEQUENCE[0] ?? '')?.id).toBe(firstAttack.id);
+  });
+
+  it('memoizes attack definitions when the damage log changes', () => {
+    const state = createFightState();
+
+    const { result, rerender } = renderHook(
+      ({ currentState, hp }) => useAttackDefinitions(currentState, hp),
+      { initialProps: { currentState: state, hp: 100 } },
+    );
+
+    const initialGroups = result.current.groupsWithMetadata;
+    const initialShortcutMap = result.current.shortcutMap;
+
+    const nextState: FightState = {
+      ...state,
+      damageLog: [
+        ...state.damageLog,
+        {
+          id: 'nail-strike',
+          label: 'Nail Strike',
+          damage: 5,
+          category: 'nail',
+          timestamp: 0,
+        },
+      ],
+    };
+
+    rerender({ currentState: nextState, hp: 100 });
+
+    expect(result.current.groupsWithMetadata).toBe(initialGroups);
+    expect(result.current.shortcutMap).toBe(initialShortcutMap);
   });
 });
