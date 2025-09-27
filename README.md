@@ -58,6 +58,37 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
+## Visual Language System
+
+The global stylesheet (`src/styles/global.css`) now provides a reusable visual language for depth, translucency, and typography across the tracker.
+
+### Layered depth tokens
+
+- **Translucent panels:** `--surface-glass-low`, `--surface-glass-mid`, `--surface-glass-strong`, and `--surface-panel-muted` mix subtle gradients for layered glass panels.
+- **Elevation shadows:** `--elevation-layer-1`, `--elevation-layer-2`, `--elevation-layer-3`, and `--elevation-inner-soft` combine drop shadows with soft inset rims to suggest stacked HUD layers.
+- **Accent glows:** `--glow-accent-soft`, `--glow-accent-strong`, and the existing overcharm glow tokens keep interactive elements illuminated without hard borders.
+
+Use these variables instead of hard-coded borders when styling new controls so components inherit the shared depth cues.
+
+### Typography scale
+
+- `--font-size-display`
+- `--font-size-headline`
+- `--font-size-title`
+- `--font-size-subhead`
+- `--font-size-body`
+- `--font-size-caption`
+
+Apply the scale to headings, buttons, and helper text to keep casing and rhythm consistent. Microcopy that previously relied on `text-transform: uppercase` has been converted to sentence case, so string literals should also use sentence case moving forward.
+
+### Reusable components
+
+- `.app-navbar` wraps sticky headers such as the encounter HUD with layered gradients and accent glow shadows.
+- `.app-panel` standardizes raised content blocks used by the attack log and combat stats.
+- `.summary-chip` (with modifiers like `--toolbar` and `--accent`) replaces outlined pills for timeline indicators, HP badges, and selection summaries.
+
+When introducing new UI, prefer these primitives before adding bespoke gradients or borders.
+
 ## Tech Stack
 
 - [Vite](https://vitejs.dev/) for lightning-fast builds and previews.
