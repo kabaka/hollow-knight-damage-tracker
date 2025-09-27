@@ -1,288 +1,174 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { useEffect } from 'react';
+import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { SparklinePoint } from './Sparkline';
 import { CombatStatsPanel } from './CombatStatsPanel';
-import { useFightState } from '../fight-state/FightStateContext';
-import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
-import { bossMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
+import type { DerivedStats } from '../fight-state/FightStateContext';
 
-const baseNailDamage = nailUpgrades[0]?.damage ?? 5;
-const defaultBossTarget = bossMap.get(DEFAULT_BOSS_ID);
-
-if (!defaultBossTarget) {
-  throw new Error('Expected default boss target to be defined for tests');
+interface SparklineRecord {
+  length: number;
+  first?: SparklinePoint;
+  last?: SparklinePoint;
+  sample?: SparklinePoint[];
+  bucketAtOneSecond?: SparklinePoint | null;
+  valueDomain?: [number, number];
 }
 
-const ActionRegistrar = ({
-  onReady,
-}: {
-  onReady: (actions: ReturnType<typeof useFightState>['actions']) => void;
-}) => {
-  const { actions } = useFightState();
+const sparklineRecords = new Map<string, SparklineRecord>();
 
-  useEffect(() => {
-    onReady(actions);
-  }, [actions, onReady]);
+vi.mock('./Sparkline', () => ({
+  Sparkline: ({
+    ariaLabel,
+    data,
+    valueDomain,
+  }: {
+    ariaLabel: string;
+    data: SparklinePoint[];
+    valueDomain?: [number, number];
+  }) => {
+    const record: SparklineRecord = {
+      length: data.length,
+      first: data[0],
+      last: data.at(-1),
+      valueDomain,
+    };
 
-  return null;
+    if (data.length <= 10) {
+      record.sample = data.slice();
+    } else {
+      record.sample = data.slice(0, 10);
+    }
+
+    if (ariaLabel === 'Damage per second trend') {
+      record.bucketAtOneSecond =
+        data.find((point) => Math.round(point.time) === 1000) ?? null;
+    }
+
+    sparklineRecords.set(ariaLabel, record);
+
+    return (
+      <svg role="img" aria-label={ariaLabel}>
+        <title>{ariaLabel}</title>
+      </svg>
+    );
+  },
+}));
+
+const mockDamageLog: Array<{ timestamp: number; damage: number }> = [];
+const baseDerivedStats: DerivedStats = {
+  targetHp: 2000,
+  totalDamage: 0,
+  remainingHp: 2000,
+  attacksLogged: 0,
+  averageDamage: null,
+  elapsedMs: null,
+  dps: null,
+  actionsPerMinute: null,
+  estimatedTimeRemainingMs: null,
+  fightStartTimestamp: null,
+  fightEndTimestamp: null,
+  isFightInProgress: false,
+  isFightComplete: false,
+  frameTimestamp: 0,
 };
+const mockDerivedStats: DerivedStats = { ...baseDerivedStats };
+
+const setDamageLog = (entries: Array<{ timestamp: number; damage: number }>) => {
+  mockDamageLog.length = 0;
+  mockDamageLog.push(...entries);
+};
+
+const setDerivedStats = (overrides: Partial<DerivedStats>) => {
+  Object.assign(mockDerivedStats, baseDerivedStats, overrides);
+};
+
+vi.mock('../fight-state/FightStateContext', () => ({
+  useFightState: () => ({ state: { damageLog: mockDamageLog } }),
+  useFightDerivedStats: () => mockDerivedStats,
+}));
 
 describe('CombatStatsPanel', () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    sparklineRecords.clear();
+    setDamageLog([]);
+    setDerivedStats({});
   });
 
   afterEach(() => {
-    window.localStorage.clear();
+    sparklineRecords.clear();
   });
 
-  it('estimates remaining fight time using observed DPS', async () => {
-    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
+  it('omits redundant fight timer stats from the overview', () => {
+    render(<CombatStatsPanel />);
 
-    renderWithFightProvider(
-      <>
-        <ActionRegistrar onReady={(value) => (actions = value)} />
-        <CombatStatsPanel />
-      </>,
-    );
-
-    await waitFor(() => {
-      expect(actions).not.toBeNull();
-    });
-
-    const { logAttack, endFight } = actions ?? {};
-
-    const estimateRow = screen
-      .getByText('Estimated Time Remaining')
-      .closest('.data-list__item');
-
-    expect(estimateRow).not.toBeNull();
-    expect(within(estimateRow as HTMLElement).getByText('—')).toBeInTheDocument();
-
-    act(() => {
-      logAttack?.({
-        id: 'test-hit-1',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 0,
-      });
-      logAttack?.({
-        id: 'test-hit-2',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 3000,
-      });
-      endFight?.(3000);
-    });
-
-    const totalDamage = baseNailDamage * 2;
-    const remainingHp = Math.max(0, defaultBossTarget.hp - totalDamage);
-    const elapsedMs = 3000;
-    const dps = totalDamage / (elapsedMs / 1000);
-    const estimatedMs = Math.round((remainingHp / dps) * 1000);
-    const totalSeconds = Math.floor(estimatedMs / 1000);
-    const expectedMinutes = Math.floor(totalSeconds / 60);
-    const expectedSeconds = (totalSeconds % 60).toString().padStart(2, '0');
-    const expectedLabel = `${expectedMinutes}:${expectedSeconds}`;
-
-    expect(
-      within(estimateRow as HTMLElement).getByText(expectedLabel),
-    ).toBeInTheDocument();
+    expect(screen.queryByText('Elapsed')).toBeNull();
+    expect(screen.queryByText('Estimated Time Remaining')).toBeNull();
+    expect(screen.queryByText('Est. Remaining')).toBeNull();
   });
 
-  it('renders sparklines to visualize damage trends', async () => {
-    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
-
-    renderWithFightProvider(
-      <>
-        <ActionRegistrar onReady={(value) => (actions = value)} />
-        <CombatStatsPanel />
-      </>,
-    );
-
-    await waitFor(() => {
-      expect(actions).not.toBeNull();
+  it('charts average damage per hit using attack count', () => {
+    setDamageLog([
+      { timestamp: 0, damage: 220 },
+      { timestamp: 2000, damage: 180 },
+      { timestamp: 4000, damage: 210 },
+    ]);
+    setDerivedStats({
+      targetHp: 2000,
+      totalDamage: 610,
+      remainingHp: 1390,
+      attacksLogged: 3,
+      averageDamage: 203.33,
+      fightStartTimestamp: 0,
+      fightEndTimestamp: 4000,
     });
 
-    const { logAttack, endFight } = actions ?? {};
+    render(<CombatStatsPanel />);
 
-    act(() => {
-      logAttack?.({
-        id: 'spark-hit-1',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 0,
-      });
-      logAttack?.({
-        id: 'spark-hit-2',
-        label: 'Test Hit',
-        damage: baseNailDamage * 2,
-        category: 'nail',
-        timestamp: 5000,
-      });
-      endFight?.(5000);
-    });
-
-    expect(
-      screen.getByRole('img', { name: /total damage dealt over time/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('img', { name: /remaining health over time/i }),
-    ).toBeInTheDocument();
+    const sparkline = sparklineRecords.get('Damage dealt per logged attack');
+    expect(sparkline?.sample?.length).toBe(3);
+    expect(sparkline?.sample?.map((point) => point.time)).toEqual([1, 2, 3]);
   });
 
-  it('updates sparklines when new damage is logged', async () => {
-    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
-
-    renderWithFightProvider(
-      <>
-        <ActionRegistrar onReady={(value) => (actions = value)} />
-        <CombatStatsPanel />
-      </>,
-    );
-
-    await waitFor(() => {
-      expect(actions).not.toBeNull();
+  it('buckets the dps trend by second', () => {
+    setDamageLog([
+      { timestamp: 0, damage: 150 },
+      { timestamp: 1500, damage: 300 },
+    ]);
+    setDerivedStats({
+      targetHp: 2000,
+      totalDamage: 450,
+      remainingHp: 1550,
+      attacksLogged: 2,
+      averageDamage: 225,
+      fightStartTimestamp: 0,
+      fightEndTimestamp: 1500,
     });
 
-    const { logAttack } = actions ?? {};
+    render(<CombatStatsPanel />);
 
-    act(() => {
-      logAttack?.({
-        id: 'spark-update-1',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 0,
-      });
-      logAttack?.({
-        id: 'spark-update-2',
-        label: 'Test Hit',
-        damage: baseNailDamage * 2,
-        category: 'nail',
-        timestamp: 4000,
-      });
-    });
-
-    const sparkline = screen.getByRole('img', {
-      name: /total damage dealt over time/i,
-    }) as SVGElement;
-
-    const readPointCount = () => {
-      const polyline = sparkline.querySelector('polyline');
-      const attribute = polyline?.getAttribute('points');
-
-      return (attribute ?? '').trim().split(/\s+/).filter(Boolean).length;
-    };
-
-    const initialPointCount = readPointCount();
-    expect(initialPointCount).toBeGreaterThanOrEqual(2);
-
-    act(() => {
-      logAttack?.({
-        id: 'spark-update-3',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 6000,
-      });
-    });
-
-    await waitFor(() => {
-      expect(readPointCount()).toBeGreaterThan(initialPointCount);
-    });
+    const sparkline = sparklineRecords.get('Damage per second trend');
+    expect(sparkline?.bucketAtOneSecond?.value).toBeCloseTo(150, 5);
+    expect(sparkline?.last?.value).toBeCloseTo(600, 5);
   });
 
-  it('scales sparklines using elapsed fight time', async () => {
-    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
-
-    renderWithFightProvider(
-      <>
-        <ActionRegistrar onReady={(value) => (actions = value)} />
-        <CombatStatsPanel />
-      </>,
-    );
-
-    await waitFor(() => {
-      expect(actions).not.toBeNull();
+  it('locks remaining health chart to the target health domain', () => {
+    setDamageLog([
+      { timestamp: 0, damage: 400 },
+      { timestamp: 2500, damage: 300 },
+    ]);
+    setDerivedStats({
+      targetHp: 2000,
+      totalDamage: 700,
+      remainingHp: 1300,
+      attacksLogged: 2,
+      averageDamage: 350,
+      fightStartTimestamp: 0,
+      fightEndTimestamp: 2500,
     });
 
-    const { logAttack, endFight } = actions ?? {};
+    render(<CombatStatsPanel />);
 
-    act(() => {
-      logAttack?.({
-        id: 'time-hit-1',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 0,
-      });
-      logAttack?.({
-        id: 'time-hit-2',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 1000,
-      });
-      endFight?.(1000);
-    });
-
-    const sparkline = screen.getByRole('img', {
-      name: /total damage dealt over time/i,
-    }) as SVGElement;
-    const polyline = sparkline.querySelector('polyline');
-
-    expect(polyline).not.toBeNull();
-
-    const pointsAttribute = polyline?.getAttribute('points');
-    expect(pointsAttribute).toBeTruthy();
-
-    const points = (pointsAttribute ?? '').trim().split(/\s+/).filter(Boolean);
-
-    expect(points.length).toBeGreaterThan(2);
-
-    const parseX = (point: string) => Number.parseFloat(point.split(',')[0] ?? '0');
-
-    const firstX = parseX(points[0] ?? '0,0');
-    const lastX = parseX(points[points.length - 1] ?? '0,0');
-
-    expect(firstX).toBeCloseTo(2, 1);
-    expect(lastX).toBeCloseTo(86, 1);
-  });
-
-  it('includes elapsed time when a fight is manually ended', async () => {
-    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
-
-    renderWithFightProvider(
-      <>
-        <ActionRegistrar onReady={(value) => (actions = value)} />
-        <CombatStatsPanel />
-      </>,
-    );
-
-    await waitFor(() => {
-      expect(actions).not.toBeNull();
-    });
-
-    const { logAttack, endFight } = actions ?? {};
-
-    act(() => {
-      logAttack?.({
-        id: 'elapsed-hit-1',
-        label: 'Test Hit',
-        damage: baseNailDamage,
-        category: 'nail',
-        timestamp: 0,
-      });
-      endFight?.(2000);
-    });
-
-    const elapsedRow = screen.getByText('Elapsed').closest('.data-list__item');
-    expect(elapsedRow).not.toBeNull();
-    expect(within(elapsedRow as HTMLElement).getByText('0:02')).toBeInTheDocument();
+    const sparkline = sparklineRecords.get('Remaining health over time');
+    expect(sparkline?.valueDomain).toEqual([0, 2000]);
   });
 });

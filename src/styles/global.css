@@ -468,6 +468,13 @@ h6 {
   flex-wrap: wrap;
 }
 
+.hud-scoreboard__status {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(0.45rem, 1.2vw, 0.9rem);
+  flex-wrap: wrap;
+}
+
 .hud-health {
   display: inline-flex;
   align-items: center;
