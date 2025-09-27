@@ -2,38 +2,13 @@ import type { FC } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
-import {
-  RESET_SHORTCUT_KEY,
-  useAttackDefinitions,
-  type AttackWithMetadata,
-} from './useAttackDefinitions';
-
-type AttackParticleEffect = 'nail' | 'spell-spirit' | 'spell-dive' | 'spell-wraith';
-type ParticleEffect = AttackParticleEffect | 'control';
-
-const PARTICLE_DURATIONS: Record<ParticleEffect, number> = {
-  nail: 200,
-  'spell-spirit': 220,
-  'spell-dive': 230,
-  'spell-wraith': 230,
-  control: 150,
-};
-
-const getParticleEffectForAttack = (attack: AttackWithMetadata): AttackParticleEffect => {
-  if (attack.category === 'spell') {
-    if (attack.id.startsWith('desolate-dive')) {
-      return 'spell-dive';
-    }
-    if (attack.id.startsWith('howling-wraiths')) {
-      return 'spell-wraith';
-    }
-    return 'spell-spirit';
-  }
-
-  return 'nail';
-};
+import { RESET_SHORTCUT_KEY, useAttackDefinitions } from './useAttackDefinitions';
 
 const RESET_SEQUENCE_SHORTCUT = 'Shift+Escape';
+const ACTIVE_EFFECT_DURATION = 320;
+
+const isActivationKey = (key: string) =>
+  key === 'Enter' || key === ' ' || key === 'Spacebar';
 
 export const AttackLogPanel: FC = () => {
   const fight = useFightState();
@@ -73,42 +48,38 @@ export const AttackLogPanel: FC = () => {
   );
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const particleTimeoutsRef = useRef<Map<HTMLElement, number>>(new Map());
+  const activeEffectTimeoutsRef = useRef<Map<HTMLElement, number>>(new Map());
 
-  const triggerParticleEffect = useCallback(
-    (element: HTMLElement | null, effect: ParticleEffect) => {
-      if (!element) {
-        return;
-      }
+  const triggerActiveEffect = useCallback((element: HTMLElement | null) => {
+    if (!element) {
+      return;
+    }
 
-      const timeouts = particleTimeoutsRef.current;
-      const previousTimeout = timeouts.get(element);
-      if (previousTimeout) {
-        window.clearTimeout(previousTimeout);
-      }
+    const timeouts = activeEffectTimeoutsRef.current;
+    const previousTimeout = timeouts.get(element);
+    if (previousTimeout) {
+      window.clearTimeout(previousTimeout);
+    }
 
-      element.classList.remove('is-particle-active');
+    element.classList.remove('is-active-effect');
 
-      const activate = () => {
-        element.classList.add('is-particle-active');
-        const duration = PARTICLE_DURATIONS[effect] ?? 200;
-        const timeoutId = window.setTimeout(() => {
-          element.classList.remove('is-particle-active');
-          timeouts.delete(element);
-        }, duration);
-        timeouts.set(element, timeoutId);
-      };
+    const activate = () => {
+      element.classList.add('is-active-effect');
+      const timeoutId = window.setTimeout(() => {
+        element.classList.remove('is-active-effect');
+        timeouts.delete(element);
+      }, ACTIVE_EFFECT_DURATION);
+      timeouts.set(element, timeoutId);
+    };
 
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(activate);
-      });
-    },
-    [],
-  );
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(activate);
+    });
+  }, []);
 
   useEffect(
     () => () => {
-      const timeouts = particleTimeoutsRef.current;
+      const timeouts = activeEffectTimeoutsRef.current;
       timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
       timeouts.clear();
     },
@@ -140,11 +111,10 @@ export const AttackLogPanel: FC = () => {
       if (key === 'Enter' && canEndFight) {
         event.preventDefault();
         actions.endFight();
-        triggerParticleEffect(
+        triggerActiveEffect(
           panelRef.current?.querySelector<HTMLButtonElement>(
             "[data-control='end-fight']",
           ),
-          'control',
         );
         return;
       }
@@ -156,11 +126,10 @@ export const AttackLogPanel: FC = () => {
           }
           event.preventDefault();
           actions.resetSequence();
-          triggerParticleEffect(
+          triggerActiveEffect(
             panelRef.current?.querySelector<HTMLButtonElement>(
               "[data-control='reset-sequence']",
             ),
-            'control',
           );
           return;
         }
@@ -170,11 +139,10 @@ export const AttackLogPanel: FC = () => {
         }
         event.preventDefault();
         actions.resetLog();
-        triggerParticleEffect(
+        triggerActiveEffect(
           panelRef.current?.querySelector<HTMLButtonElement>(
             "[data-control='reset-log']",
           ),
-          'control',
         );
         return;
       }
@@ -193,11 +161,10 @@ export const AttackLogPanel: FC = () => {
           category: attack.category,
           soulCost: attack.soulCost,
         });
-        triggerParticleEffect(
+        triggerActiveEffect(
           panelRef.current?.querySelector<HTMLButtonElement>(
             `[data-attack-id='${attack.id}']`,
           ),
-          getParticleEffectForAttack(attack),
         );
       }
     };
@@ -211,7 +178,7 @@ export const AttackLogPanel: FC = () => {
     state.redoStack.length,
     canEndFight,
     canResetSequence,
-    triggerParticleEffect,
+    triggerActiveEffect,
   ]);
 
   return (
@@ -225,10 +192,16 @@ export const AttackLogPanel: FC = () => {
         <button
           type="button"
           className="quick-actions__button"
-          data-particle-effect="control"
           data-control="undo"
-          onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control');
+          onPointerDown={(event) => {
+            triggerActiveEffect(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (isActivationKey(event.key)) {
+              triggerActiveEffect(event.currentTarget);
+            }
+          }}
+          onClick={() => {
             actions.undoLastAttack();
           }}
           disabled={damageLog.length === 0}
@@ -238,10 +211,16 @@ export const AttackLogPanel: FC = () => {
         <button
           type="button"
           className="quick-actions__button"
-          data-particle-effect="control"
           data-control="redo"
-          onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control');
+          onPointerDown={(event) => {
+            triggerActiveEffect(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (isActivationKey(event.key)) {
+              triggerActiveEffect(event.currentTarget);
+            }
+          }}
+          onClick={() => {
             actions.redoLastAttack();
           }}
           disabled={redoStack.length === 0}
@@ -251,10 +230,16 @@ export const AttackLogPanel: FC = () => {
         <button
           type="button"
           className="quick-actions__button"
-          data-particle-effect="control"
           data-control="reset-log"
-          onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control');
+          onPointerDown={(event) => {
+            triggerActiveEffect(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (isActivationKey(event.key)) {
+              triggerActiveEffect(event.currentTarget);
+            }
+          }}
+          onClick={() => {
             actions.resetLog();
           }}
           aria-keyshortcuts="Esc"
@@ -266,10 +251,16 @@ export const AttackLogPanel: FC = () => {
           <button
             type="button"
             className="quick-actions__button"
-            data-particle-effect="control"
             data-control="reset-sequence"
-            onClick={(event) => {
-              triggerParticleEffect(event.currentTarget, 'control');
+            onPointerDown={(event) => {
+              triggerActiveEffect(event.currentTarget);
+            }}
+            onKeyDown={(event) => {
+              if (isActivationKey(event.key)) {
+                triggerActiveEffect(event.currentTarget);
+              }
+            }}
+            onClick={() => {
               actions.resetSequence();
             }}
             aria-keyshortcuts={RESET_SEQUENCE_SHORTCUT}
@@ -281,10 +272,16 @@ export const AttackLogPanel: FC = () => {
         <button
           type="button"
           className="quick-actions__button"
-          data-particle-effect="control"
           data-control="end-fight"
-          onClick={(event) => {
-            triggerParticleEffect(event.currentTarget, 'control');
+          onPointerDown={(event) => {
+            triggerActiveEffect(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (isActivationKey(event.key)) {
+              triggerActiveEffect(event.currentTarget);
+            }
+          }}
+          onClick={() => {
             actions.endFight();
           }}
           aria-keyshortcuts="Enter"
@@ -298,67 +295,68 @@ export const AttackLogPanel: FC = () => {
           <section key={group.id} className="attack-group">
             <h3 className="attack-group__title">{group.label}</h3>
             <div className="button-grid" role="group" aria-label={group.label}>
-              {group.attacks.map((attack) => {
-                const particleEffect = getParticleEffectForAttack(attack);
-                return (
-                  <button
-                    key={attack.id}
-                    type="button"
-                    className="button-grid__button"
-                    aria-keyshortcuts={attack.hotkey?.toUpperCase()}
-                    data-attack-category={attack.category}
-                    data-attack-id={attack.id}
-                    data-particle-effect={particleEffect}
-                    onClick={(event) => {
-                      triggerParticleEffect(event.currentTarget, particleEffect);
-                      actions.logAttack({
-                        id: attack.id,
-                        label: attack.label,
-                        damage: attack.damage,
-                        category: attack.category,
-                        soulCost: attack.soulCost,
-                      });
-                    }}
-                  >
-                    <div className="button-grid__header">
-                      <span className="button-grid__label">{attack.label}</span>
-                      {attack.hotkey ? (
-                        <span className="button-grid__hotkey" aria-hidden="true">
-                          {attack.hotkey.toUpperCase()}
-                        </span>
-                      ) : null}
-                    </div>
+              {group.attacks.map((attack) => (
+                <button
+                  key={attack.id}
+                  type="button"
+                  className="button-grid__button"
+                  aria-keyshortcuts={attack.hotkey?.toUpperCase()}
+                  data-attack-category={attack.category}
+                  data-attack-id={attack.id}
+                  onPointerDown={(event) => {
+                    triggerActiveEffect(event.currentTarget);
+                  }}
+                  onKeyDown={(event) => {
+                    if (isActivationKey(event.key)) {
+                      triggerActiveEffect(event.currentTarget);
+                    }
+                  }}
+                  onClick={() => {
+                    actions.logAttack({
+                      id: attack.id,
+                      label: attack.label,
+                      damage: attack.damage,
+                      category: attack.category,
+                      soulCost: attack.soulCost,
+                    });
+                  }}
+                >
+                  <div className="button-grid__header">
+                    <span className="button-grid__label">{attack.label}</span>
                     {attack.hotkey ? (
-                      <span className="visually-hidden">
-                        Shortcut key {attack.hotkey.toUpperCase()}.
+                      <span className="button-grid__hotkey" aria-hidden="true">
+                        {attack.hotkey.toUpperCase()}
                       </span>
                     ) : null}
-                    <span className="button-grid__meta">
-                      <span className="button-grid__damage" aria-label="Damage per hit">
-                        {attack.damage}
-                      </span>
-                      {typeof attack.soulCost === 'number' ? (
-                        <span className="button-grid__soul" aria-label="Soul cost">
-                          {attack.soulCost} SOUL
-                        </span>
-                      ) : null}
-                      {typeof attack.hitsRemaining === 'number' ? (
-                        <span
-                          className="button-grid__hits"
-                          aria-label="Hits to finish with this attack"
-                        >
-                          Hits to finish: {attack.hitsRemaining}
-                        </span>
-                      ) : null}
+                  </div>
+                  {attack.hotkey ? (
+                    <span className="visually-hidden">
+                      Shortcut key {attack.hotkey.toUpperCase()}.
                     </span>
-                    {attack.description ? (
-                      <span className="button-grid__description">
-                        {attack.description}
+                  ) : null}
+                  <span className="button-grid__meta">
+                    <span className="button-grid__damage" aria-label="Damage per hit">
+                      {attack.damage}
+                    </span>
+                    {typeof attack.soulCost === 'number' ? (
+                      <span className="button-grid__soul" aria-label="Soul cost">
+                        {attack.soulCost} SOUL
                       </span>
                     ) : null}
-                  </button>
-                );
-              })}
+                    {typeof attack.hitsRemaining === 'number' ? (
+                      <span
+                        className="button-grid__hits"
+                        aria-label="Hits to finish with this attack"
+                      >
+                        Hits to finish: {attack.hitsRemaining}
+                      </span>
+                    ) : null}
+                  </span>
+                  {attack.description ? (
+                    <span className="button-grid__description">{attack.description}</span>
+                  ) : null}
+                </button>
+              ))}
             </div>
           </section>
         ))}
