@@ -66,6 +66,7 @@ type FightActions = {
   undoLastAttack: () => void;
   redoLastAttack: () => void;
   resetLog: () => void;
+  resetSequence: () => void;
   endFight: (timestamp?: number) => void;
   startSequence: (sequenceId: string) => void;
   stopSequence: () => void;
@@ -411,6 +412,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       undoLastAttack: () => dispatch({ type: 'undoLastAttack' }),
       redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
       resetLog: () => dispatch({ type: 'resetLog' }),
+      resetSequence: () => dispatch({ type: 'resetSequence' }),
       endFight: (timestamp) =>
         dispatch({ type: 'endFight', timestamp: timestamp ?? Date.now() }),
       startSequence: (sequenceId) => dispatch({ type: 'startSequence', sequenceId }),

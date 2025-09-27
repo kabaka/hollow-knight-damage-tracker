@@ -1,14 +1,17 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 
 import { AttackLogPanel } from './AttackLogPanel';
 import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
 import { CombatStatsPanel } from '../combat-stats/CombatStatsPanel';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
-import { bossMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
+import { bossMap, bossSequenceMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
+import { useFightState } from '../fight-state/FightStateContext';
 
 const baseNailDamage = nailUpgrades[0]?.damage ?? 5;
 const defaultBossTarget = bossMap.get(DEFAULT_BOSS_ID);
+const masterSequence = bossSequenceMap.get('pantheon-of-the-master');
 
 if (!defaultBossTarget) {
   throw new Error('Expected default boss target to be defined for tests');
@@ -18,11 +21,35 @@ if (baseNailDamage <= 0) {
   throw new Error('Expected base nail damage to be positive for tests');
 }
 
+if (!masterSequence) {
+  throw new Error('Expected pantheon-of-the-master sequence to be defined for tests');
+}
+
 const baseNailDamageText = String(baseNailDamage);
 const defaultBossHp = defaultBossTarget.hp;
 const remainingAfterOneHit = Math.max(0, defaultBossHp - baseNailDamage);
 const initialHitsToFinish = Math.ceil(defaultBossHp / baseNailDamage);
 const hitsToFinishAfterOneHit = Math.ceil(remainingAfterOneHit / baseNailDamage);
+
+const SequenceHarness = () => {
+  const { actions, state } = useFightState();
+  const sequenceId = masterSequence.id;
+
+  useEffect(() => {
+    actions.startSequence(sequenceId);
+  }, [actions, sequenceId]);
+
+  return (
+    <div>
+      <button type="button" onClick={() => actions.advanceSequenceStage()}>
+        Advance Stage
+      </button>
+      <span data-testid="sequence-index">{state.sequenceIndex}</span>
+      <span data-testid="active-sequence">{state.activeSequenceId ?? 'none'}</span>
+      <span data-testid="log-count">{state.damageLog.length}</span>
+    </div>
+  );
+};
 
 describe('AttackLogPanel', () => {
   beforeEach(() => {
@@ -200,6 +227,67 @@ describe('AttackLogPanel', () => {
 
     damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
     expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
+  });
+
+  it('resets sequence progress via quick actions and keyboard shortcut', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <SequenceHarness />
+        <AttackLogPanel />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-sequence').textContent).toBe(masterSequence.id);
+    });
+
+    const resetSequenceButton = await screen.findByRole('button', {
+      name: /reset sequence/i,
+    });
+
+    expect(resetSequenceButton).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /advance stage/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+    });
+
+    await waitFor(() => {
+      expect(resetSequenceButton).not.toBeDisabled();
+    });
+
+    await user.click(resetSequenceButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+    });
+
+    expect(resetSequenceButton).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /advance stage/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+    });
+
+    const nailStrikeButton = await screen.findByRole('button', { name: /nail strike/i });
+    await user.click(nailStrikeButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('log-count').textContent).toBe('1');
+    });
+
+    await user.keyboard('{Shift>}{Escape}{/Shift}');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+      expect(screen.getByTestId('log-count').textContent).toBe('0');
+    });
+
+    expect(resetSequenceButton).toBeDisabled();
   });
 
   it('allows ending fights early via the quick actions', async () => {

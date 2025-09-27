@@ -76,6 +76,7 @@ export type FightAction =
   | { type: 'undoLastAttack' }
   | { type: 'redoLastAttack' }
   | { type: 'resetLog' }
+  | { type: 'resetSequence' }
   | { type: 'endFight'; timestamp: number }
   | { type: 'startSequence'; sequenceId: string }
   | { type: 'stopSequence' }
@@ -527,6 +528,39 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         fightEndTimestamp: null,
         fightManuallyEnded: false,
       });
+    case 'resetSequence': {
+      if (!state.activeSequenceId) {
+        return applyLogUpdate(state, [], [], {
+          fightEndTimestamp: null,
+          fightManuallyEnded: false,
+        });
+      }
+
+      const sequenceId = state.activeSequenceId;
+      const persisted = persistCurrentSequenceStage(state);
+      const cleared: FightState = {
+        ...persisted,
+        damageLog: [],
+        redoStack: [],
+        fightEndTimestamp: null,
+        fightManuallyEnded: false,
+        sequenceLogs: filterSequenceRecords(persisted.sequenceLogs, sequenceId),
+        sequenceRedoStacks: filterSequenceRecords(
+          persisted.sequenceRedoStacks,
+          sequenceId,
+        ),
+        sequenceFightEndTimestamps: filterSequenceRecords(
+          persisted.sequenceFightEndTimestamps,
+          sequenceId,
+        ),
+        sequenceManualEndFlags: filterSequenceRecords(
+          persisted.sequenceManualEndFlags,
+          sequenceId,
+        ),
+      };
+
+      return loadSequenceStage(cleared, sequenceId, 0);
+    }
     case 'endFight': {
       if (state.damageLog.length === 0) {
         return state;
