@@ -1,5 +1,10 @@
 # Hollow Knight Damage Tracker
 
+[![CI](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/ci.yml)
+[![Dependabot Updates](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/dependabot/dependabot-updates)
+[![CodeQL](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/github-code-scanning/codeql)
+[![Deploy](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/kabaka/hollow-knight-damage-tracker/actions/workflows/deploy.yml)
+
 Hollow Knight Damage Tracker is a responsive web application designed to help players measure and analyze the damage they deal during boss fights. Users will be able to configure their build, pick a fight or specify a damage target, and log every hit in real time to monitor their progress toward victory.
 
 ## Getting Started
