@@ -98,10 +98,16 @@ When extending the UI, lean on these tokens before introducing bespoke colors so
 ### Atmosphere & Interactivity
 
 - **Dimmed cavern glow:** The global background now layers deep blue-grey gradients, a gentle vignette, and a faint hex lattice so the interface feels like a relic lit within a Godhome chamber.
-- **Tactile controls:** Buttons and selects compress with a brief soul-white flash, while nail, spell, and control buttons trigger themed CSS particle bursts to make every click feel like a strike.
+- **Tactile controls:** Buttons and selects compress with a brief soul-white flash so every click still feels like a strike.
 - **State-aware cues:** Combat panels pulse when a fight begins or ends, and the Remaining HP readout glows softly under 25% to telegraph danger and victory without stealing focus.
 
 Contributors can inspect the implementations inside `src/styles/global.css`—mirroring these primitives will keep future components steeped in the same ancient elegance.
+
+### Tactile, Performant Feedback
+
+- **Soul Ripple activations:** Interactive buttons shrink via `transform: scale(0.98)` and emit a pale outline drawn with their `::after` pseudo-element. The ripple races outward (`ripple-out`) and fades within 300 ms so inputs feel immediate rather than floaty.
+- **Keyboard and pointer parity:** The same classes fire from pointer presses, key presses, and global shortcuts, guaranteeing identical feedback for mouse and keyboard hunters.
+- **GPU-friendly motion:** All animations stick to `transform` and `opacity`, avoiding layout-bound properties. The effect renders entirely in CSS, keeping the interface pinned at 60 FPS even during frantic combat logging.
 
 ## Tech Stack
 
