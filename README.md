@@ -58,36 +58,44 @@ Vitest (unit tests) and Playwright (e2e tests) validate that core sections rende
 
 Automated workflows in `.github/workflows/` run linting, unit tests, end-to-end tests, and GitHub Pages deployments on every push.
 
-## Visual Language System
+## 🎨 Design Philosophy
 
-The global stylesheet (`src/styles/global.css`) now provides a reusable visual language for depth, translucency, and typography across the tracker.
+The tracker’s interface now mirrors the relics, reliquaries, and parchment that define Hallownest’s menus. Rather than glass panels, every surface feels etched from ancient stone or hammered metal, with soft enamel highlights that echo the Hunter’s Journal and the nailmaster tablets.
 
-### Layered depth tokens
+### Materiality & Texture
 
-- **Translucent panels:** `--surface-glass-low`, `--surface-glass-mid`, `--surface-glass-strong`, and `--surface-panel-muted` mix subtle gradients for layered glass panels.
-- **Elevation shadows:** `--elevation-layer-1`, `--elevation-layer-2`, `--elevation-layer-3`, and `--elevation-inner-soft` combine drop shadows with soft inset rims to suggest stacked HUD layers.
-- **Accent glows:** `--glow-accent-soft`, `--glow-accent-strong`, and the existing overcharm glow tokens keep interactive elements illuminated without hard borders.
+- **Stone-dark foundations:** `--color-bg`, `--color-bg-deep`, and `--color-surface` establish the cavernous midnight blues seen throughout Godhome. Layer radial gradients with `var(--texture-vein)` and `var(--texture-noise)` to keep new panels mottled and weathered instead of flat.
+- **Carved silhouettes:** `--shape-tablet` and etched shadow tokens (`--frame-outline`, `--frame-etch`, `--frame-highlight`) deliver sharp, chamfered edges reminiscent of charm plaques and Royal Waterways signage.
 
-Use these variables instead of hard-coded borders when styling new controls so components inherit the shared depth cues.
+### Ornate framing & reusable pieces
 
-### Typography scale
+- `.app-navbar`, `.app-panel`, `.summary-chip`, and `.modal__content` all clip to `var(--shape-tablet)` and apply the shared etching stack so new layouts inherit the same chiseled border treatment.
+- `.summary-chip--toolbar`, `.hud-actions__button`, and the segmented controls trade pill buttons for faceted lozenges that glow with SOUL-blue light on hover.
+- The player loadout now features a **charm notch bracelet**: `.notch-panel__bracelet` draws the metal strap and `.notch-dot` renders the circular sockets, filling with pale soullight when equipped and pulsing magenta when overcharmed.
 
-- `--font-size-display`
-- `--font-size-headline`
-- `--font-size-title`
-- `--font-size-subhead`
-- `--font-size-body`
-- `--font-size-caption`
+### Typographic voice
 
-Apply the scale to headings, buttons, and helper text to keep casing and rhythm consistent. Microcopy that previously relied on `text-transform: uppercase` has been converted to sentence case, so string literals should also use sentence case moving forward.
+- Headings, HUD badges, and ceremonial labels use [Cinzel](https://fonts.google.com/specimen/Cinzel) (`var(--font-display)`) for a carved, gothic cadence similar to the game’s official UI.
+- Body copy, tooltips, and stat labels rely on [Source Sans 3](https://fonts.google.com/specimen/Source+Sans+3) for clarity during frantic fights.
+- The existing type scale variables (`--font-size-display` through `--font-size-caption`) still govern hierarchy; prefer sentence case microcopy to match the in-game Hunter’s Journal tone.
 
-### Reusable components
+### Hallownest palette
 
-- `.app-navbar` wraps sticky headers such as the encounter HUD with layered gradients and accent glow shadows.
-- `.app-panel` standardizes raised content blocks used by the attack log and combat stats.
-- `.summary-chip` (with modifiers like `--toolbar` and `--accent`) replaces outlined pills for timeline indicators, HP badges, and selection summaries.
+- `--color-bg` `#04060d` – cavern walls and Godhome’s night sky.
+- `--color-surface` / `--color-surface-raised` – oxidized steel tablets for primary panels and chips.
+- `--color-border` / `--color-border-soft` – bone-white engraving highlights that define carved edges.
+- `--color-accent` – the pale cyan soul glimmer used for hover glows, progress meters, and timeline glyphs.
+- `--color-accent-ember` – a warm ember reserved for lore callouts or warning states alongside the long-lived overcharm pink.
 
-When introducing new UI, prefer these primitives before adding bespoke gradients or borders.
+When extending the UI, lean on these tokens before introducing bespoke colors so every addition stays anchored to Hallownest’s palette.
+
+### Interactive highlights
+
+- Hover states replace modern drop shadows with rune-like glows (`rgb(215 245 255 / 35%)`) that mirror the SOUL meter charge.
+- Buttons and toggles use polygonal `clip-path` treatments to emulate charm slots and tablet corners instead of rounded pills.
+- Modals and panels layer subtle noise above the gradients, preventing modern flatness while keeping readability high.
+
+Contributors can inspect the implementations inside `src/styles/global.css`—mirroring these primitives will keep future components steeped in the same ancient elegance.
 
 ## Tech Stack
 
