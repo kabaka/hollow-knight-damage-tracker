@@ -54,7 +54,7 @@ describe('AttackLogPanel', () => {
     expect(damageDisplay).toHaveTextContent('32');
   });
 
-  it('surfaces spell upgrades in the advanced group when unlocked', async () => {
+  it('surfaces spell upgrades in the spell group without duplicates', async () => {
     const user = userEvent.setup();
 
     renderWithFightProvider(
@@ -64,10 +64,17 @@ describe('AttackLogPanel', () => {
       </>,
     );
 
-    await user.click(screen.getByRole('radio', { name: /shade soul/i }));
+    await user.click(
+      screen.getByRole('radio', {
+        name: /shade soul/i,
+      }),
+    );
 
-    const shadeSoulButtons = screen.getAllByRole('button', { name: /shade soul/i });
-    expect(shadeSoulButtons.length).toBeGreaterThan(0);
+    const spellsGroup = screen.getByRole('group', { name: /spells/i });
+    const shadeSoulButtons = within(spellsGroup).getAllByRole('button', {
+      name: /shade soul/i,
+    });
+    expect(shadeSoulButtons).toHaveLength(1);
   });
 
   it('logs damage and updates combat statistics', async () => {

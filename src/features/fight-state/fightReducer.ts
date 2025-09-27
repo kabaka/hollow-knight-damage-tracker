@@ -10,7 +10,7 @@ import {
 } from '../../data';
 import type { BossSequenceEntry } from '../../data';
 
-export type AttackCategory = 'nail' | 'spell' | 'advanced' | 'charm';
+export type AttackCategory = 'nail' | 'spell' | 'nail-art' | 'charm';
 export type SpellLevel = 'none' | 'base' | 'upgrade';
 
 export interface AttackEvent {

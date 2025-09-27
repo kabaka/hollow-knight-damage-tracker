@@ -92,6 +92,22 @@ describe('useAttackDefinitions helpers', () => {
     expect(vengefulSpirit?.description).toMatch(/flukenest volley/i);
   });
 
+  it('groups nail arts separately from standard nail attacks', () => {
+    const state = createFightState();
+
+    const groups = buildAttackGroups(state);
+    const nailArtsGroup = groups.find((group) => group.id === 'nail-arts');
+
+    expect(nailArtsGroup).toBeDefined();
+    expect(nailArtsGroup?.attacks.map((attack) => attack.id)).toEqual(
+      expect.arrayContaining(['great-slash', 'dash-slash', 'cyclone-slash-hit']),
+    );
+    const allCategoriesAreNailArts = nailArtsGroup?.attacks.every(
+      (attack) => attack.category === 'nail-art',
+    );
+    expect(allCategoriesAreNailArts).toBe(true);
+  });
+
   it('omits spells that are not yet acquired', () => {
     const [firstSpell] = spells;
     if (!firstSpell) {
