@@ -1,12 +1,13 @@
 import type { FC, PropsWithChildren } from 'react';
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useReducer,
   useRef,
-  useState,
+  useSyncExternalStore,
 } from 'react';
 
 import {
@@ -55,7 +56,6 @@ export interface DerivedStats {
 
 interface FightContextValue {
   state: FightState;
-  derived: DerivedStats;
   actions: {
     selectBoss: (bossId: string) => void;
     setCustomTargetHp: (hp: number) => void;
@@ -81,7 +81,13 @@ interface FightContextValue {
   };
 }
 
+interface DerivedStatsStore {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => DerivedStats;
+}
+
 const FightStateContext = createContext<FightContextValue | undefined>(undefined);
+const FightDerivedStatsContext = createContext<DerivedStatsStore | undefined>(undefined);
 
 const calculateDerivedStats = (
   state: FightState,
@@ -137,16 +143,42 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     restorePersistedState(ensureSequenceState(ensureSpellLevels(createInitialState()))),
   );
   const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
-  const [frameTimestamp, setFrameTimestamp] = useState(() => Date.now());
+  const stateRef = useRef(state);
+  const frameTimestampRef = useRef<number>(Date.now());
+  const derivedRef = useRef<DerivedStats>(
+    calculateDerivedStats(state, frameTimestampRef.current),
+  );
+  const listenersRef = useRef<Set<() => void>>(new Set());
+  const derivedStoreRef = useRef<DerivedStatsStore | null>(null);
+
+  const notifyDerived = useCallback(() => {
+    derivedRef.current = calculateDerivedStats(
+      stateRef.current,
+      frameTimestampRef.current,
+    );
+    listenersRef.current.forEach((listener) => listener());
+  }, []);
+
+  if (!derivedStoreRef.current) {
+    derivedStoreRef.current = {
+      getSnapshot: () => derivedRef.current,
+      subscribe: (listener) => {
+        listenersRef.current.add(listener);
+        return () => {
+          listenersRef.current.delete(listener);
+        };
+      },
+    } satisfies DerivedStatsStore;
+  }
 
   useEffect(() => {
     persistStateToStorage(state);
   }, [state]);
 
-  const derived = useMemo(
-    () => calculateDerivedStats(state, frameTimestamp),
-    [state, frameTimestamp],
-  );
+  useEffect(() => {
+    stateRef.current = state;
+    notifyDerived();
+  }, [state, notifyDerived]);
 
   const shouldAnimate = state.damageLog.length > 0 && state.fightEndTimestamp == null;
 
@@ -156,8 +188,10 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }
 
     let frameId: number;
+
     const tick = () => {
-      setFrameTimestamp(Date.now());
+      frameTimestampRef.current = Date.now();
+      notifyDerived();
       frameId = window.requestAnimationFrame(tick);
     };
 
@@ -166,13 +200,14 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [shouldAnimate]);
+  }, [shouldAnimate, notifyDerived]);
 
   useEffect(() => {
     if (!shouldAnimate && state.fightEndTimestamp != null) {
-      setFrameTimestamp(state.fightEndTimestamp);
+      frameTimestampRef.current = state.fightEndTimestamp;
+      notifyDerived();
     }
-  }, [shouldAnimate, state.fightEndTimestamp]);
+  }, [shouldAnimate, state.fightEndTimestamp, notifyDerived]);
 
   useEffect(() => {
     if (!state.activeSequenceId) {
@@ -196,7 +231,13 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
 
     const stageKey = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
 
-    if (state.damageLog.length === 0 || derived.remainingHp > 0) {
+    const targetHp = isCustomBoss(state.selectedBossId)
+      ? Math.max(1, Math.round(state.customTargetHp))
+      : (bossMap.get(state.selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
+    const totalDamage = state.damageLog.reduce((total, event) => total + event.damage, 0);
+    const remainingHp = Math.max(0, targetHp - totalDamage);
+
+    if (state.damageLog.length === 0 || remainingHp > 0) {
       sequenceCompletionRef.current.delete(stageKey);
       return;
     }
@@ -220,8 +261,9 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     state.activeSequenceId,
     state.sequenceIndex,
     state.damageLog,
-    derived.remainingHp,
     state.sequenceConditions,
+    state.selectedBossId,
+    state.customTargetHp,
     dispatch,
   ]);
 
@@ -267,13 +309,17 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     [],
   );
 
-  const value = useMemo<FightContextValue>(
-    () => ({ state, derived, actions }),
-    [state, derived, actions],
-  );
+  const value = useMemo<FightContextValue>(() => ({ state, actions }), [state, actions]);
+  const derivedStore = derivedStoreRef.current;
+
+  if (!derivedStore) {
+    throw new Error('FightStateProvider failed to initialize derived stats store');
+  }
 
   return (
-    <FightStateContext.Provider value={value}>{children}</FightStateContext.Provider>
+    <FightDerivedStatsContext.Provider value={derivedStore}>
+      <FightStateContext.Provider value={value}>{children}</FightStateContext.Provider>
+    </FightDerivedStatsContext.Provider>
   );
 };
 
@@ -283,6 +329,14 @@ export const useFightState = () => {
     throw new Error('useFightState must be used within a FightStateProvider');
   }
   return context;
+};
+
+export const useFightDerivedStats = () => {
+  const store = useContext(FightDerivedStatsContext);
+  if (!store) {
+    throw new Error('useFightDerivedStats must be used within a FightStateProvider');
+  }
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 };
 
 export const hasStrengthCharm = (charmIds: string[]) =>

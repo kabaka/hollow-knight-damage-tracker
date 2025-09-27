@@ -7,6 +7,7 @@ import { CombatStatsPanel } from '../features/combat-stats/CombatStatsPanel';
 import {
   CUSTOM_BOSS_ID,
   FightStateProvider,
+  useFightDerivedStats,
 } from '../features/fight-state/FightStateContext';
 
 type HeaderBarProps = {
@@ -40,8 +41,8 @@ const HeaderBar: FC<HeaderBarProps> = ({ onOpenModal }) => {
     activeSequence,
     sequenceConditionValues,
     handleSequenceConditionToggle,
-    derived,
   } = useBuildConfiguration();
+  const derived = useFightDerivedStats();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

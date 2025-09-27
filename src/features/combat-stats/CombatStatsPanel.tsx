@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import { useFightState } from '../fight-state/FightStateContext';
+import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
 import { Sparkline, type SparklinePoint } from './Sparkline';
 
 const FRAMES_PER_SECOND = 60;
@@ -95,21 +95,21 @@ const toSparklineSeries = (
 export const CombatStatsPanel: FC = () => {
   const {
     state: { damageLog },
-    derived: {
-      targetHp,
-      totalDamage,
-      remainingHp,
-      attacksLogged,
-      averageDamage,
-      dps,
-      actionsPerMinute,
-      elapsedMs,
-      estimatedTimeRemainingMs,
-      fightEndTimestamp,
-      fightStartTimestamp,
-      frameTimestamp,
-    },
   } = useFightState();
+  const {
+    targetHp,
+    totalDamage,
+    remainingHp,
+    attacksLogged,
+    averageDamage,
+    dps,
+    actionsPerMinute,
+    elapsedMs,
+    estimatedTimeRemainingMs,
+    fightEndTimestamp,
+    fightStartTimestamp,
+    frameTimestamp,
+  } = useFightDerivedStats();
 
   const timelineEndTimestamp =
     fightEndTimestamp ?? (fightStartTimestamp != null ? frameTimestamp : null);

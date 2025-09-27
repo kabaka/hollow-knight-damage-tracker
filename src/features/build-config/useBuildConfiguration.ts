@@ -96,8 +96,7 @@ export const charmGridLayout = [
 ] as const;
 
 export const useBuildConfiguration = () => {
-  const fight = useFightState();
-  const { state, actions, derived } = fight;
+  const { state, actions } = useFightState();
   const {
     selectedBossId,
     customTargetHp,
@@ -335,7 +334,6 @@ export const useBuildConfiguration = () => {
   return {
     state,
     actions,
-    derived,
     bosses,
     bossMap,
     bossSequences,

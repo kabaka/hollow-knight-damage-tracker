@@ -1,8 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useEffect } from 'react';
 
-import { CUSTOM_BOSS_ID, FightStateProvider, useFightState } from './FightStateContext';
+import {
+  CUSTOM_BOSS_ID,
+  FightStateProvider,
+  useFightDerivedStats,
+  useFightState,
+} from './FightStateContext';
 import { STORAGE_KEY } from './persistence';
 import { bossSequenceMap } from '../../data';
 
@@ -192,5 +198,113 @@ describe('boss sequences', () => {
     expect(screen.getByTestId('log-total').textContent).toBe(
       firstStage.target.hp.toString(),
     );
+  });
+});
+
+describe('derived stats context', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('publishes updates to subscribers during animation frames', async () => {
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    let frameCallback: FrameRequestCallback = () => {};
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => {
+        frameCallback = callback;
+        return 1;
+      });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    const observedTimestamps: number[] = [];
+
+    const Consumer = () => {
+      const { actions } = useFightState();
+      const derived = useFightDerivedStats();
+      useEffect(() => {
+        observedTimestamps.push(derived.frameTimestamp);
+      }, [derived.frameTimestamp]);
+      return (
+        <div>
+          <span data-testid="attacks-logged">{derived.attacksLogged}</span>
+          <button
+            type="button"
+            onClick={() =>
+              actions.logAttack({
+                id: 'swing',
+                label: 'Nail Swing',
+                damage: 10,
+                category: 'nail',
+              })
+            }
+          >
+            Log hit
+          </button>
+        </div>
+      );
+    };
+
+    render(
+      <FightStateProvider>
+        <Consumer />
+      </FightStateProvider>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Log hit' }));
+
+    await waitFor(() => {
+      expect(requestAnimationFrameSpy).toHaveBeenCalled();
+    });
+
+    expect(screen.getByTestId('attacks-logged').textContent).toBe('1');
+
+    now = 1600;
+    expect(Date.now()).toBe(1600);
+    act(() => {
+      frameCallback(16);
+    });
+
+    await waitFor(() => {
+      expect(observedTimestamps.some((value) => value >= 1600)).toBe(true);
+    });
+  });
+
+  it('cancels requestAnimationFrame handles on cleanup', async () => {
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation(() => 42);
+    const cancelAnimationFrameSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => {});
+
+    const AutoLogger = () => {
+      const { actions } = useFightState();
+      useEffect(() => {
+        actions.logAttack({
+          id: 'auto-hit',
+          label: 'Auto Hit',
+          damage: 10,
+          category: 'nail',
+        });
+      }, [actions]);
+      return null;
+    };
+
+    const { unmount } = render(
+      <FightStateProvider>
+        <AutoLogger />
+      </FightStateProvider>,
+    );
+
+    await waitFor(() => {
+      expect(requestAnimationFrameSpy).toHaveBeenCalled();
+    });
+
+    unmount();
+
+    expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(42);
   });
 });
