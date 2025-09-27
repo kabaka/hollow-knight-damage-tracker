@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from 'react';
+import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 
 import { AttackLogPanel } from '../features/attack-log/AttackLogPanel';
 import { PlayerConfigModal } from '../features/build-config/PlayerConfigModal';
@@ -630,6 +630,67 @@ const AppContent: FC = () => {
   } = useBuildConfiguration();
 
   const derived = useFightDerivedStats();
+  const [panelGlow, setPanelGlow] = useState<'idle' | 'start' | 'victory'>('idle');
+  const glowTimeoutRef = useRef<number | null>(null);
+  const previousFightStartRef = useRef<number | null>(null);
+  const previousRemainingRef = useRef<number>(derived.remainingHp);
+
+  useEffect(() => {
+    if (derived.fightStartTimestamp == null) {
+      previousFightStartRef.current = null;
+      return;
+    }
+    if (
+      previousFightStartRef.current == null ||
+      previousFightStartRef.current !== derived.fightStartTimestamp
+    ) {
+      setPanelGlow('start');
+    }
+    previousFightStartRef.current = derived.fightStartTimestamp;
+  }, [derived.fightStartTimestamp]);
+
+  useEffect(() => {
+    if (
+      derived.targetHp > 0 &&
+      derived.remainingHp === 0 &&
+      previousRemainingRef.current > 0
+    ) {
+      setPanelGlow('victory');
+    }
+    previousRemainingRef.current = derived.remainingHp;
+  }, [derived.remainingHp, derived.targetHp]);
+
+  useEffect(() => {
+    if (panelGlow === 'idle') {
+      return;
+    }
+    if (glowTimeoutRef.current) {
+      window.clearTimeout(glowTimeoutRef.current);
+    }
+    const duration = panelGlow === 'victory' ? 1400 : 900;
+    const timeoutId = window.setTimeout(() => {
+      setPanelGlow('idle');
+      glowTimeoutRef.current = null;
+    }, duration);
+    glowTimeoutRef.current = timeoutId;
+    return () => window.clearTimeout(timeoutId);
+  }, [panelGlow]);
+
+  useEffect(
+    () => () => {
+      if (glowTimeoutRef.current) {
+        window.clearTimeout(glowTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const panelGlowClass =
+    panelGlow === 'idle'
+      ? ''
+      : panelGlow === 'victory'
+        ? 'app-panel--glow-victory'
+        : 'app-panel--glow-start';
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -713,7 +774,10 @@ const AppContent: FC = () => {
       />
 
       <main className="app-main">
-        <section className="app-panel" aria-labelledby="attack-log-heading">
+        <section
+          className={`app-panel${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
+          aria-labelledby="attack-log-heading"
+        >
           <div className="app-panel__header">
             <h2 id="attack-log-heading">Attack Log</h2>
             <p className="app-panel__description">
@@ -726,7 +790,7 @@ const AppContent: FC = () => {
           </div>
         </section>
         <section
-          className="app-panel app-panel--stats"
+          className={`app-panel app-panel--stats${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
           aria-labelledby="combat-stats-heading"
         >
           <div className="app-panel__header">
