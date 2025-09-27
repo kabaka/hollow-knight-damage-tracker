@@ -135,6 +135,68 @@ describe('CombatStatsPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('updates sparklines when new damage is logged', async () => {
+    let actions: ReturnType<typeof useFightState>['actions'] | null = null;
+
+    renderWithFightProvider(
+      <>
+        <ActionRegistrar onReady={(value) => (actions = value)} />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(actions).not.toBeNull();
+    });
+
+    const { logAttack } = actions ?? {};
+
+    act(() => {
+      logAttack?.({
+        id: 'spark-update-1',
+        label: 'Test Hit',
+        damage: baseNailDamage,
+        category: 'nail',
+        timestamp: 0,
+      });
+      logAttack?.({
+        id: 'spark-update-2',
+        label: 'Test Hit',
+        damage: baseNailDamage * 2,
+        category: 'nail',
+        timestamp: 4000,
+      });
+    });
+
+    const sparkline = screen.getByRole('img', {
+      name: /total damage dealt over time/i,
+    }) as SVGElement;
+
+    const readPointCount = () => {
+      const polyline = sparkline.querySelector('polyline');
+      const attribute = polyline?.getAttribute('points');
+
+      return (attribute ?? '').trim().split(/\s+/).filter(Boolean).length;
+    };
+
+    const initialPointCount = readPointCount();
+    expect(initialPointCount).toBeGreaterThanOrEqual(2);
+
+    act(() => {
+      logAttack?.({
+        id: 'spark-update-3',
+        label: 'Test Hit',
+        damage: baseNailDamage,
+        category: 'nail',
+        timestamp: 6000,
+      });
+    });
+
+    await waitFor(() => {
+      expect(readPointCount()).toBeGreaterThan(initialPointCount);
+    });
+  });
+
   it('scales sparklines using elapsed fight time', async () => {
     let actions: ReturnType<typeof useFightState>['actions'] | null = null;
 
