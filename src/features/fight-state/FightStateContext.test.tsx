@@ -7,7 +7,9 @@ import {
   CUSTOM_BOSS_ID,
   FightStateProvider,
   useFightDerivedStats,
+  useFightActions,
   useFightState,
+  useFightStateSelector,
 } from './FightStateContext';
 import { STORAGE_KEY } from './persistence';
 import { bossSequenceMap } from '../../data';
@@ -201,7 +203,71 @@ describe('boss sequences', () => {
   });
 });
 
+describe('useFightStateSelector', () => {
+  it('does not re-render when unrelated slices update', async () => {
+    const user = userEvent.setup();
+    const renderCounts = { build: 0 };
+
+    const BuildConsumer = () => {
+      const nailUpgradeId = useFightStateSelector((state) => state.build.nailUpgradeId);
+      renderCounts.build += 1;
+      return <span data-testid="nail-upgrade">{nailUpgradeId}</span>;
+    };
+
+    const Controls = () => {
+      const actions = useFightActions();
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              actions.logAttack({
+                id: 'test-attack',
+                label: 'Test Attack',
+                damage: 1,
+                category: 'nail',
+                timestamp: Date.now(),
+              })
+            }
+          >
+            Log Attack
+          </button>
+          <button type="button" onClick={() => actions.setNailUpgrade('coiled-nail')}>
+            Upgrade Nail
+          </button>
+        </div>
+      );
+    };
+
+    render(
+      <FightStateProvider>
+        <BuildConsumer />
+        <Controls />
+      </FightStateProvider>,
+    );
+
+    expect(screen.getByTestId('nail-upgrade').textContent).toBe('old-nail');
+    expect(renderCounts.build).toBe(1);
+
+    await user.click(screen.getByRole('button', { name: 'Log Attack' }));
+
+    expect(screen.getByTestId('nail-upgrade').textContent).toBe('old-nail');
+    expect(renderCounts.build).toBe(1);
+
+    await user.click(screen.getByRole('button', { name: 'Upgrade Nail' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nail-upgrade').textContent).toBe('coiled-nail');
+    });
+    expect(renderCounts.build).toBe(2);
+  });
+});
+
 describe('derived stats context', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
