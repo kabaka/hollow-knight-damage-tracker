@@ -4,9 +4,12 @@ test.describe('Landing page', () => {
   test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
 
-    const initialStateScreenshot = await page.screenshot({ fullPage: true });
+    const screenshotPath = testInfo.outputPath(
+      `initial-state-${testInfo.project.name}.png`,
+    );
+    await page.screenshot({ fullPage: true, path: screenshotPath });
     await testInfo.attach(`initial-state-${testInfo.project.name}`, {
-      body: initialStateScreenshot,
+      path: screenshotPath,
       contentType: 'image/png',
     });
   });

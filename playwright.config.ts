@@ -7,10 +7,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
-  reporter: 'html',
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }]]
+    : [['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:4173',
-    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    trace: 'on',
+    video: 'retain-on-failure',
   },
   webServer: {
     command: 'pnpm dev --host 127.0.0.1 --port 4173 --strictPort',
