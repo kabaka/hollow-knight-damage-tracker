@@ -13,30 +13,30 @@
   font-weight: 400;
 
   --font-display: 'Cinzel', 'Times New Roman', serif;
-  --color-bg: #04060d;
-  --color-bg-deep: #020309;
-  --color-surface: #101523;
-  --color-surface-raised: #161d2f;
-  --color-surface-muted: #0c111d;
-  --color-border: #d6d9e7;
-  --color-border-soft: rgb(214 217 231 / 38%);
-  --color-border-faint: rgb(214 217 231 / 22%);
-  --color-accent: #d7f5ff;
+  --color-bg: #020308;
+  --color-bg-deep: #000104;
+  --color-surface: #0c1020;
+  --color-surface-raised: #141a2c;
+  --color-surface-muted: #090e1b;
+  --color-border: #d0d7f0;
+  --color-border-soft: rgb(208 215 240 / 32%);
+  --color-border-faint: rgb(208 215 240 / 18%);
+  --color-accent: #b5e3ff;
   --color-accent-ember: #f2b87f;
-  --color-text: #f1f2f6;
-  --color-muted: rgb(241 242 246 / 72%);
-  --color-subtle: rgb(241 242 246 / 46%);
+  --color-text: #f4f6ff;
+  --color-muted: rgb(244 246 255 / 72%);
+  --color-subtle: rgb(244 246 255 / 46%);
   --color-overcharm: #f5a0d0;
   --color-overcharm-glow: rgb(245 160 208 / 35%);
   --color-glyph-shadow: rgb(5 8 16 / 90%);
   --texture-noise: radial-gradient(
     circle at 1px 1px,
-    rgb(255 255 255 / 6%) 0.5px,
+    rgb(255 255 255 / 4%) 0.45px,
     transparent 0.6px
   );
   --texture-vein:
-    linear-gradient(120deg, rgb(255 255 255 / 4%), transparent),
-    linear-gradient(300deg, rgb(0 0 0 / 45%), rgb(0 0 0 / 65%));
+    linear-gradient(120deg, rgb(255 255 255 / 3%), transparent),
+    linear-gradient(300deg, rgb(0 0 0 / 40%), rgb(0 0 0 / 62%));
   --frame-shadow-raised: 0 18px 38px rgb(0 0 0 / 62%);
   --frame-shadow-floating: 0 28px 64px rgb(0 0 0 / 68%);
   --frame-etch: inset 0 0 0 1px rgb(0 0 0 / 78%);
@@ -73,24 +73,33 @@
 body {
   margin: 0;
   min-height: 100vh;
+  position: relative;
   background-color: var(--color-bg);
   background-image:
-    radial-gradient(circle at 18% 12%, rgb(40 62 104 / 38%), transparent 60%),
-    radial-gradient(circle at 80% 85%, rgb(28 44 86 / 28%), transparent 64%),
-    radial-gradient(circle at 50% 50%, rgb(8 12 24 / 78%), rgb(4 6 13 / 94%)),
-    var(--texture-noise);
-  background-size:
-    cover,
-    cover,
-    cover,
-    4px 4px;
-  background-attachment: fixed, fixed, fixed, fixed;
+    radial-gradient(120% 160% at 50% 0%, rgb(50 74 120 / 30%), transparent 70%),
+    linear-gradient(180deg, rgb(5 8 16 / 94%), var(--color-bg-deep));
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--texture-noise);
+  background-size: 4px 4px;
+  opacity: 0.18;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  z-index: 0;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 body,
