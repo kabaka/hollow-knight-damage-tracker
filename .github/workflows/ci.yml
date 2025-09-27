@@ -5,6 +5,14 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/ci.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
 
 jobs:
   lint:
@@ -25,7 +33,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -41,6 +48,7 @@ jobs:
       - name: Cache Vite build output
         uses: actions/cache@v4
         with:
+          # Cache Vite's internal artifacts to accelerate subsequent builds.
           path: |
             ~/.cache/vite
             ~/.vite
@@ -55,7 +63,6 @@ jobs:
 
   unit-tests:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -68,11 +75,6 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
       - run: pnpm test
 
   e2e-tests:
