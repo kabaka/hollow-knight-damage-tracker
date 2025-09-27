@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useMemo } from 'react';
 
 import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
 import { Sparkline, type SparklinePoint } from './Sparkline';
@@ -92,6 +93,32 @@ const toSparklineSeries = (
 ): SparklinePoint[] =>
   timeline.map((point) => ({ time: point.time, value: selector(point) }));
 
+const appendSparklinePoint = (
+  series: SparklinePoint[],
+  livePoint: TimelinePoint | null,
+  selector: (point: TimelinePoint) => number,
+): SparklinePoint[] => {
+  if (!livePoint) {
+    return series;
+  }
+
+  const appendedPoint: SparklinePoint = {
+    time: livePoint.time,
+    value: selector(livePoint),
+  };
+  const lastPoint = series[series.length - 1];
+
+  if (
+    lastPoint &&
+    lastPoint.time === appendedPoint.time &&
+    lastPoint.value === appendedPoint.value
+  ) {
+    return series;
+  }
+
+  return [...series, appendedPoint];
+};
+
 export const CombatStatsPanel: FC = () => {
   const {
     state: { damageLog },
@@ -111,16 +138,87 @@ export const CombatStatsPanel: FC = () => {
     frameTimestamp,
   } = useFightDerivedStats();
 
-  const timelineEndTimestamp =
-    fightEndTimestamp ?? (fightStartTimestamp != null ? frameTimestamp : null);
-  const timeline = buildTimeline(damageLog, targetHp, timelineEndTimestamp);
-  const cumulativeDamageSeries = toSparklineSeries(
-    timeline,
-    (point) => point.cumulativeDamage,
+  const timeline = useMemo(
+    () => buildTimeline(damageLog, targetHp, fightEndTimestamp),
+    [damageLog, targetHp, fightEndTimestamp],
   );
-  const remainingHpSeries = toSparklineSeries(timeline, (point) => point.remainingHp);
-  const damagePerFrameSeries = toSparklineSeries(timeline, (point) => point.frameDamage);
-  const dpsSeries = toSparklineSeries(timeline, (point) => point.dps);
+
+  const liveTimelinePoint = useMemo(() => {
+    if (
+      timeline.length === 0 ||
+      fightEndTimestamp != null ||
+      fightStartTimestamp == null
+    ) {
+      return null;
+    }
+
+    const lastPoint = timeline[timeline.length - 1];
+    const elapsed = Math.max(0, frameTimestamp - fightStartTimestamp);
+
+    if (elapsed <= lastPoint.time) {
+      return null;
+    }
+
+    const elapsedSeconds = elapsed / 1000;
+    const cumulativeDamage = lastPoint.cumulativeDamage;
+
+    return {
+      time: elapsed,
+      cumulativeDamage,
+      remainingHp: Math.max(0, targetHp - cumulativeDamage),
+      frameDamage: 0,
+      dps: elapsedSeconds > 0 ? cumulativeDamage / elapsedSeconds : 0,
+    } satisfies TimelinePoint;
+  }, [timeline, fightEndTimestamp, fightStartTimestamp, frameTimestamp, targetHp]);
+
+  const baseCumulativeDamageSeries = useMemo(
+    () => toSparklineSeries(timeline, (point) => point.cumulativeDamage),
+    [timeline],
+  );
+  const baseRemainingHpSeries = useMemo(
+    () => toSparklineSeries(timeline, (point) => point.remainingHp),
+    [timeline],
+  );
+  const baseDamagePerFrameSeries = useMemo(
+    () => toSparklineSeries(timeline, (point) => point.frameDamage),
+    [timeline],
+  );
+  const baseDpsSeries = useMemo(
+    () => toSparklineSeries(timeline, (point) => point.dps),
+    [timeline],
+  );
+
+  const cumulativeDamageSeries = useMemo(
+    () =>
+      appendSparklinePoint(
+        baseCumulativeDamageSeries,
+        liveTimelinePoint,
+        (point) => point.cumulativeDamage,
+      ),
+    [baseCumulativeDamageSeries, liveTimelinePoint],
+  );
+  const remainingHpSeries = useMemo(
+    () =>
+      appendSparklinePoint(
+        baseRemainingHpSeries,
+        liveTimelinePoint,
+        (point) => point.remainingHp,
+      ),
+    [baseRemainingHpSeries, liveTimelinePoint],
+  );
+  const damagePerFrameSeries = useMemo(
+    () =>
+      appendSparklinePoint(
+        baseDamagePerFrameSeries,
+        liveTimelinePoint,
+        (point) => point.frameDamage,
+      ),
+    [baseDamagePerFrameSeries, liveTimelinePoint],
+  );
+  const dpsSeries = useMemo(
+    () => appendSparklinePoint(baseDpsSeries, liveTimelinePoint, (point) => point.dps),
+    [baseDpsSeries, liveTimelinePoint],
+  );
 
   const stats = [
     { label: 'Target HP', value: formatInteger(targetHp) },
