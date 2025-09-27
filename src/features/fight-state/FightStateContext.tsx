@@ -89,6 +89,42 @@ interface DerivedStatsStore {
 const FightStateContext = createContext<FightContextValue | undefined>(undefined);
 const FightDerivedStatsContext = createContext<DerivedStatsStore | undefined>(undefined);
 
+type IdleCallbackOptions = { timeout?: number };
+type IdleDeadline = { didTimeout: boolean; timeRemaining: () => number };
+type IdleCallback = (deadline: IdleDeadline) => void;
+
+interface IdleCallbackGlobal {
+  requestIdleCallback?: (callback: IdleCallback, options?: IdleCallbackOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+}
+
+const scheduleIdleTask = (
+  callback: () => void,
+  options?: IdleCallbackOptions,
+): (() => void) => {
+  if (typeof window === 'undefined') {
+    callback();
+    return () => {};
+  }
+
+  const idleWindow = window as Window & IdleCallbackGlobal;
+
+  if (typeof idleWindow.requestIdleCallback === 'function') {
+    const handle = idleWindow.requestIdleCallback(() => {
+      callback();
+    }, options);
+
+    return () => {
+      idleWindow.cancelIdleCallback?.(handle);
+    };
+  }
+
+  const timeoutId = window.setTimeout(callback, options?.timeout ?? 200);
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+};
+
 const calculateDerivedStats = (
   state: FightState,
   frameTimestamp: number,
@@ -150,6 +186,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   );
   const listenersRef = useRef<Set<() => void>>(new Set());
   const derivedStoreRef = useRef<DerivedStatsStore | null>(null);
+  const cancelPersistRef = useRef<(() => void) | null>(null);
 
   const notifyDerived = useCallback(() => {
     derivedRef.current = calculateDerivedStats(
@@ -157,6 +194,23 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       frameTimestampRef.current,
     );
     listenersRef.current.forEach((listener) => listener());
+  }, []);
+
+  const flushPersist = useCallback(() => {
+    cancelPersistRef.current?.();
+    cancelPersistRef.current = null;
+    persistStateToStorage(stateRef.current);
+  }, []);
+
+  const schedulePersist = useCallback(() => {
+    cancelPersistRef.current?.();
+    cancelPersistRef.current = scheduleIdleTask(
+      () => {
+        cancelPersistRef.current = null;
+        persistStateToStorage(stateRef.current);
+      },
+      { timeout: 500 },
+    );
   }, []);
 
   if (!derivedStoreRef.current) {
@@ -172,13 +226,10 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   }
 
   useEffect(() => {
-    persistStateToStorage(state);
-  }, [state]);
-
-  useEffect(() => {
     stateRef.current = state;
+    schedulePersist();
     notifyDerived();
-  }, [state, notifyDerived]);
+  }, [state, notifyDerived, schedulePersist]);
 
   const shouldAnimate = state.damageLog.length > 0 && state.fightEndTimestamp == null;
 
@@ -208,6 +259,19 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       notifyDerived();
     }
   }, [shouldAnimate, state.fightEndTimestamp, notifyDerived]);
+
+  useEffect(() => {
+    if (state.fightEndTimestamp != null) {
+      flushPersist();
+    }
+  }, [state.fightEndTimestamp, flushPersist]);
+
+  useEffect(
+    () => () => {
+      flushPersist();
+    },
+    [flushPersist],
+  );
 
   useEffect(() => {
     if (!state.activeSequenceId) {

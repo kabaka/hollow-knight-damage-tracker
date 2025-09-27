@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { bossSequenceMap } from '../../data';
 import {
@@ -16,6 +17,8 @@ import {
   restorePersistedState,
   sanitizeAttackEvents,
 } from './persistence';
+import * as persistenceModule from './persistence';
+import { FightStateProvider, useFightState } from './FightStateContext';
 
 describe('fight-state persistence', () => {
   beforeEach(() => {
@@ -240,5 +243,88 @@ describe('fight-state persistence', () => {
     const parsed = JSON.parse(stored) as { version: number; state: unknown };
     expect(parsed.version).toBe(3);
     expect(parsed.state).toBeTruthy();
+  });
+
+  it('batches persistence writes when updates occur rapidly', () => {
+    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+    vi.useFakeTimers();
+
+    try {
+      const { result, unmount } = renderHook(() => useFightState(), {
+        wrapper: FightStateProvider,
+      });
+
+      act(() => {
+        result.current.actions.setCustomTargetHp(1111);
+        result.current.actions.setCustomTargetHp(2222);
+        result.current.actions.setCustomTargetHp(3333);
+      });
+
+      expect(persistSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(persistSpy).toHaveBeenCalledTimes(1);
+      expect(persistSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ customTargetHp: 3333 }),
+      );
+
+      persistSpy.mockClear();
+
+      act(() => {
+        unmount();
+      });
+
+      expect(persistSpy).toHaveBeenCalledTimes(1);
+      expect(persistSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ customTargetHp: 3333 }),
+      );
+    } finally {
+      vi.useRealTimers();
+      persistSpy.mockRestore();
+    }
+  });
+
+  it('flushes pending persistence immediately when fights end', () => {
+    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+    vi.useFakeTimers();
+
+    try {
+      const { result } = renderHook(() => useFightState(), {
+        wrapper: FightStateProvider,
+      });
+
+      act(() => {
+        result.current.actions.logAttack({
+          id: 'nail-hit',
+          label: 'Nail Hit',
+          damage: 10,
+          category: 'nail',
+          timestamp: Date.now(),
+        });
+      });
+
+      expect(persistSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.actions.endFight();
+      });
+
+      expect(persistSpy).toHaveBeenCalledTimes(1);
+      expect(persistSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fightEndTimestamp: expect.any(Number) }),
+      );
+
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(persistSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+      persistSpy.mockRestore();
+    }
   });
 });
