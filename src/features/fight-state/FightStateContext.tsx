@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -88,6 +89,9 @@ interface DerivedStatsStore {
 
 const FightStateContext = createContext<FightContextValue | undefined>(undefined);
 const FightDerivedStatsContext = createContext<DerivedStatsStore | undefined>(undefined);
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 type IdleCallbackOptions = { timeout?: number };
 type IdleDeadline = { didTimeout: boolean; timeRemaining: () => number };
@@ -225,7 +229,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     } satisfies DerivedStatsStore;
   }
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     stateRef.current = state;
     schedulePersist();
     notifyDerived();
@@ -266,7 +270,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }
   }, [state.fightEndTimestamp, flushPersist]);
 
-  useEffect(
+  useIsomorphicLayoutEffect(
     () => () => {
       flushPersist();
     },
