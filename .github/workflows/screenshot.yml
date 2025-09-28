@@ -8,6 +8,10 @@ on:
 jobs:
   screenshot:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.1-jammy
+    env:
+      HOME: /root
     permissions:
       contents: write
     steps:
@@ -25,9 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
 
       - name: Create the screenshot
         run: pnpm exec playwright test --project=chromium tests/e2e/screenshot.spec.ts
