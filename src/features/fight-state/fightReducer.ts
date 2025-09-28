@@ -40,8 +40,12 @@ export interface FightState {
   sequenceLogs: Record<string, AttackEvent[]>;
   sequenceRedoStacks: Record<string, AttackEvent[]>;
   sequenceConditions: Record<string, Record<string, boolean>>;
+  fightStartTimestamp: number | null;
+  fightManuallyStarted: boolean;
   fightEndTimestamp: number | null;
   fightManuallyEnded: boolean;
+  sequenceFightStartTimestamps: Record<string, number | null>;
+  sequenceManualStartFlags: Record<string, boolean>;
   sequenceFightEndTimestamps: Record<string, number | null>;
   sequenceManualEndFlags: Record<string, boolean>;
 }
@@ -77,6 +81,7 @@ export type FightAction =
   | { type: 'redoLastAttack' }
   | { type: 'resetLog' }
   | { type: 'resetSequence' }
+  | { type: 'startFight'; timestamp: number }
   | { type: 'endFight'; timestamp: number }
   | { type: 'startSequence'; sequenceId: string }
   | { type: 'stopSequence' }
@@ -153,8 +158,12 @@ export const createInitialState = (): FightState => ({
   sequenceLogs: {},
   sequenceRedoStacks: {},
   sequenceConditions: {},
+  fightStartTimestamp: null,
+  fightManuallyStarted: false,
   fightEndTimestamp: null,
   fightManuallyEnded: false,
+  sequenceFightStartTimestamps: {},
+  sequenceManualStartFlags: {},
   sequenceFightEndTimestamps: {},
   sequenceManualEndFlags: {},
 });
@@ -231,6 +240,14 @@ export const persistCurrentSequenceStage = (state: FightState): FightState => {
       ...state.sequenceRedoStacks,
       [key]: [...state.redoStack],
     },
+    sequenceFightStartTimestamps: {
+      ...state.sequenceFightStartTimestamps,
+      [key]: state.fightStartTimestamp,
+    },
+    sequenceManualStartFlags: {
+      ...state.sequenceManualStartFlags,
+      [key]: state.fightManuallyStarted,
+    },
     sequenceFightEndTimestamps: {
       ...state.sequenceFightEndTimestamps,
       [key]: state.fightEndTimestamp,
@@ -280,6 +297,8 @@ export const loadSequenceStage = (
   const key = toSequenceStageKey(sequenceId, clampedIndex);
   const storedLog = state.sequenceLogs[key] ?? [];
   const storedRedo = state.sequenceRedoStacks[key] ?? [];
+  const storedStartTimestamp = state.sequenceFightStartTimestamps[key] ?? null;
+  const storedManualStart = state.sequenceManualStartFlags[key] ?? false;
   const storedEndTimestamp = state.sequenceFightEndTimestamps[key] ?? null;
   const storedManualEnd = state.sequenceManualEndFlags[key] ?? false;
   const nextTarget = entries[clampedIndex]?.target;
@@ -291,6 +310,8 @@ export const loadSequenceStage = (
     selectedBossId: nextTarget?.id ?? state.selectedBossId,
     damageLog: [...storedLog],
     redoStack: [...storedRedo],
+    fightStartTimestamp: storedStartTimestamp,
+    fightManuallyStarted: storedManualStart,
     fightEndTimestamp: storedEndTimestamp,
     fightManuallyEnded: storedManualEnd,
   };
@@ -314,6 +335,7 @@ export const applyLogUpdate = (
   damageLog: AttackEvent[],
   redoStack: AttackEvent[],
   fightCompletion: { fightEndTimestamp: number | null; fightManuallyEnded: boolean },
+  fightStart: { timestamp: number | null; manuallyStarted: boolean },
 ): FightState => {
   if (!state.activeSequenceId) {
     return {
@@ -322,6 +344,8 @@ export const applyLogUpdate = (
       redoStack,
       fightEndTimestamp: fightCompletion.fightEndTimestamp,
       fightManuallyEnded: fightCompletion.fightManuallyEnded,
+      fightStartTimestamp: fightStart.timestamp,
+      fightManuallyStarted: fightStart.manuallyStarted,
     };
   }
 
@@ -332,6 +356,8 @@ export const applyLogUpdate = (
     redoStack,
     fightEndTimestamp: fightCompletion.fightEndTimestamp,
     fightManuallyEnded: fightCompletion.fightManuallyEnded,
+    fightStartTimestamp: fightStart.timestamp,
+    fightManuallyStarted: fightStart.manuallyStarted,
     sequenceLogs: {
       ...state.sequenceLogs,
       [key]: damageLog,
@@ -339,6 +365,14 @@ export const applyLogUpdate = (
     sequenceRedoStacks: {
       ...state.sequenceRedoStacks,
       [key]: redoStack,
+    },
+    sequenceFightStartTimestamps: {
+      ...state.sequenceFightStartTimestamps,
+      [key]: fightStart.timestamp,
+    },
+    sequenceManualStartFlags: {
+      ...state.sequenceManualStartFlags,
+      [key]: fightStart.manuallyStarted,
     },
     sequenceFightEndTimestamps: {
       ...state.sequenceFightEndTimestamps,
@@ -409,6 +443,8 @@ export const ensureSequenceState = (state: FightState): FightState => {
   const key = toSequenceStageKey(state.activeSequenceId, clampedIndex);
   const damageLog = state.sequenceLogs[key] ?? [];
   const redoStack = state.sequenceRedoStacks[key] ?? [];
+  const fightStartTimestamp = state.sequenceFightStartTimestamps[key] ?? null;
+  const fightManuallyStarted = state.sequenceManualStartFlags[key] ?? false;
   const fightEndTimestamp = state.sequenceFightEndTimestamps[key] ?? null;
   const fightManuallyEnded = state.sequenceManualEndFlags[key] ?? false;
   const targetId = entries[clampedIndex]?.target.id ?? state.selectedBossId;
@@ -419,6 +455,8 @@ export const ensureSequenceState = (state: FightState): FightState => {
     selectedBossId: targetId,
     damageLog: [...damageLog],
     redoStack: [...redoStack],
+    fightStartTimestamp,
+    fightManuallyStarted,
     fightEndTimestamp,
     fightManuallyEnded,
   };
@@ -496,7 +534,14 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
           : undefined,
       );
 
-      return applyLogUpdate(state, nextDamageLog, [], fightCompletion);
+      const nextFightStartTimestamp = state.fightStartTimestamp ?? event.timestamp;
+      const nextFightManuallyStarted =
+        state.fightStartTimestamp != null ? state.fightManuallyStarted : false;
+
+      return applyLogUpdate(state, nextDamageLog, [], fightCompletion, {
+        timestamp: nextFightStartTimestamp,
+        manuallyStarted: nextFightManuallyStarted,
+      });
     }
     case 'undoLastAttack': {
       if (state.damageLog.length === 0) {
@@ -506,7 +551,24 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       const nextDamageLog = state.damageLog.slice(0, -1);
       const nextRedoStack = [undoneEvent, ...state.redoStack];
       const fightCompletion = resolveFightCompletion(state, nextDamageLog);
-      return applyLogUpdate(state, nextDamageLog, nextRedoStack, fightCompletion);
+      let nextFightStartTimestamp: number | null;
+      let nextFightManuallyStarted: boolean;
+
+      if (state.fightManuallyStarted && state.fightStartTimestamp != null) {
+        nextFightStartTimestamp = state.fightStartTimestamp;
+        nextFightManuallyStarted = true;
+      } else if (nextDamageLog.length > 0) {
+        nextFightStartTimestamp = nextDamageLog[0]?.timestamp ?? null;
+        nextFightManuallyStarted = false;
+      } else {
+        nextFightStartTimestamp = null;
+        nextFightManuallyStarted = false;
+      }
+
+      return applyLogUpdate(state, nextDamageLog, nextRedoStack, fightCompletion, {
+        timestamp: nextFightStartTimestamp,
+        manuallyStarted: nextFightManuallyStarted,
+      });
     }
     case 'redoLastAttack': {
       if (state.redoStack.length === 0) {
@@ -521,19 +583,39 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
           ? { preserveEndTimestamp: true }
           : undefined,
       );
-      return applyLogUpdate(state, nextDamageLog, remaining, fightCompletion);
+      const nextFightStartTimestamp =
+        state.fightStartTimestamp ?? nextDamageLog[0]?.timestamp ?? nextEvent.timestamp;
+      const nextFightManuallyStarted =
+        state.fightStartTimestamp != null ? state.fightManuallyStarted : false;
+
+      return applyLogUpdate(state, nextDamageLog, remaining, fightCompletion, {
+        timestamp: nextFightStartTimestamp,
+        manuallyStarted: nextFightManuallyStarted,
+      });
     }
     case 'resetLog':
-      return applyLogUpdate(state, [], [], {
-        fightEndTimestamp: null,
-        fightManuallyEnded: false,
-      });
-    case 'resetSequence': {
-      if (!state.activeSequenceId) {
-        return applyLogUpdate(state, [], [], {
+      return applyLogUpdate(
+        state,
+        [],
+        [],
+        {
           fightEndTimestamp: null,
           fightManuallyEnded: false,
-        });
+        },
+        { timestamp: null, manuallyStarted: false },
+      );
+    case 'resetSequence': {
+      if (!state.activeSequenceId) {
+        return applyLogUpdate(
+          state,
+          [],
+          [],
+          {
+            fightEndTimestamp: null,
+            fightManuallyEnded: false,
+          },
+          { timestamp: null, manuallyStarted: false },
+        );
       }
 
       const sequenceId = state.activeSequenceId;
@@ -542,11 +624,21 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         ...persisted,
         damageLog: [],
         redoStack: [],
+        fightStartTimestamp: null,
+        fightManuallyStarted: false,
         fightEndTimestamp: null,
         fightManuallyEnded: false,
         sequenceLogs: filterSequenceRecords(persisted.sequenceLogs, sequenceId),
         sequenceRedoStacks: filterSequenceRecords(
           persisted.sequenceRedoStacks,
+          sequenceId,
+        ),
+        sequenceFightStartTimestamps: filterSequenceRecords(
+          persisted.sequenceFightStartTimestamps,
+          sequenceId,
+        ),
+        sequenceManualStartFlags: filterSequenceRecords(
+          persisted.sequenceManualStartFlags,
           sequenceId,
         ),
         sequenceFightEndTimestamps: filterSequenceRecords(
@@ -561,8 +653,51 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
 
       return loadSequenceStage(cleared, sequenceId, 0);
     }
+    case 'startFight': {
+      if (state.damageLog.length > 0) {
+        return state;
+      }
+
+      if (state.fightStartTimestamp != null && state.fightEndTimestamp == null) {
+        return state;
+      }
+
+      const startTimestamp = action.timestamp;
+      const baseState: FightState = {
+        ...state,
+        fightStartTimestamp: startTimestamp,
+        fightManuallyStarted: true,
+        fightEndTimestamp: null,
+        fightManuallyEnded: false,
+      };
+
+      if (!state.activeSequenceId) {
+        return baseState;
+      }
+
+      const key = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
+      return {
+        ...baseState,
+        sequenceFightStartTimestamps: {
+          ...state.sequenceFightStartTimestamps,
+          [key]: startTimestamp,
+        },
+        sequenceManualStartFlags: {
+          ...state.sequenceManualStartFlags,
+          [key]: true,
+        },
+        sequenceFightEndTimestamps: {
+          ...state.sequenceFightEndTimestamps,
+          [key]: null,
+        },
+        sequenceManualEndFlags: {
+          ...state.sequenceManualEndFlags,
+          [key]: false,
+        },
+      };
+    }
     case 'endFight': {
-      if (state.damageLog.length === 0) {
+      if (state.damageLog.length === 0 && !state.fightManuallyStarted) {
         return state;
       }
 
@@ -633,11 +768,21 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         ...nextState,
         damageLog: [],
         redoStack: [],
+        fightStartTimestamp: null,
+        fightManuallyStarted: false,
         fightEndTimestamp: null,
         fightManuallyEnded: false,
         sequenceLogs: filterSequenceRecords(nextState.sequenceLogs, action.sequenceId),
         sequenceRedoStacks: filterSequenceRecords(
           nextState.sequenceRedoStacks,
+          action.sequenceId,
+        ),
+        sequenceFightStartTimestamps: filterSequenceRecords(
+          nextState.sequenceFightStartTimestamps,
+          action.sequenceId,
+        ),
+        sequenceManualStartFlags: filterSequenceRecords(
+          nextState.sequenceManualStartFlags,
           action.sequenceId,
         ),
         sequenceFightEndTimestamps: filterSequenceRecords(

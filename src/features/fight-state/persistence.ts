@@ -14,7 +14,7 @@ import type { NailArtId } from '../attack-log/attackData';
 const isNailArtId = (id: string): id is NailArtId => NAIL_ART_IDS.has(id as NailArtId);
 
 export const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
-export const STORAGE_VERSION = 3;
+export const STORAGE_VERSION = 4;
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -302,6 +302,14 @@ export const mergePersistedState = (
     persisted.sequenceConditions,
     fallback.sequenceConditions,
   );
+  const fightStartTimestamp = sanitizeOptionalTimestamp(
+    persisted.fightStartTimestamp,
+    fallback.fightStartTimestamp,
+  );
+  const fightManuallyStarted =
+    typeof persisted.fightManuallyStarted === 'boolean'
+      ? persisted.fightManuallyStarted
+      : fallback.fightManuallyStarted;
   const fightEndTimestamp = sanitizeOptionalTimestamp(
     persisted.fightEndTimestamp,
     fallback.fightEndTimestamp,
@@ -310,6 +318,14 @@ export const mergePersistedState = (
     typeof persisted.fightManuallyEnded === 'boolean'
       ? persisted.fightManuallyEnded
       : fallback.fightManuallyEnded;
+  const sequenceFightStartTimestamps = sanitizeSequenceTimestampMap(
+    persisted.sequenceFightStartTimestamps,
+    fallback.sequenceFightStartTimestamps,
+  );
+  const sequenceManualStartFlags = sanitizeBooleanRecord(
+    persisted.sequenceManualStartFlags,
+    fallback.sequenceManualStartFlags,
+  );
   const sequenceFightEndTimestamps = sanitizeSequenceTimestampMap(
     persisted.sequenceFightEndTimestamps,
     fallback.sequenceFightEndTimestamps,
@@ -336,8 +352,12 @@ export const mergePersistedState = (
       sequenceLogs,
       sequenceRedoStacks,
       sequenceConditions,
+      fightStartTimestamp,
+      fightManuallyStarted,
       fightEndTimestamp,
       fightManuallyEnded,
+      sequenceFightStartTimestamps,
+      sequenceManualStartFlags,
       sequenceFightEndTimestamps,
       sequenceManualEndFlags,
     }),

@@ -161,12 +161,12 @@ describe('AttackLogPanel', () => {
     const undoButton = screen.getByRole('button', { name: /undo/i });
     const redoButton = screen.getByRole('button', { name: /redo/i });
     const resetButton = screen.getByRole('button', { name: /quick reset/i });
-    const endFightButton = screen.getByRole('button', { name: /end fight/i });
+    const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
 
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
-    expect(endFightButton).toBeDisabled();
+    expect(endFightButton).not.toBeDisabled();
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     await user.click(nailStrikeButton);
@@ -198,7 +198,38 @@ describe('AttackLogPanel', () => {
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
-    expect(endFightButton).toBeDisabled();
+    expect(endFightButton).not.toBeDisabled();
+  });
+
+  it('starts fights via the Enter key without logging damage', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <>
+        <AttackLogPanel />
+        <CombatStatsPanel />
+      </>,
+    );
+
+    const startButton = screen.getByRole('button', { name: /start fight \(enter\)/i });
+    expect(startButton).not.toBeDisabled();
+
+    await user.keyboard('{Enter}');
+
+    const damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
+    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /end fight \(enter\)/i }),
+      ).not.toBeDisabled();
+    });
+
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /fight \(enter\)/i })).toBeDisabled();
+    });
   });
 
   it('supports keyboard shortcuts for logging attacks and resetting', async () => {
@@ -220,7 +251,7 @@ describe('AttackLogPanel', () => {
 
     await user.keyboard('{Enter}');
 
-    const endFightButton = screen.getByRole('button', { name: /end fight/i });
+    const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
     expect(endFightButton).toBeDisabled();
 
     await user.keyboard('{Escape}');
@@ -301,10 +332,10 @@ describe('AttackLogPanel', () => {
     );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
-    const endFightButton = screen.getByRole('button', { name: /end fight/i });
+    const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
     const resetButton = screen.getByRole('button', { name: /quick reset/i });
 
-    expect(endFightButton).toBeDisabled();
+    expect(endFightButton).not.toBeDisabled();
 
     await user.click(nailStrikeButton);
     expect(endFightButton).not.toBeDisabled();
@@ -318,7 +349,7 @@ describe('AttackLogPanel', () => {
     ).toBeInTheDocument();
 
     await user.click(resetButton);
-    expect(endFightButton).toBeDisabled();
+    expect(endFightButton).not.toBeDisabled();
 
     await user.click(nailStrikeButton);
     await user.keyboard('{Enter}');

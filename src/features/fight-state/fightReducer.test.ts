@@ -111,6 +111,22 @@ describe('fightReducer fight completion tracking', () => {
     expect(resumed.fightEndTimestamp).toBeNull();
     expect(resumed.fightManuallyEnded).toBe(false);
   });
+
+  it('supports manually starting fights without logging attacks', () => {
+    const state = createInitialState();
+
+    const started = fightReducer(state, { type: 'startFight', timestamp: 1_000 });
+
+    expect(started.fightStartTimestamp).toBe(1_000);
+    expect(started.fightManuallyStarted).toBe(true);
+    expect(started.fightEndTimestamp).toBeNull();
+    expect(started.fightManuallyEnded).toBe(false);
+
+    const ended = fightReducer(started, { type: 'endFight', timestamp: 2_000 });
+
+    expect(ended.fightEndTimestamp).toBe(2_000);
+    expect(ended.fightManuallyEnded).toBe(true);
+  });
 });
 
 describe('fightReducer sequence management', () => {
@@ -165,6 +181,8 @@ describe('fightReducer sequence management', () => {
     expect(reset.sequenceIndex).toBe(0);
     expect(reset.damageLog).toHaveLength(0);
     expect(reset.redoStack).toHaveLength(0);
+    expect(reset.fightStartTimestamp).toBeNull();
+    expect(reset.fightManuallyStarted).toBe(false);
     expect(reset.fightEndTimestamp).toBeNull();
     expect(reset.fightManuallyEnded).toBe(false);
     expect(reset.selectedBossId).toBe(firstStage.target.id);
@@ -184,6 +202,16 @@ describe('fightReducer sequence management', () => {
     ).toBe(false);
     expect(
       Object.keys(reset.sequenceManualEndFlags).some((key) =>
+        key.startsWith(sequencePrefix),
+      ),
+    ).toBe(false);
+    expect(
+      Object.keys(reset.sequenceFightStartTimestamps).some((key) =>
+        key.startsWith(sequencePrefix),
+      ),
+    ).toBe(false);
+    expect(
+      Object.keys(reset.sequenceManualStartFlags).some((key) =>
         key.startsWith(sequencePrefix),
       ),
     ).toBe(false);

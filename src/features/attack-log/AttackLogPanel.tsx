@@ -16,6 +16,11 @@ export const AttackLogPanel: FC = () => {
   const { actions, state } = fight;
   const { damageLog, redoStack } = state;
   const canEndFight = derived.fightStartTimestamp != null && !derived.isFightComplete;
+  const canStartFight =
+    derived.fightStartTimestamp == null &&
+    !derived.isFightInProgress &&
+    damageLog.length === 0 &&
+    redoStack.length === 0;
   const isSequenceActive = state.activeSequenceId != null;
 
   const sequenceKeyPrefix = state.activeSequenceId ? `${state.activeSequenceId}#` : null;
@@ -108,15 +113,28 @@ export const AttackLogPanel: FC = () => {
 
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
-      if (key === 'Enter' && canEndFight) {
-        event.preventDefault();
-        actions.endFight();
-        triggerActiveEffect(
-          panelRef.current?.querySelector<HTMLButtonElement>(
-            "[data-control='end-fight']",
-          ),
-        );
-        return;
+      if (key === 'Enter') {
+        if (canEndFight) {
+          event.preventDefault();
+          actions.endFight();
+          triggerActiveEffect(
+            panelRef.current?.querySelector<HTMLButtonElement>(
+              "[data-control='end-fight']",
+            ),
+          );
+          return;
+        }
+
+        if (canStartFight) {
+          event.preventDefault();
+          actions.startFight();
+          triggerActiveEffect(
+            panelRef.current?.querySelector<HTMLButtonElement>(
+              "[data-control='end-fight']",
+            ),
+          );
+          return;
+        }
       }
 
       if (key === RESET_SHORTCUT_KEY) {
@@ -177,6 +195,7 @@ export const AttackLogPanel: FC = () => {
     state.damageLog.length,
     state.redoStack.length,
     canEndFight,
+    canStartFight,
     canResetSequence,
     triggerActiveEffect,
   ]);
@@ -282,12 +301,16 @@ export const AttackLogPanel: FC = () => {
             }
           }}
           onClick={() => {
-            actions.endFight();
+            if (canEndFight) {
+              actions.endFight();
+            } else if (canStartFight) {
+              actions.startFight();
+            }
           }}
           aria-keyshortcuts="Enter"
-          disabled={!canEndFight}
+          disabled={!canEndFight && !canStartFight}
         >
-          End fight (Enter)
+          {canStartFight ? 'Start fight (Enter)' : 'End fight (Enter)'}
         </button>
       </div>
       <div className="attack-groups">

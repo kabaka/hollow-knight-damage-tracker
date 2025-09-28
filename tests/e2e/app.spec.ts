@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
 type SpellLevel = 'none' | 'base' | 'upgrade';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
