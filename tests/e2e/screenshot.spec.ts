@@ -74,5 +74,5 @@ test('generate a mid-combat screenshot', async ({ page }) => {
     page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
   ).toBeVisible();
 
-  await page.screenshot({ path: 'docs/demo.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/demo.png', fullPage: true });
 });
