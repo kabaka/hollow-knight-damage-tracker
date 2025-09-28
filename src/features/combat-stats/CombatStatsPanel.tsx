@@ -261,9 +261,6 @@ export const CombatStatsPanel: FC = () => {
 
   return (
     <div className="data-list" aria-live="polite">
-      <p className="section__description">
-        Combat metrics update as you log damage, surfacing progress at a glance.
-      </p>
       {stats.map((stat) => (
         <div key={stat.id} className="data-list__item" data-stat-id={stat.id}>
           <span className="data-list__label">{stat.label}</span>
