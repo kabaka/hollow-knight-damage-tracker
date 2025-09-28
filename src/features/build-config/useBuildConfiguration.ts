@@ -11,15 +11,13 @@ import type { Charm } from '../../data';
 import {
   bossMap,
   bosses,
-  bossSequenceMap,
   bossSequences,
   charmMap,
-  getSequenceConditionValues,
   nailUpgrades,
-  resolveSequenceEntries,
   spells,
   supportedCharmIds,
 } from '../../data';
+import { useSequenceContext } from '../fight-state/useSequenceContext';
 
 const orderCharmIds = (selected: string[]) => {
   const ordered = supportedCharmIds.filter((charmId) => selected.includes(charmId));
@@ -101,9 +99,18 @@ export const useBuildConfiguration = () => {
   const selectedBossId = useFightStateSelector((state) => state.selectedBossId);
   const customTargetHp = useFightStateSelector((state) => state.customTargetHp);
   const build = useFightStateSelector((state) => state.build);
-  const activeSequenceId = useFightStateSelector((state) => state.activeSequenceId);
-  const sequenceIndex = useFightStateSelector((state) => state.sequenceIndex);
-  const sequenceConditions = useFightStateSelector((state) => state.sequenceConditions);
+
+  const {
+    activeSequenceId,
+    activeSequence,
+    sequenceEntries,
+    sequenceConditionValues,
+    cappedSequenceIndex,
+    currentSequenceEntry,
+    isSequenceActive,
+    hasNextSequenceStage,
+    hasPreviousSequenceStage,
+  } = useSequenceContext();
 
   const selectedTarget = useMemo(() => bossMap.get(selectedBossId), [selectedBossId]);
 
@@ -117,41 +124,6 @@ export const useBuildConfiguration = () => {
 
   const selectedVersion = selectedTarget?.version;
 
-  const activeSequence = useMemo(
-    () => (activeSequenceId ? bossSequenceMap.get(activeSequenceId) : undefined),
-    [activeSequenceId],
-  );
-
-  const sequenceConditionOverrides = activeSequenceId
-    ? sequenceConditions[activeSequenceId]
-    : undefined;
-
-  const sequenceEntries = useMemo(
-    () =>
-      activeSequence
-        ? resolveSequenceEntries(activeSequence, sequenceConditionOverrides)
-        : [],
-    [activeSequence, sequenceConditionOverrides],
-  );
-
-  const sequenceConditionValues = useMemo(
-    () =>
-      activeSequence
-        ? getSequenceConditionValues(activeSequence, sequenceConditionOverrides)
-        : {},
-    [activeSequence, sequenceConditionOverrides],
-  );
-
-  const cappedSequenceIndex = sequenceEntries.length
-    ? Math.min(Math.max(sequenceIndex, 0), sequenceEntries.length - 1)
-    : 0;
-
-  const currentSequenceEntry =
-    sequenceEntries.length > 0 ? sequenceEntries[cappedSequenceIndex] : undefined;
-  const isSequenceActive = Boolean(activeSequence);
-  const hasPreviousSequenceStage = isSequenceActive && cappedSequenceIndex > 0;
-  const hasNextSequenceStage =
-    isSequenceActive && cappedSequenceIndex < sequenceEntries.length - 1;
   const sequenceSelectValue = activeSequenceId ?? '';
 
   const bossSelectValue =
