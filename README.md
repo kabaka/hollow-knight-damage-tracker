@@ -58,7 +58,7 @@ The UI now wires together real-time combat calculations driven by typed data mod
 
 - `src/data/` stores structured JSON for charms, nail upgrades, spells, and boss health pools, along with helpers that expose typed lookups.
 - `FightStateProvider` (under `src/features/fight-state/`) centralizes build configuration, attack logs, and derived combat statistics that power the UI.
-- `BuildConfigPanel`, `AttackLogPanel`, and `CombatStatsPanel` consume the shared state to surface boss presets, configurable damage presets, and running metrics.
+- `BuildConfigPanel`, `AttackLogPanel`, and `CombatLogPanel` consume the shared state to surface boss presets, configurable damage presets, and running combat metrics/history.
 - Shared layout primitives live in `src/components/` and global theming resides in `src/styles/`.
 
 Vitest (unit tests) and Playwright (e2e tests) validate that core sections render correctly and that critical interactions—such as selecting bosses or logging attacks—update derived statistics as expected.
