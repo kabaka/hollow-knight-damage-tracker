@@ -10,38 +10,8 @@ import {
   useFightDerivedStats,
 } from '../features/fight-state/FightStateContext';
 import { HelpModal } from '../features/help/HelpModal';
+import { formatDecimal, formatNumber, formatStopwatch } from '../utils/format';
 import { useVisualViewportCssVars } from './useVisualViewportCssVars';
-
-const formatNumber = (value: number) => value.toLocaleString();
-
-const formatDecimal = (value: number | null, fractionDigits = 1) => {
-  if (value == null || Number.isNaN(value)) {
-    return '—';
-  }
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: fractionDigits,
-    minimumFractionDigits: fractionDigits,
-  });
-};
-
-const formatStopwatch = (value: number | null) => {
-  if (value == null || Number.isNaN(value)) {
-    return '—';
-  }
-
-  if (value <= 0) {
-    return '0:00.00';
-  }
-
-  const hundredths = Math.floor(value / 10);
-  const minutes = Math.floor(hundredths / 6000);
-  const seconds = Math.floor((hundredths / 100) % 60);
-  const remainingHundredths = hundredths % 100;
-
-  return `${minutes}:${seconds.toString().padStart(2, '0')}.${remainingHundredths
-    .toString()
-    .padStart(2, '0')}`;
-};
 
 type StageTimelineProps = {
   readonly stageLabel: string | null;
