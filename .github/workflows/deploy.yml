@@ -38,10 +38,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Move screenshot to dist/docs
+      - name: Move screenshots to dist/docs
         run: |
           mkdir -p dist/docs
           mv artifacts/test-results/demo.png dist/docs/app.png
+          mv artifacts/test-results/mobile-app.png dist/docs/mobile-app.png
 
       - uses: actions/upload-pages-artifact@v4
         with:
