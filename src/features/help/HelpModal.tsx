@@ -84,9 +84,10 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
               <h3 id="help-attack-log-heading">Logging attacks</h3>
             </div>
             <p className="modal-section__description">
-              The <strong>Attack Log</strong> lists every strike you record. Click the
-              attack buttons or press their keyboard shortcuts to subtract damage and keep
-              the log in sync with your practice run. Hover each button to see its
+              The <strong>Attack Log</strong> lists every strike you record. Use the
+              attack buttons or their keyboard shortcuts to subtract damage while you
+              practice. Nail strikes, arts, spells, and charm effects automatically apply
+              the modifiers from your loadout, and you can hover each button to see its
               shortcut and damage value.
             </p>
             <p>
@@ -105,7 +106,9 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
             <p className="modal-section__description">
               The <strong>Combat Overview</strong> summarizes progress, including total
               damage, average DPS, fight duration, stagger tracking, and charm effects.
-              Watch these indicators to evaluate the consistency of your attempts.
+              Watch these indicators to evaluate the consistency of your attempts and to
+              confirm your build can finish encounters before enrages or stagger windows
+              slip away.
             </p>
           </section>
 

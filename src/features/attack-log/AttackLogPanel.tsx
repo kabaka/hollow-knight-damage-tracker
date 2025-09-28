@@ -203,9 +203,7 @@ export const AttackLogPanel: FC = () => {
   return (
     <div ref={panelRef}>
       <p className="section__description">
-        Log each successful hit to reduce the boss health target. Use the buttons below to
-        record nail strikes, nail arts, spells, and charm effects with the appropriate
-        modifiers applied.
+        Log hits with the buttons or shortcuts below to keep the encounter in sync.
       </p>
       <div className="quick-actions" role="group" aria-label="Attack log controls">
         <button

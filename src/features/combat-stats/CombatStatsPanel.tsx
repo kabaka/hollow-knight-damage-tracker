@@ -262,8 +262,7 @@ export const CombatStatsPanel: FC = () => {
   return (
     <div className="data-list" aria-live="polite">
       <p className="section__description">
-        These stats update automatically as you log damage. Use them to verify if a build
-        can close the gap before enrage timers or stagger opportunities end.
+        Combat metrics update as you log damage, surfacing progress at a glance.
       </p>
       {stats.map((stat) => (
         <div key={stat.id} className="data-list__item" data-stat-id={stat.id}>
