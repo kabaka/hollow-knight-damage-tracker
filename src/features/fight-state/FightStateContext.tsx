@@ -67,6 +67,7 @@ type FightActions = {
   redoLastAttack: () => void;
   resetLog: () => void;
   resetSequence: () => void;
+  startFight: (timestamp?: number) => void;
   endFight: (timestamp?: number) => void;
   startSequence: (sequenceId: string) => void;
   stopSequence: () => void;
@@ -137,7 +138,13 @@ const calculateDerivedStats = (
   state: FightState,
   frameTimestamp: number,
 ): DerivedStats => {
-  const { damageLog, selectedBossId, customTargetHp, fightEndTimestamp } = state;
+  const {
+    damageLog,
+    selectedBossId,
+    customTargetHp,
+    fightEndTimestamp,
+    fightStartTimestamp: storedFightStartTimestamp,
+  } = state;
   const targetHp = isCustomBoss(selectedBossId)
     ? Math.max(1, Math.round(customTargetHp))
     : (bossMap.get(selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
@@ -145,7 +152,8 @@ const calculateDerivedStats = (
   const attacksLogged = damageLog.length;
   const remainingHp = Math.max(0, targetHp - totalDamage);
   const averageDamage = attacksLogged === 0 ? null : totalDamage / attacksLogged;
-  const fightStartTimestamp = damageLog[0]?.timestamp ?? null;
+  const fightStartTimestamp =
+    storedFightStartTimestamp ?? damageLog[0]?.timestamp ?? null;
   const effectiveEndTimestamp =
     fightEndTimestamp ?? (fightStartTimestamp != null ? frameTimestamp : null);
   const elapsedMs =
@@ -258,7 +266,8 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     notifyDerived();
   }, [state, notifyDerived, notifyState, schedulePersist]);
 
-  const shouldAnimate = state.damageLog.length > 0 && state.fightEndTimestamp == null;
+  const shouldAnimate =
+    state.fightStartTimestamp != null && state.fightEndTimestamp == null;
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -413,6 +422,8 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
       resetLog: () => dispatch({ type: 'resetLog' }),
       resetSequence: () => dispatch({ type: 'resetSequence' }),
+      startFight: (timestamp) =>
+        dispatch({ type: 'startFight', timestamp: timestamp ?? Date.now() }),
       endFight: (timestamp) =>
         dispatch({ type: 'endFight', timestamp: timestamp ?? Date.now() }),
       startSequence: (sequenceId) => dispatch({ type: 'startSequence', sequenceId }),

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { nailUpgrades, spells } from '../../data';
 import type { FightState } from '../fight-state/FightStateContext';
+import { createInitialState } from '../fight-state/fightReducer';
 import {
   FURY_MULTIPLIER,
   KEY_SEQUENCE,
@@ -16,22 +17,7 @@ const DEFAULT_SPELL_LEVELS = Object.fromEntries(
 ) as FightState['build']['spellLevels'];
 
 const createFightState = (overrides: Partial<FightState> = {}): FightState => {
-  const baseState: FightState = {
-    selectedBossId: 'false-knight__standard',
-    customTargetHp: 0,
-    build: {
-      nailUpgradeId: 'old-nail',
-      activeCharmIds: [],
-      spellLevels: { ...DEFAULT_SPELL_LEVELS },
-    },
-    damageLog: [],
-    redoStack: [],
-    activeSequenceId: null,
-    sequenceIndex: 0,
-    sequenceLogs: {},
-    sequenceRedoStacks: {},
-    sequenceConditions: {},
-  };
+  const baseState = createInitialState();
 
   return {
     ...baseState,

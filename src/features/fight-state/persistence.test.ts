@@ -180,7 +180,7 @@ describe('fight-state persistence', () => {
     const fallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
 
     const persisted = {
-      version: 3,
+      version: 4,
       state: {
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: 4242,
@@ -241,7 +241,7 @@ describe('fight-state persistence', () => {
     }
 
     const parsed = JSON.parse(stored) as { version: number; state: unknown };
-    expect(parsed.version).toBe(3);
+    expect(parsed.version).toBe(4);
     expect(parsed.state).toBeTruthy();
   });
 
