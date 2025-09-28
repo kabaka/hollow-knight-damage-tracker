@@ -15,6 +15,12 @@ Hollow Knight Damage Tracker is a responsive companion app that captures your Kn
 
 **Live Demo:** [kabaka.github.io/hollow-knight-damage-tracker](https://kabaka.github.io/hollow-knight-damage-tracker/)
 
+## Disclaimer
+
+This is an unofficial fan project. The artwork and any other assets from _Hollow Knight_ are the property of Team Cherry. This project is not affiliated with, endorsed, or sponsored by Team Cherry.
+
+All _Hollow Knight_ images and assets are used for informational and commentary purposes under the principles of fair use.
+
 ## Features
 
 ### For the Hardcore Player 🛡️
