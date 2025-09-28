@@ -40,6 +40,9 @@ jobs:
           name: docs-demo-screenshot
           path: docs/demo.png
 
+      - name: Mark repository as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Commit screenshot
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
