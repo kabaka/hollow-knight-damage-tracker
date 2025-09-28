@@ -38,7 +38,7 @@ export type {
 export { CUSTOM_BOSS_ID } from './fightReducer';
 import { persistStateToStorage, restorePersistedState } from './persistence';
 
-export interface DerivedStats {
+export type DerivedStats = {
   targetHp: number;
   totalDamage: number;
   remainingHp: number;
@@ -53,7 +53,7 @@ export interface DerivedStats {
   isFightInProgress: boolean;
   isFightComplete: boolean;
   frameTimestamp: number;
-}
+};
 
 type FightActions = {
   selectBoss: (bossId: string) => void;
