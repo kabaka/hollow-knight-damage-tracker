@@ -98,9 +98,10 @@ const buildDpsBucketSeries = (timeline: TimelinePoint[]): SparklinePoint[] => {
 
     while (currentBucketIndex < pointBucketIndex) {
       const bucketDurationSeconds = 1;
+      const bucketAverage = bucketDamage / bucketDurationSeconds;
       series.push({
         time: (currentBucketIndex + 1) * 1000,
-        value: bucketDurationSeconds > 0 ? bucketDamage / bucketDurationSeconds : 0,
+        value: bucketAverage,
       });
       currentBucketIndex += 1;
       bucketStart = currentBucketIndex * 1000;
@@ -119,7 +120,7 @@ const buildDpsBucketSeries = (timeline: TimelinePoint[]): SparklinePoint[] => {
     const bucketDurationSeconds = Math.min(elapsedInBucket, 1000) / 1000;
     series.push({
       time: point.time,
-      value: bucketDurationSeconds > 0 ? bucketDamage / bucketDurationSeconds : 0,
+      value: bucketDamage / bucketDurationSeconds,
     });
   }
 
@@ -166,12 +167,16 @@ export const CombatStatsPanel: FC = () => {
     const elapsedSeconds = elapsed / 1000;
     const cumulativeDamage = lastPoint.cumulativeDamage;
 
+    if (elapsedSeconds <= 0) {
+      return null;
+    }
+
     return {
       time: elapsed,
       cumulativeDamage,
       remainingHp: Math.max(0, targetHp - cumulativeDamage),
       frameDamage: 0,
-      dps: elapsedSeconds > 0 ? cumulativeDamage / elapsedSeconds : 0,
+      dps: cumulativeDamage / elapsedSeconds,
     } satisfies TimelinePoint;
   }, [timeline, fightEndTimestamp, fightStartTimestamp, frameTimestamp, targetHp]);
 
@@ -180,7 +185,7 @@ export const CombatStatsPanel: FC = () => {
       return timeline;
     }
 
-    const lastPoint = timeline[timeline.length - 1];
+    const lastPoint = timeline.length > 0 ? timeline[timeline.length - 1] : undefined;
 
     if (
       lastPoint &&

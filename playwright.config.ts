@@ -1,13 +1,19 @@
+import { env } from 'node:process';
+
 import { defineConfig, devices } from '@playwright/test';
+
+const isCI = env.CI === 'true' || env.CI === '1';
+const usePreview =
+  env.PLAYWRIGHT_USE_PREVIEW === 'true' || env.PLAYWRIGHT_USE_PREVIEW === '1';
 
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 60_000,
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
-  reporter: process.env.CI
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 2 : undefined,
+  reporter: isCI
     ? [['github'], ['html', { open: 'never' }]]
     : [['html', { open: 'never' }]],
   use: {
@@ -17,11 +23,11 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   webServer: {
-    command: process.env.PLAYWRIGHT_USE_PREVIEW
+    command: usePreview
       ? 'pnpm preview --host 127.0.0.1 --port 4173 --strictPort'
       : 'pnpm dev --host 127.0.0.1 --port 4173 --strictPort',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !isCI,
     stdout: 'pipe',
   },
   projects: [

@@ -97,10 +97,11 @@ describe('useAttackDefinitions helpers', () => {
   });
 
   it('omits spells that are not yet acquired', () => {
-    const [firstSpell] = spells;
-    if (!firstSpell) {
+    if (spells.length === 0) {
       throw new Error('Expected at least one spell fixture');
     }
+
+    const [firstSpell] = spells;
 
     const state = createFightState({
       build: {

@@ -124,7 +124,9 @@ const scheduleIdleTask = (
     }, options);
 
     return () => {
-      idleWindow.cancelIdleCallback?.(handle);
+      if (typeof idleWindow.cancelIdleCallback === 'function') {
+        idleWindow.cancelIdleCallback(handle);
+      }
     };
   }
 
@@ -132,6 +134,13 @@ const scheduleIdleTask = (
   return () => {
     window.clearTimeout(timeoutId);
   };
+};
+
+const assertStore = <T,>(value: T | null, message: string): T => {
+  if (value === null) {
+    throw new Error(message);
+  }
+  return value;
 };
 
 const calculateDerivedStats = (
@@ -152,25 +161,42 @@ const calculateDerivedStats = (
   const attacksLogged = damageLog.length;
   const remainingHp = Math.max(0, targetHp - totalDamage);
   const averageDamage = attacksLogged === 0 ? null : totalDamage / attacksLogged;
-  const fightStartTimestamp =
-    storedFightStartTimestamp ?? damageLog[0]?.timestamp ?? null;
-  const effectiveEndTimestamp =
-    fightEndTimestamp ?? (fightStartTimestamp != null ? frameTimestamp : null);
+  let fightStartTimestamp = storedFightStartTimestamp;
+  if (fightStartTimestamp === null) {
+    fightStartTimestamp = damageLog[0]?.timestamp ?? null;
+  }
+
+  const hasFightStartTimestamp = typeof fightStartTimestamp === 'number';
+
+  let effectiveEndTimestamp = fightEndTimestamp;
+  if (effectiveEndTimestamp === null && hasFightStartTimestamp) {
+    effectiveEndTimestamp = frameTimestamp;
+  }
+
   const elapsedMs =
-    fightStartTimestamp != null && effectiveEndTimestamp != null
+    hasFightStartTimestamp && effectiveEndTimestamp !== null
       ? Math.max(0, effectiveEndTimestamp - fightStartTimestamp)
       : null;
-  const dps = elapsedMs && elapsedMs > 0 ? totalDamage / (elapsedMs / 1000) : null;
-  const actionsPerMinute =
-    elapsedMs && elapsedMs > 0 ? attacksLogged / (elapsedMs / 60000) : null;
-  const estimatedTimeRemainingMs =
-    remainingHp === 0
-      ? 0
-      : dps && dps > 0
-        ? Math.round((remainingHp / dps) * 1000)
-        : null;
-  const isFightInProgress = fightStartTimestamp != null && fightEndTimestamp == null;
-  const isFightComplete = fightStartTimestamp != null && fightEndTimestamp != null;
+
+  let dps: number | null = null;
+  let actionsPerMinute: number | null = null;
+  if (elapsedMs !== null && elapsedMs > 0) {
+    dps = totalDamage / (elapsedMs / 1000);
+    actionsPerMinute = attacksLogged / (elapsedMs / 60000);
+  }
+
+  let estimatedTimeRemainingMs: number | null;
+  if (remainingHp === 0) {
+    estimatedTimeRemainingMs = 0;
+  } else if (dps !== null && dps > 0) {
+    estimatedTimeRemainingMs = Math.round((remainingHp / dps) * 1000);
+  } else {
+    estimatedTimeRemainingMs = null;
+  }
+
+  const fightHasEnded = fightEndTimestamp !== null;
+  const isFightInProgress = hasFightStartTimestamp && !fightHasEnded;
+  const isFightComplete = hasFightStartTimestamp && fightHasEnded;
 
   return {
     targetHp,
@@ -267,7 +293,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   }, [state, notifyDerived, notifyState, schedulePersist]);
 
   const shouldAnimate =
-    state.fightStartTimestamp != null && state.fightEndTimestamp == null;
+    state.fightStartTimestamp !== null && state.fightEndTimestamp === null;
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -290,14 +316,14 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   }, [shouldAnimate, notifyDerived]);
 
   useEffect(() => {
-    if (!shouldAnimate && state.fightEndTimestamp != null) {
+    if (!shouldAnimate && state.fightEndTimestamp !== null) {
       frameTimestampRef.current = state.fightEndTimestamp;
       notifyDerived();
     }
   }, [shouldAnimate, state.fightEndTimestamp, notifyDerived]);
 
   useEffect(() => {
-    if (state.fightEndTimestamp != null) {
+    if (state.fightEndTimestamp !== null) {
       flushPersist();
     }
   }, [state.fightEndTimestamp, flushPersist]);
@@ -377,9 +403,6 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }
 
     const lastEvent = state.damageLog[state.damageLog.length - 1];
-    if (!lastEvent) {
-      return;
-    }
 
     if (sequenceCompletionRef.current.get(stageKey) === lastEvent.timestamp) {
       return;
@@ -441,12 +464,9 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     }),
     [],
   );
-  const derivedStore = derivedStoreRef.current;
-  const stateStore = stateStoreRef.current;
-
-  if (!stateStore || !derivedStore) {
-    throw new Error('FightStateProvider failed to initialize derived stats store');
-  }
+  const storeError = 'FightStateProvider failed to initialize derived stats store';
+  const derivedStore = assertStore(derivedStoreRef.current, storeError);
+  const stateStore = assertStore(stateStoreRef.current, storeError);
 
   return (
     <FightActionsContext.Provider value={actions}>

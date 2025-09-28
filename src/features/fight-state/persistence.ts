@@ -375,7 +375,7 @@ export const restorePersistedState = (fallback: FightState): FightState => {
       return fallback;
     }
 
-    const parsed = JSON.parse(serialized);
+    const parsed: unknown = JSON.parse(serialized);
     if (!isRecord(parsed)) {
       return fallback;
     }

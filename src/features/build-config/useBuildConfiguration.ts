@@ -146,7 +146,8 @@ export const useBuildConfiguration = () => {
     ? Math.min(Math.max(sequenceIndex, 0), sequenceEntries.length - 1)
     : 0;
 
-  const currentSequenceEntry = sequenceEntries[cappedSequenceIndex];
+  const currentSequenceEntry =
+    sequenceEntries.length > 0 ? sequenceEntries[cappedSequenceIndex] : undefined;
   const isSequenceActive = Boolean(activeSequence);
   const hasPreviousSequenceStage = isSequenceActive && cappedSequenceIndex > 0;
   const hasNextSequenceStage =
