@@ -102,8 +102,8 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
             </div>
             <p className="modal-section__description">
               The header scoreboard tracks elapsed time, estimated remaining duration,
-              DPS, average damage per action, and actions per minute. Damage logged and
-              total actions appear beneath their metrics so you can gauge pacing at a
+              DPS, average damage per action, and actions per minute. Cumulative damage
+              and action totals appear beneath their metrics so you can gauge pacing at a
               glance without opening another panel.
             </p>
             <p>

@@ -177,10 +177,7 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
         id: 'dps',
         label: 'DPS',
         value: formatDecimal(dps),
-        sublabel:
-          typeof totalDamage === 'number'
-            ? `Damage logged: ${formatNumber(totalDamage)}`
-            : undefined,
+        sublabel: typeof totalDamage === 'number' ? formatNumber(totalDamage) : undefined,
       },
       {
         id: 'average-damage',
@@ -192,9 +189,7 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
         label: 'APM',
         value: formatDecimal(actionsPerMinute),
         sublabel:
-          typeof attacksLogged === 'number'
-            ? `Total actions: ${formatNumber(attacksLogged)}`
-            : undefined,
+          typeof attacksLogged === 'number' ? formatNumber(attacksLogged) : undefined,
       },
     ],
     [
