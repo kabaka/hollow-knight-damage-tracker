@@ -11,7 +11,7 @@ Hollow Knight Damage Tracker is a responsive companion app that captures your Kn
 
 > ✨ Designed for co-pilots, commentators, and VOD reviewers—let a trusted spectator log hits live or replay the action later while you stay locked in on the battle.
 
-[![Demo of Hollow Knight Damage Tracker in action](https://placehold.co/1200x675/0b0b16/ffffff.png?text=Demo+GIF+Coming+Soon)](#)
+![A screenshot of the Hollow Knight Damage Tracker showing a mid-combat scenario against the Gruz Mother. The tracker displays the player's loadout, attack log, and real-time combat statistics.](docs/demo.png)
 
 **Live Demo:** [kabaka.github.io/hollow-knight-damage-tracker](https://kabaka.github.io/hollow-knight-damage-tracker/)
 
