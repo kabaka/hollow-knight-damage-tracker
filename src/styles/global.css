@@ -51,6 +51,9 @@
   --frame-highlight: inset 0 1px 0 rgb(255 255 255 / 16%);
   --frame-outline: 0 0 0 1px var(--color-border-soft);
   --frame-outline-strong: 0 0 0 1.5px rgb(214 217 231 / 55%);
+  --visual-viewport-height: 100vh;
+  --visual-viewport-offset-top: 0px;
+  --visual-viewport-offset-bottom: 0px;
   --shape-tablet: polygon(
     14px 0,
     calc(100% - 14px) 0,
@@ -72,6 +75,18 @@
 
   background-color: var(--color-bg);
   color: var(--color-text);
+}
+
+@supports (height: 100svh) {
+  :root {
+    --visual-viewport-height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --visual-viewport-height: 100dvh;
+  }
 }
 
 * {
@@ -1669,7 +1684,19 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1rem, 4vw, 2rem);
+
+  --modal-padding-inline: clamp(1rem, 4vw, 2rem);
+  --modal-padding-block: clamp(1.5rem, 6vh, 3rem);
+  --modal-top-inset: calc(
+    env(safe-area-inset-top, 0px) + var(--visual-viewport-offset-top)
+  );
+  --modal-bottom-inset: calc(
+    env(safe-area-inset-bottom, 0px) + var(--visual-viewport-offset-bottom)
+  );
+
+  padding-inline: var(--modal-padding-inline);
+  padding-top: calc(var(--modal-padding-block) + var(--modal-top-inset));
+  padding-bottom: calc(var(--modal-padding-block) + var(--modal-bottom-inset));
   overflow-y: auto;
 }
 
@@ -1686,7 +1713,18 @@ h6 {
   position: relative;
   z-index: 1;
   width: min(100%, 980px);
-  max-height: min(90vh, 900px);
+
+  --modal-available-height-offset: calc(
+    var(--modal-padding-block) * 2 + var(--modal-top-inset) + var(--modal-bottom-inset)
+  );
+
+  max-height: min(
+    max(
+      calc(var(--visual-viewport-height) - var(--modal-available-height-offset)),
+      320px
+    ),
+    900px
+  );
   overflow-y: auto;
   clip-path: var(--shape-tablet);
   background-color: var(--color-surface);
@@ -1703,12 +1741,6 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-@supports (height: 100dvh) {
-  .modal__content {
-    max-height: min(90dvh, 900px);
-  }
 }
 
 .modal__content::before {
@@ -2451,11 +2483,8 @@ h6 {
   }
 
   .modal {
-    padding: 1rem;
-  }
-
-  .modal__content {
-    max-height: 100vh;
+    --modal-padding-inline: 1rem;
+    --modal-padding-block: clamp(1.5rem, 10vh, 3.5rem);
   }
 
   .charm-grid__row--offset {
