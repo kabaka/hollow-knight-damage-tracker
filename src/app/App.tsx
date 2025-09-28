@@ -10,6 +10,7 @@ import {
   useFightDerivedStats,
 } from '../features/fight-state/FightStateContext';
 import { HelpModal } from '../features/help/HelpModal';
+import { useVisualViewportCssVars } from './useVisualViewportCssVars';
 
 const formatNumber = (value: number) => value.toLocaleString();
 
@@ -650,6 +651,8 @@ const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
 );
 
 const AppContent: FC = () => {
+  useVisualViewportCssVars();
+
   const [isModalOpen, setModalOpen] = useState(false);
   const [isSetupOpen, setSetupOpen] = useState(false);
   const [isHelpOpen, setHelpOpen] = useState(false);
