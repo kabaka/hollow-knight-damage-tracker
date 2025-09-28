@@ -20,6 +20,11 @@
 - Update the README and other documentation whenever new features or configuration steps are introduced.
 - Write TODO comments sparingly; prefer capturing follow-up work in `TODO.md` or GitHub issues.
 - Describe user-facing changes clearly in PR summaries.
+- Capture UI screenshots with Playwright when needed for PR summaries:
+  - Launch the app (e.g., with `pnpm dev --host 0.0.0.0 --port <port>`), then use the `browser_container.run_playwright_script` tool.
+  - Within the Playwright script, connect to the forwarded port, navigate to the relevant route, and use locators plus interaction helpers (`fill`, `click`, etc.) to reach the desired state.
+  - Use `locator.screenshot()` or `page.screenshot()` to capture specific components or full pages after simulating the required inputs/state changes. Save artifacts under a relative path so they can be attached in the final response.
+  - Reference the generated artifact in the final message using Markdown image syntax, as required by the system instructions.
 
 ## File & Directory Structure
 
