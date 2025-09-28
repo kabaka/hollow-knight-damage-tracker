@@ -11,8 +11,11 @@ on:
       - 'src/**'
       - 'tests/**'
       - '.github/workflows/ci.yml'
+      - 'eslint.config.mjs'
+      - 'playwright.config.ts'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'tsconfig*.json'
 
 jobs:
   lint:
