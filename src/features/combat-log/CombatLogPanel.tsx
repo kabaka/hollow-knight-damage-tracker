@@ -1,13 +1,14 @@
 import type { FC } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { bossMap, bossSequenceMap, resolveSequenceEntries } from '../../data';
+import { bossMap } from '../../data';
 import { formatNumber, formatRelativeTime } from '../../utils/format';
 import {
   useFightDerivedStats,
   useFightState,
   type AttackEvent,
 } from '../fight-state/FightStateContext';
+import { useSequenceContext } from '../fight-state/useSequenceContext';
 
 type CombatLogEntry =
   | {
@@ -33,38 +34,6 @@ const getTargetName = (targetId: string | null) => {
   return target?.bossName ?? 'Custom target';
 };
 
-const getSequenceContext = (
-  sequenceId: string | null,
-  sequenceIndex: number,
-  sequenceConditions: ReturnType<typeof useFightState>['state']['sequenceConditions'],
-) => {
-  if (!sequenceId) {
-    return null;
-  }
-
-  const sequence = bossSequenceMap.get(sequenceId);
-  if (!sequence) {
-    return null;
-  }
-
-  const entries = resolveSequenceEntries(sequence, sequenceConditions[sequenceId]);
-  const stage = entries.at(sequenceIndex) ?? null;
-
-  if (!stage) {
-    return {
-      sequenceName: sequence.name,
-      stageLabel: null,
-      stageNumber: sequenceIndex + 1,
-    };
-  }
-
-  return {
-    sequenceName: sequence.name,
-    stageLabel: stage.target.bossName,
-    stageNumber: sequenceIndex + 1,
-  };
-};
-
 const createAttackDetail = (
   event: AttackEvent,
   cumulativeDamage: number,
@@ -85,14 +54,7 @@ const createAttackDetail = (
 
 export const CombatLogPanel: FC = () => {
   const {
-    state: {
-      damageLog,
-      redoStack,
-      selectedBossId,
-      activeSequenceId,
-      sequenceIndex,
-      sequenceConditions,
-    },
+    state: { damageLog, redoStack, selectedBossId },
   } = useFightState();
   const {
     targetHp,
@@ -101,6 +63,11 @@ export const CombatLogPanel: FC = () => {
     frameTimestamp,
     totalDamage,
   } = useFightDerivedStats();
+  const {
+    activeSequenceId,
+    sequenceIndex,
+    labels: sequenceLabels,
+  } = useSequenceContext();
 
   const [entries, setEntries] = useState<CombatLogEntry[]>([]);
   const processedEventIdsRef = useRef<Set<string>>(new Set());
@@ -125,11 +92,6 @@ export const CombatLogPanel: FC = () => {
   const allocateEntryId = (prefix: string) => `${prefix}-${entryIdRef.current++}`;
 
   const targetName = useMemo(() => getTargetName(selectedBossId), [selectedBossId]);
-  const sequenceContext = useMemo(
-    () => getSequenceContext(activeSequenceId, sequenceIndex, sequenceConditions),
-    [activeSequenceId, sequenceConditions, sequenceIndex],
-  );
-
   useEffect(() => {
     const nextEntries: CombatLogEntry[] = [];
     const processedEventIds = processedEventIdsRef.current;
@@ -145,8 +107,8 @@ export const CombatLogPanel: FC = () => {
       currentFight.targetId = selectedBossId;
       currentFight.sequenceId = activeSequenceId;
       currentFight.sequenceIndex = sequenceIndex;
-      const contextLabel = sequenceContext
-        ? `${sequenceContext.sequenceName} – Stage ${sequenceContext.stageNumber}`
+      const contextLabel = sequenceLabels
+        ? `${sequenceLabels.sequenceName} – Stage ${sequenceLabels.stageNumber}`
         : undefined;
       nextEntries.push({
         id: allocateEntryId('target'),
@@ -160,12 +122,12 @@ export const CombatLogPanel: FC = () => {
     ) {
       currentFight.sequenceId = activeSequenceId;
       currentFight.sequenceIndex = sequenceIndex;
-      if (sequenceContext) {
+      if (sequenceLabels) {
         nextEntries.push({
           id: allocateEntryId('sequence'),
           type: 'banner',
-          message: `${sequenceContext.sequenceName} – Stage ${sequenceContext.stageNumber}`,
-          context: sequenceContext.stageLabel ?? undefined,
+          message: `${sequenceLabels.sequenceName} – Stage ${sequenceLabels.stageNumber}`,
+          context: sequenceLabels.stageLabel ?? undefined,
         });
       }
     }
@@ -182,8 +144,8 @@ export const CombatLogPanel: FC = () => {
         id: allocateEntryId('fight-start-banner'),
         type: 'banner',
         message: `Fight started vs ${targetName}`,
-        context: sequenceContext
-          ? `${sequenceContext.sequenceName} – Stage ${sequenceContext.stageNumber}`
+        context: sequenceLabels
+          ? `${sequenceLabels.sequenceName} – Stage ${sequenceLabels.stageNumber}`
           : undefined,
       });
       nextEntries.push({
@@ -230,8 +192,8 @@ export const CombatLogPanel: FC = () => {
           id: allocateEntryId('fight-autostart'),
           type: 'banner',
           message: `Fight started vs ${targetName}`,
-          context: sequenceContext
-            ? `${sequenceContext.sequenceName} – Stage ${sequenceContext.stageNumber}`
+          context: sequenceLabels
+            ? `${sequenceLabels.sequenceName} – Stage ${sequenceLabels.stageNumber}`
             : undefined,
         });
         nextEntries.push({
@@ -291,7 +253,7 @@ export const CombatLogPanel: FC = () => {
     frameTimestamp,
     redoStack.length,
     selectedBossId,
-    sequenceContext,
+    sequenceLabels,
     sequenceIndex,
     targetHp,
     targetName,
