@@ -630,24 +630,9 @@ const AppContent: FC = () => {
   } = useBuildConfiguration();
 
   const derived = useFightDerivedStats();
-  const [panelGlow, setPanelGlow] = useState<'idle' | 'start' | 'victory'>('idle');
+  const [panelGlow, setPanelGlow] = useState<'idle' | 'victory'>('idle');
   const glowTimeoutRef = useRef<number | null>(null);
-  const previousFightStartRef = useRef<number | null>(null);
   const previousRemainingRef = useRef<number>(derived.remainingHp);
-
-  useEffect(() => {
-    if (derived.fightStartTimestamp == null) {
-      previousFightStartRef.current = null;
-      return;
-    }
-    if (
-      previousFightStartRef.current == null ||
-      previousFightStartRef.current !== derived.fightStartTimestamp
-    ) {
-      setPanelGlow('start');
-    }
-    previousFightStartRef.current = derived.fightStartTimestamp;
-  }, [derived.fightStartTimestamp]);
 
   useEffect(() => {
     if (
@@ -667,7 +652,7 @@ const AppContent: FC = () => {
     if (glowTimeoutRef.current) {
       window.clearTimeout(glowTimeoutRef.current);
     }
-    const duration = panelGlow === 'victory' ? 760 : 520;
+    const duration = 820;
     const timeoutId = window.setTimeout(() => {
       setPanelGlow('idle');
       glowTimeoutRef.current = null;
@@ -685,12 +670,7 @@ const AppContent: FC = () => {
     [],
   );
 
-  const panelGlowClass =
-    panelGlow === 'idle'
-      ? ''
-      : panelGlow === 'victory'
-        ? 'app-panel--glow-victory'
-        : 'app-panel--glow-start';
+  const panelGlowClass = panelGlow === 'victory' ? 'app-panel--glow-victory' : '';
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
