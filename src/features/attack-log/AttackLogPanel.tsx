@@ -5,7 +5,7 @@ import { useFightDerivedStats, useFightState } from '../fight-state/FightStateCo
 import { RESET_SHORTCUT_KEY, useAttackDefinitions } from './useAttackDefinitions';
 
 const RESET_SEQUENCE_SHORTCUT = 'Shift+Escape';
-const ACTIVE_EFFECT_DURATION = 320;
+const ACTIVE_EFFECT_DURATION = 260;
 
 const isActivationKey = (key: string) =>
   key === 'Enter' || key === ' ' || key === 'Spacebar';

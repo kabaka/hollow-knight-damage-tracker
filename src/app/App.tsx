@@ -667,7 +667,7 @@ const AppContent: FC = () => {
     if (glowTimeoutRef.current) {
       window.clearTimeout(glowTimeoutRef.current);
     }
-    const duration = panelGlow === 'victory' ? 1400 : 900;
+    const duration = panelGlow === 'victory' ? 760 : 520;
     const timeoutId = window.setTimeout(() => {
       setPanelGlow('idle');
       glowTimeoutRef.current = null;
