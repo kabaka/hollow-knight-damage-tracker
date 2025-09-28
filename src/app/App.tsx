@@ -12,6 +12,7 @@ import {
 import { HelpModal } from '../features/help/HelpModal';
 import { formatDecimal, formatNumber, formatStopwatch } from '../utils/format';
 import { useVisualViewportCssVars } from './useVisualViewportCssVars';
+import { BossHealthBar } from './components/BossHealthBar';
 
 type StageTimelineProps = {
   readonly stageLabel: string | null;
@@ -134,8 +135,6 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
     attacksLogged,
     totalDamage,
   } = derived;
-  const percentRemaining = targetHp > 0 ? Math.max(0, remainingHp / targetHp) : 0;
-
   const metrics = useMemo(
     () => [
       { id: 'elapsed', label: 'Elapsed', value: formatStopwatch(elapsedMs) },
@@ -177,30 +176,16 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
   return (
     <section className="hud-scoreboard" aria-label="Encounter scoreboard">
       <div className="hud-scoreboard__status">
-        <div
+        <BossHealthBar
           className="hud-health summary-chip summary-chip--accent"
           role="group"
           aria-label="Boss HP"
-        >
-          <span className="hud-health__label">HP</span>
-          <div
-            className="hud-health__track"
-            role="progressbar"
-            aria-label="Boss HP"
-            aria-valuemin={0}
-            aria-valuemax={targetHp}
-            aria-valuenow={remainingHp}
-          >
-            <div
-              className="hud-health__fill"
-              style={{ width: `${Math.round(percentRemaining * 100)}%` }}
-              aria-hidden="true"
-            />
-          </div>
-          <span className="hud-health__value">
-            {formatNumber(remainingHp)} / {formatNumber(targetHp)}
-          </span>
-        </div>
+          label="HP"
+          current={remainingHp}
+          total={targetHp}
+          progressbarAriaLabel="Boss HP"
+          valueLabel={`${formatNumber(remainingHp)} / ${formatNumber(targetHp)}`}
+        />
         <StageTimeline
           stageLabel={stageLabel}
           stageProgress={stageProgress}
@@ -234,33 +219,23 @@ type MobilePinnedHudProps = {
 
 const MobilePinnedHud: FC<MobilePinnedHudProps> = ({ derived, encounterName }) => {
   const { targetHp, remainingHp } = derived;
-  const percentRemaining = targetHp > 0 ? Math.max(0, remainingHp / targetHp) : 0;
-
   return (
     <div className="mobile-hud-sentinel">
       <div className="mobile-hud" role="group" aria-label="Boss status">
         <span className="mobile-hud__title" aria-live="polite">
           {encounterName}
         </span>
-        <div className="mobile-hud__health" role="group" aria-label="Boss HP">
-          <div
-            className="hud-health__track mobile-hud__track"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={targetHp}
-            aria-valuenow={remainingHp}
-            aria-label="Boss HP"
-          >
-            <div
-              className="hud-health__fill"
-              style={{ width: `${Math.round(percentRemaining * 100)}%` }}
-              aria-hidden="true"
-            />
-          </div>
-          <span className="mobile-hud__value">
-            {formatNumber(remainingHp)} / {formatNumber(targetHp)}
-          </span>
-        </div>
+        <BossHealthBar
+          className="mobile-hud__health"
+          role="group"
+          aria-label="Boss HP"
+          current={remainingHp}
+          total={targetHp}
+          progressbarAriaLabel="Boss HP"
+          trackClassName="mobile-hud__track"
+          valueLabel={`${formatNumber(remainingHp)} / ${formatNumber(targetHp)}`}
+          valueClassName="mobile-hud__value"
+        />
       </div>
     </div>
   );
