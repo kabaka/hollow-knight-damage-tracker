@@ -131,4 +131,57 @@ describe('CombatLogPanel', () => {
       expect(screen.getAllByText(/fight ended/i).length).toBeGreaterThan(0);
     });
   });
+
+  it('omits fight reset banners when advancing sequence stages', async () => {
+    let actions: FightActions | null = null;
+
+    renderWithFightProvider(
+      <>
+        <ActionsBridge
+          onReady={(value) => {
+            actions = value;
+          }}
+        />
+        <CombatLogPanel />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(actions).not.toBeNull();
+    });
+
+    act(() => {
+      actions?.startSequence('pantheon-of-the-sage');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Target: Hive Knight/i)).toBeInTheDocument();
+    });
+
+    act(() => {
+      actions?.startFight(1_000);
+      actions?.logAttack({
+        id: 'hive-knight-opening',
+        label: 'Opening hit',
+        category: 'nail',
+        damage: 50,
+        timestamp: 1_200,
+      });
+      actions?.endFight(1_800);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Fight started vs Hive Knight/i)).toBeInTheDocument();
+    });
+
+    act(() => {
+      actions?.advanceSequenceStage();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Target: Elder Hu/i)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Fight reset')).not.toBeInTheDocument();
+  });
 });

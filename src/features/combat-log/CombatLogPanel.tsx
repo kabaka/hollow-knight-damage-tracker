@@ -146,6 +146,11 @@ export const CombatLogPanel: FC = () => {
     const currentFight = currentFightRef.current;
 
     const hasTargetChanged = currentFight.targetId !== selectedBossId;
+    const isSequenceTransition =
+      activeSequenceId != null &&
+      (currentFight.sequenceId !== activeSequenceId ||
+        currentFight.sequenceIndex !== sequenceIndex ||
+        hasTargetChanged);
     if (hasTargetChanged) {
       currentFight.targetId = selectedBossId;
       currentFight.sequenceId = activeSequenceId;
@@ -207,11 +212,13 @@ export const CombatLogPanel: FC = () => {
       redoStack.length === 0 &&
       fightEndTimestamp == null
     ) {
-      nextEntries.push({
-        id: allocateEntryId('fight-reset'),
-        type: 'banner',
-        message: 'Fight reset',
-      });
+      if (!isSequenceTransition) {
+        nextEntries.push({
+          id: allocateEntryId('fight-reset'),
+          type: 'banner',
+          message: 'Fight reset',
+        });
+      }
       currentFight.startTimestamp = null;
       runningDamageRef.current = 0;
       targetHpRef.current = null;

@@ -1335,6 +1335,11 @@ h6 {
   color: rgb(240 243 255 / 62%);
 }
 
+.combat-log__context {
+  display: block;
+  margin-top: 0.15rem;
+}
+
 .combat-log__placeholder {
   font-size: var(--font-size-body);
   color: var(--color-muted);
