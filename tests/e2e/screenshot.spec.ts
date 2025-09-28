@@ -21,34 +21,35 @@ const MID_COMBAT_STATE = {
     },
     notchLimit: 11,
   },
+  fightStartOffsetMs: 12_500,
   damageLog: [
     {
       id: 'nail-strike-1',
       label: 'Nail Strike',
       damage: 32,
       category: 'nail',
-      timestamp: 1727492581000,
+      timestampOffsetMs: 0,
     },
     {
       id: 'nail-strike-2',
       label: 'Nail Strike',
       damage: 32,
       category: 'nail',
-      timestamp: 1727492581500,
+      timestampOffsetMs: 500,
     },
     {
       id: 'great-slash-1',
       label: 'Great Slash',
       damage: 80,
       category: 'nail-art',
-      timestamp: 1727492582000,
+      timestampOffsetMs: 1000,
     },
     {
       id: 'shade-soul-1',
       label: 'Shade Soul',
       damage: 40,
       category: 'spell',
-      timestamp: 1727492582500,
+      timestampOffsetMs: 1600,
     },
   ],
   redoStack: [],
@@ -58,11 +59,34 @@ test('generate a mid-combat screenshot', async ({ page }) => {
   await page.addInitScript(
     ({ storageKey, version, state }) => {
       try {
+        const {
+          fightStartOffsetMs = 0,
+          damageLog = [],
+          redoStack = [],
+          ...rest
+        } = state as typeof state;
+        const fightStartTimestamp = Date.now() - fightStartOffsetMs;
+        const resolveTimestamps = (events: typeof damageLog) =>
+          events.map(({ timestampOffsetMs = 0, ...event }) => ({
+            ...event,
+            timestamp: fightStartTimestamp + timestampOffsetMs,
+          }));
+
+        const resolvedState = {
+          ...rest,
+          fightStartTimestamp,
+          fightManuallyStarted: true,
+          fightEndTimestamp: null,
+          fightManuallyEnded: false,
+          damageLog: resolveTimestamps(damageLog),
+          redoStack: resolveTimestamps(redoStack),
+        };
+
         window.localStorage.setItem(
           storageKey,
           JSON.stringify({
             version,
-            state,
+            state: resolvedState,
           }),
         );
       } catch {
@@ -84,6 +108,27 @@ test('generate a mid-combat screenshot', async ({ page }) => {
   const encounterBanner = page.getByRole('banner');
   await expect(encounterBanner).toContainText('Gruz Mother');
   await expect(encounterBanner).toContainText('Radiant');
+
+  const scoreboard = page.getByRole('region', { name: 'Encounter scoreboard' });
+  const elapsed = scoreboard.locator(
+    '[data-metric-id="elapsed"] .hud-metrics__value-primary',
+  );
+  const estimatedRemaining = scoreboard.locator(
+    '[data-metric-id="estimated-remaining"] .hud-metrics__value-primary',
+  );
+
+  await expect(elapsed).toHaveText(/^\d+:\d{2}\.\d{2}$/);
+  await expect(estimatedRemaining).toHaveText(/^\d+:\d{2}\.\d{2}$/);
+
+  const [elapsedMinutes, remainingMinutes] = await Promise.all([
+    elapsed.innerText().then((value) => Number.parseInt(value.split(':')[0] ?? '0', 10)),
+    estimatedRemaining
+      .innerText()
+      .then((value) => Number.parseInt(value.split(':')[0] ?? '0', 10)),
+  ]);
+
+  expect(elapsedMinutes).toBeLessThan(5);
+  expect(remainingMinutes).toBeLessThan(10);
 
   await page.screenshot({ path: 'test-results/demo.png', fullPage: true });
 });
