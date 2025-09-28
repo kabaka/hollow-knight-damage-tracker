@@ -149,7 +149,7 @@ button {
 }
 
 button.is-active-effect {
-  transform: scale(0.98);
+  animation: button-strike 180ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
 }
 
 .quick-actions__button,
@@ -163,14 +163,14 @@ button.is-active-effect {
   content: '';
   position: absolute;
   inset: -1px;
-  border: 1.5px solid var(--color-accent);
+  border: 1.5px solid rgb(170 225 255 / 90%);
   border-radius: inherit;
   opacity: 0;
-  transform: scale(1);
+  transform: scale(0.9);
   transform-origin: center;
   pointer-events: none;
   mix-blend-mode: screen;
-  will-change: transform, opacity;
+  will-change: transform, opacity, box-shadow;
   z-index: -1;
 }
 
@@ -191,18 +191,44 @@ button.is-active-effect {
 
 .quick-actions__button.is-active-effect::after,
 .button-grid__button.is-active-effect::after {
-  animation: ripple-out 300ms ease-out forwards;
+  animation: button-flare 220ms cubic-bezier(0.28, 0.65, 0.35, 1) forwards;
 }
 
-@keyframes ripple-out {
+@keyframes button-strike {
   0% {
-    opacity: 0.8;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
+  }
+
+  45% {
+    transform: translateY(1px) scale(0.94);
+  }
+
+  70% {
+    transform: translateY(-1px) scale(1.06);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes button-flare {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgb(170 225 255 / 65%);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 0 18px 8px rgb(170 225 255 / 45%);
   }
 
   100% {
     opacity: 0;
-    transform: scale(1.2);
+    transform: scale(1.18);
+    box-shadow: 0 0 36px 14px rgb(170 225 255 / 0%);
   }
 }
 
@@ -1160,22 +1186,32 @@ h6 {
   clip-path: var(--shape-tablet);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 320ms ease;
+  transform: translateX(-125%) skewX(-12deg);
+  mix-blend-mode: screen;
+  will-change: transform, opacity, box-shadow;
   z-index: 2;
 }
 
 .app-panel--glow-start::after {
-  background:
-    radial-gradient(120% 120% at 50% 50%, rgb(228 236 255 / 60%), transparent 72%),
-    radial-gradient(90% 90% at 50% 50%, rgb(180 200 240 / 32%), transparent 75%);
-  animation: panel-glow-start 900ms ease-out forwards;
+  background: linear-gradient(
+    118deg,
+    rgb(185 215 255 / 0%) 14%,
+    rgb(210 240 255 / 78%) 44%,
+    rgb(140 200 255 / 30%) 62%,
+    rgb(185 215 255 / 0%) 78%
+  );
+  animation: panel-shimmer-start 460ms cubic-bezier(0.28, 0.65, 0.32, 1) forwards;
 }
 
 .app-panel--glow-victory::after {
-  background:
-    radial-gradient(120% 120% at 50% 50%, rgb(235 244 255 / 78%), transparent 74%),
-    radial-gradient(90% 90% at 50% 50%, rgb(200 228 255 / 40%), transparent 72%);
-  animation: panel-glow-victory 1300ms ease-out forwards;
+  background: linear-gradient(
+    118deg,
+    rgb(245 250 255 / 0%) 10%,
+    rgb(225 250 255 / 94%) 36%,
+    rgb(255 220 160 / 45%) 55%,
+    rgb(210 235 255 / 0%) 78%
+  );
+  animation: panel-shimmer-victory 680ms cubic-bezier(0.25, 0.7, 0.3, 1) forwards;
 }
 
 .app-panel > * {
@@ -2255,46 +2291,46 @@ h6 {
   }
 }
 
-@keyframes panel-glow-start {
+@keyframes panel-shimmer-start {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.92);
-    box-shadow: 0 0 0 0 rgb(235 244 255 / 35%);
+    transform: translateX(-125%) skewX(-12deg);
+    box-shadow: 0 0 0 0 rgb(210 240 255 / 45%);
   }
 
-  30% {
-    opacity: 0.8;
-    box-shadow: 0 0 24px 12px rgb(235 244 255 / 45%);
+  35% {
+    opacity: 1;
+    box-shadow: 0 0 24px 10px rgb(210 240 255 / 50%);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.12);
-    box-shadow: 0 0 48px 20px rgb(235 244 255 / 0%);
+    transform: translateX(125%) skewX(-12deg);
+    box-shadow: 0 0 40px 18px rgb(210 240 255 / 0%);
   }
 }
 
-@keyframes panel-glow-victory {
+@keyframes panel-shimmer-victory {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-    box-shadow: 0 0 0 0 rgb(235 244 255 / 55%);
+    transform: translateX(-130%) skewX(-10deg);
+    box-shadow: 0 0 0 0 rgb(230 250 255 / 55%);
   }
 
-  20% {
-    opacity: 0.95;
-    box-shadow: 0 0 34px 16px rgb(235 244 255 / 55%);
+  25% {
+    opacity: 1;
+    box-shadow: 0 0 32px 14px rgb(230 250 255 / 60%);
   }
 
   60% {
-    opacity: 0.7;
-    box-shadow: 0 0 48px 22px rgb(200 224 255 / 35%);
+    opacity: 0.85;
+    box-shadow: 0 0 44px 20px rgb(255 215 160 / 45%);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.18);
-    box-shadow: 0 0 64px 26px rgb(235 244 255 / 0%);
+    transform: translateX(130%) skewX(-10deg);
+    box-shadow: 0 0 56px 24px rgb(230 250 255 / 0%);
   }
 }
 
