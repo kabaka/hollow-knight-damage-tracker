@@ -329,46 +329,49 @@ export const CombatLogPanel: FC = () => {
 
   if (entries.length === 0) {
     return (
-      <div className="combat-log">
+      <div
+        className="combat-log"
+        role="log"
+        aria-live="polite"
+        aria-label="Combat history"
+      >
         <div className="combat-log__placeholder">Combat log will appear here.</div>
       </div>
     );
   }
 
   return (
-    <div className="combat-log">
-      <div
-        ref={logViewportRef}
-        className="combat-log__feed"
-        role="log"
-        aria-live="polite"
-        aria-label="Combat history"
-      >
-        <ol className="combat-log__entries">
-          {entries.map((entry) => (
-            <li key={entry.id} className="combat-log__entry" data-entry-type={entry.type}>
-              {entry.type === 'event' ? (
-                <>
-                  <span className="combat-log__timestamp">{entry.timestamp}</span>
-                  <div className="combat-log__content">
-                    <span className="combat-log__message">{entry.message}</span>
-                    {entry.detail ? (
-                      <span className="combat-log__detail">{entry.detail}</span>
-                    ) : null}
-                  </div>
-                </>
-              ) : (
-                <div className="combat-log__banner">
+    <div
+      ref={logViewportRef}
+      className="combat-log"
+      role="log"
+      aria-live="polite"
+      aria-label="Combat history"
+    >
+      <ol className="combat-log__entries">
+        {entries.map((entry) => (
+          <li key={entry.id} className="combat-log__entry" data-entry-type={entry.type}>
+            {entry.type === 'event' ? (
+              <>
+                <span className="combat-log__timestamp">{entry.timestamp}</span>
+                <div className="combat-log__content">
                   <span className="combat-log__message">{entry.message}</span>
-                  {entry.context ? (
-                    <span className="combat-log__context">{entry.context}</span>
+                  {entry.detail ? (
+                    <span className="combat-log__detail">{entry.detail}</span>
                   ) : null}
                 </div>
-              )}
-            </li>
-          ))}
-        </ol>
-      </div>
+              </>
+            ) : (
+              <div className="combat-log__banner">
+                <span className="combat-log__message">{entry.message}</span>
+                {entry.context ? (
+                  <span className="combat-log__context">{entry.context}</span>
+                ) : null}
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
     </div>
   );
 };
