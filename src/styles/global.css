@@ -678,6 +678,54 @@ h6 {
   min-width: 88px;
 }
 
+.mobile-hud-sentinel {
+  display: none;
+}
+
+.mobile-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0 0 12px 12px;
+  background-color: rgb(9 14 27 / 92%);
+  box-shadow:
+    0 8px 18px rgb(0 0 0 / 55%),
+    inset 0 0 0 1px rgb(214 217 231 / 38%);
+}
+
+.mobile-hud__title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-hud__health {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mobile-hud__track {
+  width: 100%;
+  min-width: 0;
+  height: 0.38rem;
+  border-radius: 999px;
+  border: none;
+  box-shadow: none;
+}
+
+.mobile-hud__value {
+  font-family: var(--font-numeric);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 .hud-metrics__label {
   font-size: var(--font-size-caption);
   letter-spacing: 0.08em;
@@ -2378,6 +2426,30 @@ h6 {
 }
 
 @media (width <= 720px) {
+  .encounter-hud {
+    position: static;
+    top: auto;
+  }
+
+  .mobile-hud-sentinel {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+  }
+
+  .mobile-hud {
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-hud__title {
+    font-size: 0.9rem;
+  }
+
+  .mobile-hud__value {
+    font-size: 0.76rem;
+  }
+
   .modal {
     padding: 1rem;
   }

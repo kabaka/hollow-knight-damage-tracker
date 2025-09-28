@@ -23,7 +23,9 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /player loadout/i })).toBeVisible();
     const changeEncounter = screen.getByRole('button', { name: /change encounter/i });
     expect(changeEncounter).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByRole('progressbar', { name: /boss hp/i })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('banner')).getByRole('progressbar', { name: /boss hp/i }),
+    ).toBeInTheDocument();
   });
 
   it('allows selecting a custom boss target and updating HP from the HUD', async () => {
