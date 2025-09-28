@@ -2,22 +2,12 @@ import type { FC } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { bossMap, bossSequenceMap, resolveSequenceEntries } from '../../data';
+import { formatNumber, formatRelativeTime } from '../../utils/format';
 import {
   useFightDerivedStats,
   useFightState,
   type AttackEvent,
 } from '../fight-state/FightStateContext';
-
-const formatNumber = (value: number) => value.toLocaleString();
-
-const formatRelativeTime = (start: number | null, timestamp: number | null) => {
-  if (start == null || timestamp == null) {
-    return '—';
-  }
-
-  const elapsedSeconds = Math.max(0, (timestamp - start) / 1000);
-  return `${elapsedSeconds.toFixed(2)}s`;
-};
 
 type CombatLogEntry =
   | {
