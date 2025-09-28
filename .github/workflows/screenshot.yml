@@ -33,6 +33,13 @@ jobs:
       - name: Create the screenshot
         run: pnpm exec playwright test --project=chromium tests/e2e/screenshot.spec.ts
 
+      - name: Upload screenshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-demo-screenshot
+          path: docs/demo.png
+
       - name: Commit screenshot
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
