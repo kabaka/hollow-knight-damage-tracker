@@ -95,6 +95,7 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   } = useBuildConfiguration();
 
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const onCloseRef = useRef<PlayerConfigModalProps['onClose']>(onClose);
   const charmIconMap = useMemo(createCharmIconMap, []);
 
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
@@ -120,13 +121,17 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   );
 
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -139,7 +144,7 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div

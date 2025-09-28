@@ -104,6 +104,27 @@ describe('App', () => {
     expect(fragileStrengthButton).toBeDisabled();
   });
 
+  it('preserves the loadout modal scroll position while editing settings', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /player loadout/i }));
+    const modal = await screen.findByRole('dialog', { name: /player loadout/i });
+    const modalBody = modal.querySelector('.modal__body') as HTMLElement | null;
+    if (!modalBody) {
+      throw new Error('Expected the modal body to be present');
+    }
+
+    modalBody.scrollTop = 200;
+
+    await user.selectOptions(
+      within(modal).getByLabelText(/nail upgrade/i),
+      'channelled-nail',
+    );
+
+    expect(modalBody.scrollTop).toBe(200);
+  });
+
   it('surfaces sequence conditions in the setup tray when selecting a pantheon', async () => {
     const user = userEvent.setup();
     render(<App />);
