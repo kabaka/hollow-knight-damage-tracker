@@ -1188,6 +1188,7 @@ h6 {
     inset 0 0 0 1px rgb(255 255 255 / 10%),
     var(--frame-etch);
   overflow: hidden;
+  min-height: 0;
 }
 
 .app-panel::before {
@@ -1255,6 +1256,8 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .app-panel--stats .app-panel__body {
@@ -1275,7 +1278,8 @@ h6 {
 .combat-log {
   position: relative;
   min-height: 220px;
-  max-height: clamp(220px, 48vh, 420px);
+  flex: 1 1 220px;
+  max-height: 100%;
   overflow-y: auto;
 }
 
