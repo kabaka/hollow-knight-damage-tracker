@@ -131,4 +131,19 @@ test('generate a mid-combat screenshot', async ({ page }) => {
   expect(remainingMinutes).toBeLessThan(10);
 
   await page.screenshot({ path: 'test-results/demo.png', fullPage: true });
+
+  await test.step('capture a mobile layout screenshot', async () => {
+    await page.setViewportSize({ width: 430, height: 932 });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => window.scrollTo(0, 0));
+
+    await expect(
+      page.getByRole('region', { name: 'Encounter scoreboard' }),
+    ).toBeVisible();
+
+    await page.screenshot({
+      path: 'test-results/mobile-app.png',
+      fullPage: true,
+    });
+  });
 });
