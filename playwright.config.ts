@@ -1,11 +1,10 @@
-import process from 'node:process';
-
 import { defineConfig, devices } from '@playwright/test';
 
-const { CI, PLAYWRIGHT_USE_PREVIEW } = process.env;
+const env = process.env as NodeJS.ProcessEnv;
 
-const isCI = CI === 'true' || CI === '1';
-const usePreview = PLAYWRIGHT_USE_PREVIEW === 'true' || PLAYWRIGHT_USE_PREVIEW === '1';
+const isCI = env.CI === 'true' || env.CI === '1';
+const usePreview =
+  env.PLAYWRIGHT_USE_PREVIEW === 'true' || env.PLAYWRIGHT_USE_PREVIEW === '1';
 
 export default defineConfig({
   testDir: './tests/e2e',
