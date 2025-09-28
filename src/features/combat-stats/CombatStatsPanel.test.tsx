@@ -29,7 +29,7 @@ vi.mock('./Sparkline', () => ({
     const record: SparklineRecord = {
       length: data.length,
       first: data[0],
-      last: data.at(-1),
+      last: data.length > 0 ? data[data.length - 1] : undefined,
       valueDomain,
     };
 

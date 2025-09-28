@@ -136,12 +136,11 @@ describe('fightReducer sequence management', () => {
     throw new Error('Expected pantheon-of-the-master sequence to be defined for tests');
   }
 
-  const firstStage = masterSequence.entries[0];
-  const secondStage = masterSequence.entries[1];
-
-  if (!firstStage || !secondStage) {
+  if (masterSequence.entries.length < 2) {
     throw new Error('Expected pantheon-of-the-master sequence to have multiple stages');
   }
+
+  const [firstStage, secondStage] = masterSequence.entries;
 
   it('clears progress across all stages when resetting the sequence', () => {
     let state = createInitialState();

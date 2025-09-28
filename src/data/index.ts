@@ -65,11 +65,20 @@ const toNumberEntries = (value: unknown) =>
 export const charms = rawDamage.charms as Charm[];
 export const charmMap = new Map(charms.map((charm) => [charm.id, charm]));
 export const nailUpgrades = rawDamage.nailUpgrades as NailUpgrade[];
-export const spells = rawDamage.spells.map((spell) => ({
+type RawSpellVariant = Omit<SpellVariant, 'key'>;
+
+type RawSpell = Omit<Spell, 'base' | 'upgrade'> & {
+  base: RawSpellVariant;
+  upgrade?: RawSpellVariant | null;
+};
+
+const rawSpells = rawDamage.spells as RawSpell[];
+
+export const spells = rawSpells.map((spell) => ({
   ...spell,
   base: mapVariant(spell.base),
   upgrade: spell.upgrade ? mapVariant(spell.upgrade) : undefined,
-})) as Spell[];
+})) satisfies Spell[];
 
 type RawBossVersion = {
   title: string;
@@ -295,7 +304,7 @@ export const bossSequenceMap = new Map(
 
 const buildConditionDefaults = (sequence: BossSequence) =>
   sequence.conditions.reduce<Record<string, boolean>>((acc, condition) => {
-    acc[condition.id] = condition.defaultEnabled ?? false;
+    acc[condition.id] = condition.defaultEnabled;
     return acc;
   }, {});
 
@@ -327,16 +336,13 @@ export const resolveSequenceEntries = (
       return [entry];
     }
 
-    const isEnabled = values[entry.condition.id] ?? false;
+    const isEnabled = values[entry.condition.id];
     if (entry.condition.mode === 'include') {
       return isEnabled ? [entry] : [];
     }
 
-    if (entry.condition.mode === 'replace') {
-      if (isEnabled && entry.condition.replacementTarget) {
-        return [{ ...entry, target: entry.condition.replacementTarget }];
-      }
-      return [entry];
+    if (entry.condition.replacementTarget && isEnabled) {
+      return [{ ...entry, target: entry.condition.replacementTarget }];
     }
 
     return [entry];
@@ -345,10 +351,13 @@ export const resolveSequenceEntries = (
 
 const defaultBossTargetId = `${toSlug('False Knight')}__standard`;
 
-const defaultBossTarget =
-  bossTargets.find((target) => target.id === defaultBossTargetId) ?? bossTargets[0];
+const defaultBossTarget = bossTargets.find((target) => target.id === defaultBossTargetId);
 
-export const DEFAULT_BOSS_ID = defaultBossTarget?.id ?? defaultBossTargetId;
+if (!defaultBossTarget) {
+  throw new Error('Failed to resolve default boss target from damage data.');
+}
+
+export const DEFAULT_BOSS_ID = defaultBossTarget.id;
 export const DEFAULT_CUSTOM_HP = 2100;
 
 export const supportedCharmIds = [

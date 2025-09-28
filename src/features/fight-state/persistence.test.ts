@@ -19,6 +19,19 @@ import {
 } from './persistence';
 import * as persistenceModule from './persistence';
 import { FightStateProvider, useFightState } from './FightStateContext';
+import type { FightState } from './fightReducer';
+
+const createPersistSpy = () => {
+  const states: FightState[] = [];
+  const spy = vi
+    .spyOn(persistenceModule, 'persistStateToStorage')
+    .mockImplementation((state: FightState) => {
+      states.push(state);
+    });
+  const getLastPersistedState = (): FightState | undefined =>
+    states.length > 0 ? states[states.length - 1] : undefined;
+  return { spy, getLastPersistedState } as const;
+};
 
 describe('fight-state persistence', () => {
   beforeEach(() => {
@@ -246,7 +259,7 @@ describe('fight-state persistence', () => {
   });
 
   it('batches persistence writes when updates occur rapidly', () => {
-    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+    const { spy: persistSpy, getLastPersistedState } = createPersistSpy();
     vi.useFakeTimers();
 
     try {
@@ -267,9 +280,7 @@ describe('fight-state persistence', () => {
       });
 
       expect(persistSpy).toHaveBeenCalledTimes(1);
-      expect(persistSpy).toHaveBeenLastCalledWith(
-        expect.objectContaining({ customTargetHp: 3333 }),
-      );
+      expect(getLastPersistedState()?.customTargetHp).toBe(3333);
 
       persistSpy.mockClear();
 
@@ -278,9 +289,7 @@ describe('fight-state persistence', () => {
       });
 
       expect(persistSpy).toHaveBeenCalledTimes(1);
-      expect(persistSpy).toHaveBeenLastCalledWith(
-        expect.objectContaining({ customTargetHp: 3333 }),
-      );
+      expect(getLastPersistedState()?.customTargetHp).toBe(3333);
     } finally {
       vi.useRealTimers();
       persistSpy.mockRestore();
@@ -288,7 +297,7 @@ describe('fight-state persistence', () => {
   });
 
   it('flushes pending persistence immediately when fights end', () => {
-    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+    const { spy: persistSpy, getLastPersistedState } = createPersistSpy();
     vi.useFakeTimers();
 
     try {
@@ -313,9 +322,11 @@ describe('fight-state persistence', () => {
       });
 
       expect(persistSpy).toHaveBeenCalledTimes(1);
-      expect(persistSpy).toHaveBeenLastCalledWith(
-        expect.objectContaining({ fightEndTimestamp: expect.any(Number) }),
-      );
+      const lastPersistState = getLastPersistedState();
+      expect(lastPersistState).toBeDefined();
+      if (lastPersistState) {
+        expect(typeof lastPersistState.fightEndTimestamp).toBe('number');
+      }
 
       act(() => {
         vi.runAllTimers();
@@ -329,7 +340,7 @@ describe('fight-state persistence', () => {
   });
 
   it('flushes pending persistence when the page is hidden or unloading', () => {
-    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+    const { spy: persistSpy } = createPersistSpy();
     vi.useFakeTimers();
 
     const originalVisibility = Object.getOwnPropertyDescriptor(

@@ -115,15 +115,22 @@ const getVariantDamage = (variant: (typeof spells)[number]['base']) => {
 };
 
 export const buildAttackGroups = (build: FightState['build']): AttackGroup[] => {
+  if (nailUpgrades.length === 0) {
+    throw new Error('Nail upgrade data is unavailable.');
+  }
+
+  const fallbackNailUpgrade = nailUpgrades[0];
+
   const nailUpgrade =
-    nailUpgrades.find((upgrade) => upgrade.id === build.nailUpgradeId) ?? nailUpgrades[0];
+    nailUpgrades.find((upgrade) => upgrade.id === build.nailUpgradeId) ??
+    fallbackNailUpgrade;
   const hasStrength = hasStrengthCharm(build.activeCharmIds);
   const hasFury = build.activeCharmIds.includes('fury-of-the-fallen');
   const hasShamanStone = build.activeCharmIds.includes('shaman-stone');
   const hasSpellTwister = build.activeCharmIds.includes('spell-twister');
   const hasFlukenest = build.activeCharmIds.includes('flukenest');
 
-  const baseNailDamage = nailUpgrade?.damage ?? 0;
+  const baseNailDamage = nailUpgrade.damage;
   const strengthMultiplier = hasStrength ? 1.5 : 1;
   const nailDamageExact = baseNailDamage * strengthMultiplier;
   const nailDamage = Math.round(nailDamageExact);
@@ -171,7 +178,7 @@ export const buildAttackGroups = (build: FightState['build']): AttackGroup[] => 
   const spellAttacks: AttackDefinition[] = [];
 
   for (const spell of spells) {
-    const level = build.spellLevels[spell.id] ?? 'base';
+    const level = build.spellLevels[spell.id];
     if (level === 'none') {
       continue;
     }

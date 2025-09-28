@@ -379,11 +379,11 @@ const TargetSelector: FC<TargetSelectorProps> = ({
         className="target-selector__tray"
         hidden={!isOptionsOpen}
       >
-        {selectedBoss && selectedBossId !== CUSTOM_BOSS_ID ? (
+        {selectedBoss && selectedBossId !== CUSTOM_BOSS_ID && selectedTarget ? (
           <label className="target-selector__field">
             <span className="target-selector__field-label">Boss version</span>
             <select
-              value={selectedTarget?.id ?? selectedBoss.versions[0]?.targetId ?? ''}
+              value={selectedTarget.id}
               onChange={(event) => onBossVersionChange(event.target.value)}
             >
               {selectedBoss.versions.map((version) => (
@@ -578,7 +578,7 @@ const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
         <h4 className="sequence-conditions__title">Sequence conditions</h4>
         <div className="sequence-conditions__grid">
           {activeSequence.conditions.map((condition) => {
-            const isEnabled = sequenceConditionValues[condition.id] ?? false;
+            const isEnabled = sequenceConditionValues[condition.id];
             return (
               <label key={condition.id} className="sequence-conditions__option">
                 <input
@@ -718,7 +718,7 @@ const AppContent: FC = () => {
         total: sequenceEntries.length,
       }
     : null;
-  const stageLabel = currentSequenceEntry?.target.bossName ?? null;
+  const stageLabel = currentSequenceEntry ? currentSequenceEntry.target.bossName : null;
 
   return (
     <div className="app-shell">

@@ -37,17 +37,17 @@ export interface FightState {
   redoStack: AttackEvent[];
   activeSequenceId: string | null;
   sequenceIndex: number;
-  sequenceLogs: Record<string, AttackEvent[]>;
-  sequenceRedoStacks: Record<string, AttackEvent[]>;
-  sequenceConditions: Record<string, Record<string, boolean>>;
+  sequenceLogs: Partial<Record<string, AttackEvent[]>>;
+  sequenceRedoStacks: Partial<Record<string, AttackEvent[]>>;
+  sequenceConditions: Partial<Record<string, Record<string, boolean>>>;
   fightStartTimestamp: number | null;
   fightManuallyStarted: boolean;
   fightEndTimestamp: number | null;
   fightManuallyEnded: boolean;
-  sequenceFightStartTimestamps: Record<string, number | null>;
-  sequenceManualStartFlags: Record<string, boolean>;
-  sequenceFightEndTimestamps: Record<string, number | null>;
-  sequenceManualEndFlags: Record<string, boolean>;
+  sequenceFightStartTimestamps: Partial<Record<string, number | null>>;
+  sequenceManualStartFlags: Partial<Record<string, boolean>>;
+  sequenceFightEndTimestamps: Partial<Record<string, number | null>>;
+  sequenceManualEndFlags: Partial<Record<string, boolean>>;
 }
 
 export interface AttackInput {
@@ -213,7 +213,7 @@ const resolveFightCompletion = (
   if (totalDamage >= targetHp) {
     const lastEvent = damageLog[damageLog.length - 1];
     return {
-      fightEndTimestamp: lastEvent?.timestamp ?? null,
+      fightEndTimestamp: lastEvent.timestamp,
       fightManuallyEnded: false,
     };
   }
@@ -259,11 +259,14 @@ export const persistCurrentSequenceStage = (state: FightState): FightState => {
   };
 };
 
-const filterSequenceRecords = <T>(records: Record<string, T>, sequenceId: string) => {
+const filterSequenceRecords = <T>(
+  records: Partial<Record<string, T>>,
+  sequenceId: string,
+) => {
   const prefix = `${sequenceId}#`;
   return Object.fromEntries(
     Object.entries(records).filter(([key]) => !key.startsWith(prefix)),
-  );
+  ) as Partial<Record<string, T>>;
 };
 
 const getResolvedSequenceEntries = (
@@ -301,13 +304,13 @@ export const loadSequenceStage = (
   const storedManualStart = state.sequenceManualStartFlags[key] ?? false;
   const storedEndTimestamp = state.sequenceFightEndTimestamps[key] ?? null;
   const storedManualEnd = state.sequenceManualEndFlags[key] ?? false;
-  const nextTarget = entries[clampedIndex]?.target;
+  const nextTarget = entries[clampedIndex].target;
 
   return {
     ...state,
     activeSequenceId: sequenceId,
     sequenceIndex: clampedIndex,
-    selectedBossId: nextTarget?.id ?? state.selectedBossId,
+    selectedBossId: nextTarget.id,
     damageLog: [...storedLog],
     redoStack: [...storedRedo],
     fightStartTimestamp: storedStartTimestamp,
@@ -447,7 +450,7 @@ export const ensureSequenceState = (state: FightState): FightState => {
   const fightManuallyStarted = state.sequenceManualStartFlags[key] ?? false;
   const fightEndTimestamp = state.sequenceFightEndTimestamps[key] ?? null;
   const fightManuallyEnded = state.sequenceManualEndFlags[key] ?? false;
-  const targetId = entries[clampedIndex]?.target.id ?? state.selectedBossId;
+  const targetId = entries[clampedIndex].target.id;
 
   return {
     ...state,
@@ -534,9 +537,10 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
           : undefined,
       );
 
-      const nextFightStartTimestamp = state.fightStartTimestamp ?? event.timestamp;
+      const nextFightStartTimestamp =
+        state.fightStartTimestamp !== null ? state.fightStartTimestamp : event.timestamp;
       const nextFightManuallyStarted =
-        state.fightStartTimestamp != null ? state.fightManuallyStarted : false;
+        state.fightStartTimestamp !== null ? state.fightManuallyStarted : false;
 
       return applyLogUpdate(state, nextDamageLog, [], fightCompletion, {
         timestamp: nextFightStartTimestamp,
@@ -554,11 +558,11 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       let nextFightStartTimestamp: number | null;
       let nextFightManuallyStarted: boolean;
 
-      if (state.fightManuallyStarted && state.fightStartTimestamp != null) {
+      if (state.fightManuallyStarted && state.fightStartTimestamp !== null) {
         nextFightStartTimestamp = state.fightStartTimestamp;
         nextFightManuallyStarted = true;
       } else if (nextDamageLog.length > 0) {
-        nextFightStartTimestamp = nextDamageLog[0]?.timestamp ?? null;
+        nextFightStartTimestamp = nextDamageLog[0].timestamp;
         nextFightManuallyStarted = false;
       } else {
         nextFightStartTimestamp = null;
@@ -584,9 +588,11 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
           : undefined,
       );
       const nextFightStartTimestamp =
-        state.fightStartTimestamp ?? nextDamageLog[0]?.timestamp ?? nextEvent.timestamp;
+        state.fightStartTimestamp !== null
+          ? state.fightStartTimestamp
+          : nextDamageLog[0].timestamp;
       const nextFightManuallyStarted =
-        state.fightStartTimestamp != null ? state.fightManuallyStarted : false;
+        state.fightStartTimestamp !== null ? state.fightManuallyStarted : false;
 
       return applyLogUpdate(state, nextDamageLog, remaining, fightCompletion, {
         timestamp: nextFightStartTimestamp,
@@ -705,11 +711,10 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         return state;
       }
 
-      const lastEvent = state.damageLog[state.damageLog.length - 1];
-      const endTimestamp = Math.max(
-        action.timestamp,
-        lastEvent?.timestamp ?? action.timestamp,
-      );
+      const lastEvent =
+        state.damageLog.length > 0 ? state.damageLog[state.damageLog.length - 1] : null;
+      const fallbackTimestamp = lastEvent?.timestamp ?? action.timestamp;
+      const endTimestamp = Math.max(action.timestamp, fallbackTimestamp);
 
       const baseState: FightState = {
         ...state,
