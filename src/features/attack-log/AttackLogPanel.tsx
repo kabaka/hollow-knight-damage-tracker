@@ -202,9 +202,6 @@ export const AttackLogPanel: FC = () => {
 
   return (
     <div ref={panelRef}>
-      <p className="section__description">
-        Log hits with the buttons or shortcuts below to keep the encounter in sync.
-      </p>
       <div className="quick-actions" role="group" aria-label="Attack log controls">
         <button
           type="button"
