@@ -256,6 +256,45 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
   );
 };
 
+type MobilePinnedHudProps = {
+  readonly derived: ReturnType<typeof useFightDerivedStats>;
+  readonly encounterName: string;
+};
+
+const MobilePinnedHud: FC<MobilePinnedHudProps> = ({ derived, encounterName }) => {
+  const { targetHp, remainingHp } = derived;
+  const percentRemaining = targetHp > 0 ? Math.max(0, remainingHp / targetHp) : 0;
+
+  return (
+    <div className="mobile-hud-sentinel">
+      <div className="mobile-hud" role="group" aria-label="Boss status">
+        <span className="mobile-hud__title" aria-live="polite">
+          {encounterName}
+        </span>
+        <div className="mobile-hud__health" role="group" aria-label="Boss HP">
+          <div
+            className="hud-health__track mobile-hud__track"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={targetHp}
+            aria-valuenow={remainingHp}
+            aria-label="Boss HP"
+          >
+            <div
+              className="hud-health__fill"
+              style={{ width: `${Math.round(percentRemaining * 100)}%` }}
+              aria-hidden="true"
+            />
+          </div>
+          <span className="mobile-hud__value">
+            {formatNumber(remainingHp)} / {formatNumber(targetHp)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 type HeaderBarProps = {
   readonly derived: ReturnType<typeof useFightDerivedStats>;
   readonly encounterName: string;
@@ -782,6 +821,7 @@ const AppContent: FC = () => {
         hasNextStage={hasNextSequenceStage}
         hasPreviousStage={hasPreviousSequenceStage}
       />
+      <MobilePinnedHud derived={derived} encounterName={encounterName} />
 
       <EncounterSetupPanel
         isOpen={isSetupOpen}
