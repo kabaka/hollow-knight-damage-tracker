@@ -28,6 +28,7 @@ Hollow Knight Damage Tracker is a responsive companion app that captures your Kn
 - **Your Knight's build:** Combine nail upgrades, spell levels, and charms—including retaliatory vines, minions, and spell conversions—to instantly see tuned damage presets.
 - **Boss presets & custom targets:** Swap between Hallownest's fiercest foes, Godhome variants (Attuned, Ascended, Radiant), or set a custom HP pool for practice sessions.
 - **Attack grid mastery:** Log nail strikes, spells, and charm effects with undo/redo support. Each button shows how many more hits of that move would finish the fight.
+- **Built-in guidance:** Open the header Help modal for a walkthrough of encounter setup, logging controls, shortcuts, and persistence tips.
 
 ### For the Analyst 📊
 
