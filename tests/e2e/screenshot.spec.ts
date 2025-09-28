@@ -55,24 +55,35 @@ const MID_COMBAT_STATE = {
 };
 
 test('generate a mid-combat screenshot', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(
-    ([storageKey, version, state]) => {
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          version,
-          state,
-        }),
-      );
+  await page.addInitScript(
+    ({ storageKey, version, state }) => {
+      try {
+        window.localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            version,
+            state,
+          }),
+        );
+      } catch {
+        // Keep the test running even if storage writes fail in unusual environments.
+      }
     },
-    [STORAGE_KEY, STORAGE_VERSION, MID_COMBAT_STATE],
+    {
+      storageKey: STORAGE_KEY,
+      version: STORAGE_VERSION,
+      state: MID_COMBAT_STATE,
+    },
   );
 
-  await page.reload();
+  await page.goto('/', { waitUntil: 'networkidle' });
   await expect(
     page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
   ).toBeVisible();
+
+  const encounterBanner = page.getByRole('banner');
+  await expect(encounterBanner).toContainText('Gruz Mother');
+  await expect(encounterBanner).toContainText('Radiant');
 
   await page.screenshot({ path: 'test-results/demo.png', fullPage: true });
 });
