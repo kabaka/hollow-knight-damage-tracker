@@ -121,3 +121,12 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: warn
+
+      - name: Upload landing page screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: landing-page-${{ matrix.browser }}-screenshot
+          path: |
+            test-results/**/initial-state-${{ matrix.browser }}.png
+          if-no-files-found: warn
