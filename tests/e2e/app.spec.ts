@@ -200,9 +200,22 @@ test.describe('Landing page', () => {
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change Encounter' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Player loadout/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Attack Log' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Combat Overview' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Boss HP' })).toBeVisible();
+  });
+
+  test('displays application help modal', async ({ page }) => {
+    await page.getByRole('button', { name: 'Help' }).click();
+
+    const helpDialog = page.getByRole('dialog', { name: 'App help' });
+    await expect(helpDialog).toBeVisible();
+    await expect(
+      helpDialog.getByRole('heading', { name: 'Player loadout and advanced setup' }),
+    ).toBeVisible();
+    await helpDialog.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(helpDialog).not.toBeVisible();
   });
 
   test('restores build configuration and logs after a reload', async ({ page }) => {

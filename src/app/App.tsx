@@ -9,6 +9,7 @@ import {
   FightStateProvider,
   useFightDerivedStats,
 } from '../features/fight-state/FightStateContext';
+import { HelpModal } from '../features/help/HelpModal';
 
 const formatNumber = (value: number) => value.toLocaleString();
 
@@ -218,6 +219,7 @@ type HeaderBarProps = {
   readonly arenaLabel: string | null;
   readonly onToggleSetup: () => void;
   readonly onOpenLoadout: () => void;
+  readonly onOpenHelp: () => void;
   readonly isSetupOpen: boolean;
   readonly stageLabel: string | null;
   readonly stageProgress: { current: number; total: number } | null;
@@ -234,6 +236,7 @@ const HeaderBar: FC<HeaderBarProps> = ({
   arenaLabel,
   onToggleSetup,
   onOpenLoadout,
+  onOpenHelp,
   isSetupOpen,
   stageLabel,
   stageProgress,
@@ -263,6 +266,10 @@ const HeaderBar: FC<HeaderBarProps> = ({
         <button type="button" className="hud-actions__button" onClick={onOpenLoadout}>
           <span aria-hidden="true">👤</span>
           <span className="hud-actions__label">Player loadout</span>
+        </button>
+        <button type="button" className="hud-actions__button" onClick={onOpenHelp}>
+          <span aria-hidden="true">❓</span>
+          <span className="hud-actions__label">Help</span>
         </button>
       </div>
     </div>
@@ -601,6 +608,7 @@ const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
 const AppContent: FC = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isSetupOpen, setSetupOpen] = useState(false);
+  const [isHelpOpen, setHelpOpen] = useState(false);
 
   const {
     bosses,
@@ -721,6 +729,7 @@ const AppContent: FC = () => {
         arenaLabel={arenaLabel}
         onToggleSetup={() => setSetupOpen((open) => !open)}
         onOpenLoadout={() => setModalOpen(true)}
+        onOpenHelp={() => setHelpOpen(true)}
         isSetupOpen={isSetupOpen}
         stageLabel={stageLabel}
         stageProgress={stageProgress}
@@ -760,10 +769,6 @@ const AppContent: FC = () => {
         >
           <div className="app-panel__header">
             <h2 id="attack-log-heading">Attack Log</h2>
-            <p className="app-panel__description">
-              Record each strike to reduce the boss health target. Buttons support
-              keyboard shortcuts for fast practice reps.
-            </p>
           </div>
           <div className="app-panel__body">
             <AttackLogPanel />
@@ -775,9 +780,6 @@ const AppContent: FC = () => {
         >
           <div className="app-panel__header">
             <h2 id="combat-stats-heading">Combat Overview</h2>
-            <p className="app-panel__description">
-              Track your progress and efficiency throughout the encounter.
-            </p>
           </div>
           <div className="app-panel__body">
             <CombatStatsPanel />
@@ -786,6 +788,7 @@ const AppContent: FC = () => {
       </main>
 
       <PlayerConfigModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
+      <HelpModal isOpen={isHelpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };
