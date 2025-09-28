@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 import { AttackLogPanel } from './AttackLogPanel';
 import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
-import { CombatStatsPanel } from '../combat-stats/CombatStatsPanel';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, bossSequenceMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
 import { useFightState } from '../fight-state/FightStateContext';
@@ -104,32 +103,6 @@ describe('AttackLogPanel', () => {
     expect(shadeSoulButtons).toHaveLength(1);
   });
 
-  it('logs damage and updates combat statistics', async () => {
-    const user = userEvent.setup();
-
-    renderWithFightProvider(
-      <>
-        <AttackLogPanel />
-        <CombatStatsPanel />
-      </>,
-    );
-
-    await user.click(screen.getByRole('button', { name: /nail strike/i }));
-
-    const damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(
-      within(damageRow as HTMLElement).getByText(baseNailDamageText),
-    ).toBeInTheDocument();
-
-    const remainingRow = screen.getByText('Remaining HP').closest('.data-list__item');
-    expect(
-      within(remainingRow as HTMLElement).getByText(String(remainingAfterOneHit)),
-    ).toBeInTheDocument();
-
-    const actionsRow = screen.getByText('Attacks Logged').closest('.data-list__item');
-    expect(within(actionsRow as HTMLElement).getByText('1')).toBeInTheDocument();
-  });
-
   it('shows hits remaining for each attack and updates after logging damage', async () => {
     const user = userEvent.setup();
 
@@ -151,12 +124,7 @@ describe('AttackLogPanel', () => {
   it('supports undo, redo, and quick reset controls', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(
-      <>
-        <AttackLogPanel />
-        <CombatStatsPanel />
-      </>,
-    );
+    renderWithFightProvider(<AttackLogPanel />);
 
     const undoButton = screen.getByRole('button', { name: /undo/i });
     const redoButton = screen.getByRole('button', { name: /redo/i });
@@ -177,24 +145,13 @@ describe('AttackLogPanel', () => {
     expect(endFightButton).not.toBeDisabled();
 
     await user.click(undoButton);
-
-    let damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
     expect(redoButton).not.toBeDisabled();
     expect(endFightButton).toBeDisabled();
 
     await user.click(redoButton);
-
-    damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(
-      within(damageRow as HTMLElement).getByText(baseNailDamageText),
-    ).toBeInTheDocument();
     expect(endFightButton).not.toBeDisabled();
 
     await user.click(resetButton);
-
-    damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
@@ -204,20 +161,12 @@ describe('AttackLogPanel', () => {
   it('starts fights via the Enter key without logging damage', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(
-      <>
-        <AttackLogPanel />
-        <CombatStatsPanel />
-      </>,
-    );
+    renderWithFightProvider(<AttackLogPanel />);
 
     const startButton = screen.getByRole('button', { name: /start fight \(enter\)/i });
     expect(startButton).not.toBeDisabled();
 
     await user.keyboard('{Enter}');
-
-    const damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(
@@ -235,19 +184,9 @@ describe('AttackLogPanel', () => {
   it('supports keyboard shortcuts for logging attacks and resetting', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(
-      <>
-        <AttackLogPanel />
-        <CombatStatsPanel />
-      </>,
-    );
+    renderWithFightProvider(<AttackLogPanel />);
 
     await user.keyboard('1');
-
-    let damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(
-      within(damageRow as HTMLElement).getByText(baseNailDamageText),
-    ).toBeInTheDocument();
 
     await user.keyboard('{Enter}');
 
@@ -255,9 +194,6 @@ describe('AttackLogPanel', () => {
     expect(endFightButton).toBeDisabled();
 
     await user.keyboard('{Escape}');
-
-    damageRow = screen.getByText('Damage Logged').closest('.data-list__item');
-    expect(within(damageRow as HTMLElement).getByText('0')).toBeInTheDocument();
   });
 
   it('resets sequence progress via quick actions and keyboard shortcut', async () => {
@@ -324,12 +260,7 @@ describe('AttackLogPanel', () => {
   it('allows ending fights early via the quick actions', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(
-      <>
-        <AttackLogPanel />
-        <CombatStatsPanel />
-      </>,
-    );
+    renderWithFightProvider(<AttackLogPanel />);
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
@@ -342,11 +273,6 @@ describe('AttackLogPanel', () => {
 
     await user.click(endFightButton);
     expect(endFightButton).toBeDisabled();
-
-    const remainingRow = screen.getByText('Remaining HP').closest('.data-list__item');
-    expect(
-      within(remainingRow as HTMLElement).getByText(String(remainingAfterOneHit)),
-    ).toBeInTheDocument();
 
     await user.click(resetButton);
     expect(endFightButton).not.toBeDisabled();

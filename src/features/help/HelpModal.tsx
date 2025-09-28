@@ -96,19 +96,35 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
             </p>
           </section>
 
-          <section
-            className="modal-section"
-            aria-labelledby="help-combat-overview-heading"
-          >
+          <section className="modal-section" aria-labelledby="help-encounter-hud-heading">
             <div className="modal-section__header">
-              <h3 id="help-combat-overview-heading">Understanding the Combat Overview</h3>
+              <h3 id="help-encounter-hud-heading">Reading the encounter HUD</h3>
             </div>
             <p className="modal-section__description">
-              The <strong>Combat Overview</strong> summarizes progress, including total
-              damage, average DPS, fight duration, stagger tracking, and charm effects.
-              Watch these indicators to evaluate the consistency of your attempts and to
-              confirm your build can finish encounters before enrages or stagger windows
-              slip away.
+              The header scoreboard tracks elapsed time, estimated remaining duration,
+              DPS, average damage per action, and actions per minute. Damage logged and
+              total actions appear beneath their metrics so you can gauge pacing at a
+              glance without opening another panel.
+            </p>
+            <p>
+              Keep an eye on these values to confirm your build can finish the fight
+              before enrages and to measure the consistency of your attempts.
+            </p>
+          </section>
+
+          <section className="modal-section" aria-labelledby="help-combat-log-heading">
+            <div className="modal-section__header">
+              <h3 id="help-combat-log-heading">Reviewing the Combat Log</h3>
+            </div>
+            <p className="modal-section__description">
+              The <strong>Combat Log</strong> lists every action in timestamped order,
+              starting with the opening HP and ending when the fight concludes. The log
+              persists between attempts and notes resets, sequence transitions, and fight
+              completions so you always have context for your runs.
+            </p>
+            <p>
+              Scroll through the feed to understand pacing, identify missed opportunities,
+              and cross-check totals against the encounter HUD.
             </p>
           </section>
 

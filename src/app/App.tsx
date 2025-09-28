@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { AttackLogPanel } from '../features/attack-log/AttackLogPanel';
 import { PlayerConfigModal } from '../features/build-config/PlayerConfigModal';
 import { useBuildConfiguration } from '../features/build-config/useBuildConfiguration';
-import { CombatStatsPanel } from '../features/combat-stats/CombatStatsPanel';
+import { CombatLogPanel } from '../features/combat-log/CombatLogPanel';
 import {
   CUSTOM_BOSS_ID,
   FightStateProvider,
@@ -152,16 +152,60 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
   hasNextStage,
   hasPreviousStage,
 }) => {
-  const { targetHp, remainingHp, dps, elapsedMs, estimatedTimeRemainingMs } = derived;
+  const {
+    targetHp,
+    remainingHp,
+    dps,
+    elapsedMs,
+    estimatedTimeRemainingMs,
+    averageDamage,
+    actionsPerMinute,
+    attacksLogged,
+    totalDamage,
+  } = derived;
   const percentRemaining = targetHp > 0 ? Math.max(0, remainingHp / targetHp) : 0;
 
   const metrics = useMemo(
     () => [
-      { label: 'Elapsed', value: formatStopwatch(elapsedMs) },
-      { label: 'Est. Remaining', value: formatStopwatch(estimatedTimeRemainingMs) },
-      { label: 'DPS', value: formatDecimal(dps) },
+      { id: 'elapsed', label: 'Elapsed', value: formatStopwatch(elapsedMs) },
+      {
+        id: 'estimated-remaining',
+        label: 'Est. Remaining',
+        value: formatStopwatch(estimatedTimeRemainingMs),
+      },
+      {
+        id: 'dps',
+        label: 'DPS',
+        value: formatDecimal(dps),
+        sublabel:
+          typeof totalDamage === 'number'
+            ? `Damage logged: ${formatNumber(totalDamage)}`
+            : undefined,
+      },
+      {
+        id: 'average-damage',
+        label: 'Avg Dmg',
+        value: formatDecimal(averageDamage),
+      },
+      {
+        id: 'actions-per-minute',
+        label: 'APM',
+        value: formatDecimal(actionsPerMinute),
+        sublabel:
+          typeof attacksLogged === 'number'
+            ? `Total actions: ${formatNumber(attacksLogged)}`
+            : undefined,
+      },
     ],
-    [dps, elapsedMs, estimatedTimeRemainingMs],
+    [
+      actionsPerMinute,
+      attacksLogged,
+      averageDamage,
+      dps,
+      elapsedMs,
+      estimatedTimeRemainingMs,
+      totalDamage,
+    ],
   );
 
   return (
@@ -202,9 +246,14 @@ const TargetScoreboard: FC<TargetScoreboardProps> = ({
       </div>
       <dl className="hud-metrics">
         {metrics.map((metric) => (
-          <div key={metric.label} className="hud-metrics__item">
+          <div key={metric.id} className="hud-metrics__item" data-metric-id={metric.id}>
             <dt className="hud-metrics__label">{metric.label}</dt>
-            <dd className="hud-metrics__value">{metric.value}</dd>
+            <dd className="hud-metrics__value">
+              <span className="hud-metrics__value-primary">{metric.value}</span>
+              {metric.sublabel ? (
+                <span className="hud-metrics__sublabel">{metric.sublabel}</span>
+              ) : null}
+            </dd>
           </div>
         ))}
       </dl>
@@ -775,14 +824,14 @@ const AppContent: FC = () => {
           </div>
         </section>
         <section
-          className={`app-panel app-panel--stats${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
-          aria-labelledby="combat-stats-heading"
+          className={`app-panel app-panel--log${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
+          aria-labelledby="combat-log-heading"
         >
           <div className="app-panel__header">
-            <h2 id="combat-stats-heading">Combat Overview</h2>
+            <h2 id="combat-log-heading">Combat Log</h2>
           </div>
           <div className="app-panel__body">
-            <CombatStatsPanel />
+            <CombatLogPanel />
           </div>
         </section>
       </main>

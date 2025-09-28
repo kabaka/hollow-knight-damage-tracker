@@ -13,8 +13,10 @@ const formatHpText = (remaining: number, target: number) =>
 const getScoreboardValue = (page: Page) => page.locator('.hud-health__value');
 const getBossHealthProgressbar = (page: Page) =>
   page.getByRole('progressbar', { name: 'Boss HP' });
-const getStatValue = (page: Page, id: string) =>
-  page.locator(`[data-stat-id="${id}"] .data-list__value-text`);
+const getMetricValue = (page: Page, id: string) =>
+  page.locator(`[data-metric-id="${id}"] .hud-metrics__value-primary`);
+const getMetricSublabel = (page: Page, id: string) =>
+  page.locator(`[data-metric-id="${id}"] .hud-metrics__sublabel`);
 const getAttackButton = (page: Page, attackId: string) =>
   page.locator(`[data-attack-id='${attackId}']`);
 const getAttackDamage = async (page: Page, attackId: string) => {
@@ -313,9 +315,6 @@ test.describe('Combat mechanics', () => {
       await expect(getScoreboardValue(page)).toHaveText(
         formatHpText(remainingHp, targetHp),
       );
-      await expect(getStatValue(page, 'remaining-hp')).toHaveText(
-        formatNumber(remainingHp),
-      );
       return damage;
     };
 
@@ -328,10 +327,10 @@ test.describe('Combat mechanics', () => {
     ];
 
     const totalDamage = damageValues.reduce((total, value) => total + value, 0);
-    await expect(getStatValue(page, 'damage-logged')).toHaveText(
-      formatNumber(totalDamage),
+    await expect(getMetricSublabel(page, 'dps')).toHaveText(
+      `Total: ${formatNumber(totalDamage)}`,
     );
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('3');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('3 actions');
   });
 
   test('tracks DPS and APM over time during a fight', async ({ page }) => {
@@ -368,14 +367,10 @@ test.describe('Combat mechanics', () => {
     const expectedDps = (totalDamage / elapsedSeconds).toFixed(1);
     const expectedApm = (damageSequence.length / (elapsedSeconds / 60)).toFixed(1);
 
-    const dpsValue = page
-      .locator('.hud-metrics__item')
-      .filter({ has: page.locator('.hud-metrics__label', { hasText: 'DPS' }) })
-      .locator('.hud-metrics__value');
-    await expect(dpsValue).toHaveText(expectedDps);
-    await expect(getStatValue(page, 'actions-per-minute')).toHaveText(expectedApm);
-    await expect(getStatValue(page, 'damage-logged')).toHaveText(
-      formatNumber(totalDamage),
+    await expect(getMetricValue(page, 'dps')).toHaveText(expectedDps);
+    await expect(getMetricValue(page, 'actions-per-minute')).toHaveText(expectedApm);
+    await expect(getMetricSublabel(page, 'dps')).toHaveText(
+      `Total: ${formatNumber(totalDamage)}`,
     );
   });
 });
@@ -404,8 +399,8 @@ test.describe('Sequence modes and navigation', () => {
     await expect(timelineTitle).toHaveText('Gruz Mother');
     await expect(progressbar).toHaveAttribute('aria-valuemax', '650');
     await expect(progressbar).toHaveAttribute('aria-valuenow', '650');
-    await expect(getStatValue(page, 'damage-logged')).toHaveText('0');
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('0');
+    await expect(getMetricSublabel(page, 'dps')).toHaveText('Total: 0');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('0 actions');
   });
 
   test('supports manual stage navigation with persistent state', async ({ page }) => {
@@ -431,18 +426,18 @@ test.describe('Sequence modes and navigation', () => {
     await page.getByRole('button', { name: 'Next stage' }).click();
     await expect(page.locator('.hud-timeline__title')).toHaveText('Gruz Mother');
     await expect(getScoreboardValue(page)).toHaveText('650 / 650');
-    await expect(getStatValue(page, 'damage-logged')).toHaveText('0');
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('0');
+    await expect(getMetricSublabel(page, 'dps')).toHaveText('Total: 0');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('0 actions');
 
     await page.getByRole('button', { name: 'Previous stage' }).click();
     await expect(page.locator('.hud-timeline__title')).toHaveText('Vengefly King');
     await expect(getScoreboardValue(page)).toHaveText(
       formatHpText(remainingAfterHits, targetHp),
     );
-    await expect(getStatValue(page, 'damage-logged')).toHaveText(
-      formatNumber(shadeSoulDamage * 2),
+    await expect(getMetricSublabel(page, 'dps')).toHaveText(
+      `Total: ${formatNumber(shadeSoulDamage * 2)}`,
     );
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('2');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('2 actions');
   });
 
   test('toggles conditional bosses within a pantheon sequence', async ({ page }) => {
@@ -487,21 +482,21 @@ test.describe('UI controls and shortcuts', () => {
 
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(getScoreboardValue(page)).toHaveText(formatHpText(afterNail, targetHp));
-    await expect(getStatValue(page, 'damage-logged')).toHaveText(
-      formatNumber(nailDamage),
+    await expect(getMetricSublabel(page, 'dps')).toHaveText(
+      `Total: ${formatNumber(nailDamage)}`,
     );
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('1');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('1 action');
 
     await page.getByRole('button', { name: 'Redo' }).click();
     await expect(getScoreboardValue(page)).toHaveText(formatHpText(afterSpell, targetHp));
-    await expect(getStatValue(page, 'damage-logged')).toHaveText(
-      formatNumber(nailDamage + spellDamage),
+    await expect(getMetricSublabel(page, 'dps')).toHaveText(
+      `Total: ${formatNumber(nailDamage + spellDamage)}`,
     );
 
     await page.getByRole('button', { name: /Quick reset/ }).click();
     await expect(getScoreboardValue(page)).toHaveText(formatHpText(targetHp, targetHp));
-    await expect(getStatValue(page, 'damage-logged')).toHaveText('0');
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('0');
+    await expect(getMetricSublabel(page, 'dps')).toHaveText('Total: 0');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('0 actions');
   });
 
   test('shows overcharmed warnings and resolves charm conflicts', async ({ page }) => {
@@ -553,8 +548,8 @@ test.describe('UI controls and shortcuts', () => {
 
     const expectRemaining = async (value: number) => {
       await expect(getScoreboardValue(page)).toHaveText(formatHpText(value, targetHp));
-      await expect(getStatValue(page, 'damage-logged')).toHaveText(
-        formatNumber(targetHp - value),
+      await expect(getMetricSublabel(page, 'dps')).toHaveText(
+        `Total: ${formatNumber(targetHp - value)}`,
       );
     };
 
@@ -579,7 +574,7 @@ test.describe('UI controls and shortcuts', () => {
 
     await page.keyboard.press('Escape');
     await expect(getScoreboardValue(page)).toHaveText(formatHpText(targetHp, targetHp));
-    await expect(getStatValue(page, 'damage-logged')).toHaveText('0');
-    await expect(getStatValue(page, 'attacks-logged')).toHaveText('0');
+    await expect(getMetricSublabel(page, 'dps')).toHaveText('Total: 0');
+    await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('0 actions');
   });
 });
