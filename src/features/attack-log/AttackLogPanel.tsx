@@ -500,7 +500,8 @@ export const AttackLogPanel: FC = () => {
                     <span className="button-grid__damage" aria-label="Damage per hit">
                       {attack.damage}
                     </span>
-                    {typeof attack.soulCost === 'number' ? (
+                    {typeof attack.soulCost === 'number' &&
+                    attack.category !== 'spell' ? (
                       <span className="button-grid__soul" aria-label="Soul cost">
                         {attack.soulCost} SOUL
                       </span>
@@ -508,9 +509,9 @@ export const AttackLogPanel: FC = () => {
                     {typeof attack.hitsRemaining === 'number' ? (
                       <span
                         className="button-grid__hits"
-                        aria-label={`Hits to finish: ${attack.hitsRemaining}`}
+                        aria-label={`To end: ${attack.hitsRemaining}`}
                       >
-                        Hits to finish: {attack.hitsRemaining}
+                        To end: {attack.hitsRemaining}
                       </span>
                     ) : null}
                   </span>

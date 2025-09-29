@@ -1721,8 +1721,7 @@ h6 {
   color: var(--color-text);
 }
 
-.button-grid__soul,
-.button-grid__hits {
+.button-grid__soul {
   font-size: var(--font-size-caption);
   letter-spacing: 0.05em;
   text-transform: none;
@@ -1735,6 +1734,16 @@ h6 {
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 8%),
     inset 0 -1px 0 rgb(0 0 0 / 55%);
+}
+
+.button-grid__hits {
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.05em;
+  text-transform: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .button-grid__description {
@@ -2691,9 +2700,12 @@ h6 {
     font-size: 1.1rem;
   }
 
-  .button-grid__soul,
-  .button-grid__hits {
+  .button-grid__soul {
     padding: 0.1rem 0.5rem;
+  }
+
+  .button-grid__hits {
+    padding: 0;
   }
 }
 

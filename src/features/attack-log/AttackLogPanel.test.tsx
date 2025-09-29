@@ -116,18 +116,28 @@ describe('AttackLogPanel', () => {
     );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
-    const hitsDisplay = within(nailStrikeButton).getByLabelText(/hits to finish/i);
-    expect(hitsDisplay).toHaveAttribute(
-      'aria-label',
-      `Hits to finish: ${initialHitsToFinish}`,
-    );
+    const hitsDisplay = within(nailStrikeButton).getByLabelText(/to end/i);
+    expect(hitsDisplay).toHaveAttribute('aria-label', `To end: ${initialHitsToFinish}`);
 
     await user.click(nailStrikeButton);
 
     expect(hitsDisplay).toHaveAttribute(
       'aria-label',
-      `Hits to finish: ${hitsToFinishAfterOneHit}`,
+      `To end: ${hitsToFinishAfterOneHit}`,
     );
+  });
+
+  it('hides soul cost metadata for spell attacks', () => {
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
+
+    const spellsGroup = screen.getByRole('group', { name: /spells/i });
+
+    expect(within(spellsGroup).queryByLabelText(/soul cost/i)).not.toBeInTheDocument();
   });
 
   it('supports undo, redo, and quick reset controls', async () => {
