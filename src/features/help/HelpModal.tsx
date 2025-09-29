@@ -84,7 +84,7 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
               <h3 id="help-attack-log-heading">Logging attacks</h3>
             </div>
             <p className="modal-section__description">
-              The <strong>Attack Log</strong> lists every strike you record. Use the
+              The <strong>Attack</strong> panel lists every strike you record. Use the
               attack buttons or their keyboard shortcuts to subtract damage while you
               practice. Nail strikes, arts, spells, and charm effects automatically apply
               the modifiers from your loadout, and you can hover each button to see its

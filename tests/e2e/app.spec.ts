@@ -203,7 +203,7 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('button', { name: 'Change Encounter' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Player loadout/i })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Attack Log' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Attack' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Combat Log' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Boss HP' })).toBeVisible();
   });

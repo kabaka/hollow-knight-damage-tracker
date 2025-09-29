@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type FC } from 'react';
 
-import { AttackLogPanel } from '../features/attack-log/AttackLogPanel';
+import {
+  AttackLogActions,
+  AttackLogPanel,
+  AttackLogProvider,
+} from '../features/attack-log/AttackLogPanel';
 import { PlayerConfigModal } from '../features/build-config/PlayerConfigModal';
 import { useBuildConfiguration } from '../features/build-config/useBuildConfiguration';
 import {
@@ -14,6 +18,7 @@ import {
 } from '../features/fight-state/FightStateContext';
 import { HelpModal } from '../features/help/HelpModal';
 import { useVisualViewportCssVars } from './useVisualViewportCssVars';
+import { SurfaceSection } from '../components/SurfaceSection';
 import { EncounterSetupPanel } from './components/EncounterSetupPanel';
 import { HeaderBar } from './components/HeaderBar';
 import { MobilePinnedHud } from './components/MobilePinnedHud';
@@ -179,30 +184,29 @@ const AppContent: FC = () => {
       />
 
       <main className="app-main">
-        <section
-          className={`app-panel${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
-          aria-labelledby="attack-log-heading"
-        >
-          <div className="app-panel__header">
-            <h2 id="attack-log-heading">Attack Log</h2>
-          </div>
-          <div className="app-panel__body">
-            <AttackLogPanel />
-          </div>
-        </section>
-        <CombatLogProvider>
-          <section
-            className={`app-panel app-panel--log${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
-            aria-labelledby="combat-log-heading"
+        <AttackLogProvider>
+          <SurfaceSection
+            title="Attack"
+            titleId="attack-log-heading"
+            className={panelGlowClass ? `app-panel ${panelGlowClass}` : 'app-panel'}
+            actions={<AttackLogActions />}
           >
-            <div className="app-panel__header app-panel__header--with-actions">
-              <h2 id="combat-log-heading">Combat Log</h2>
-              <CombatLogClearButton />
-            </div>
-            <div className="app-panel__body">
-              <CombatLogPanel />
-            </div>
-          </section>
+            <AttackLogPanel />
+          </SurfaceSection>
+        </AttackLogProvider>
+        <CombatLogProvider>
+          <SurfaceSection
+            title="Combat Log"
+            titleId="combat-log-heading"
+            className={
+              panelGlowClass
+                ? `app-panel app-panel--log ${panelGlowClass}`
+                : 'app-panel app-panel--log'
+            }
+            actions={<CombatLogClearButton />}
+          >
+            <CombatLogPanel />
+          </SurfaceSection>
         </CombatLogProvider>
       </main>
 

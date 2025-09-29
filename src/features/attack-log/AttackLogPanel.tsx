@@ -1,6 +1,20 @@
-import type { FC } from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import type {
+  FC,
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+  PropsWithChildren,
+  RefObject,
+} from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 
+import { AppButton } from '../../components/AppButton';
 import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
 import { RESET_SHORTCUT_KEY, useAttackDefinitions } from './useAttackDefinitions';
 
@@ -10,7 +24,47 @@ const ACTIVE_EFFECT_DURATION = 260;
 const isActivationKey = (key: string) =>
   key === 'Enter' || key === ' ' || key === 'Spacebar';
 
-export const AttackLogPanel: FC = () => {
+type AttackLogContextValue = {
+  readonly panelRef: RefObject<HTMLDivElement>;
+  readonly groupsWithMetadata: ReturnType<
+    typeof useAttackDefinitions
+  >['groupsWithMetadata'];
+  readonly logAttack: (attack: {
+    id: string;
+    label: string;
+    damage: number;
+    category: string;
+    soulCost: number | null;
+  }) => void;
+  readonly undoLastAttack: () => void;
+  readonly redoLastAttack: () => void;
+  readonly resetLog: () => void;
+  readonly resetSequence: () => void;
+  readonly toggleFight: () => void;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly canResetLog: boolean;
+  readonly canResetSequence: boolean;
+  readonly showResetSequence: boolean;
+  readonly fightButtonLabel: string;
+  readonly fightButtonDisabled: boolean;
+  readonly triggerActiveEffect: (element: HTMLElement | null) => void;
+  readonly registerActionButton: (id: string, element: HTMLButtonElement | null) => void;
+};
+
+const AttackLogContext = createContext<AttackLogContextValue | null>(null);
+
+const useAttackLogContext = () => {
+  const context = useContext(AttackLogContext);
+  if (!context) {
+    throw new Error('AttackLog components must be rendered within an AttackLogProvider');
+  }
+  return context;
+};
+
+type AttackLogProviderProps = PropsWithChildren;
+
+export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   const fight = useFightState();
   const derived = useFightDerivedStats();
   const { actions, state } = fight;
@@ -54,6 +108,7 @@ export const AttackLogPanel: FC = () => {
 
   const panelRef = useRef<HTMLDivElement>(null);
   const activeEffectTimeoutsRef = useRef<Map<HTMLElement, number>>(new Map());
+  const actionButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   const triggerActiveEffect = useCallback((element: HTMLElement | null) => {
     if (!element) {
@@ -82,6 +137,18 @@ export const AttackLogPanel: FC = () => {
     });
   }, []);
 
+  const registerActionButton = useCallback(
+    (id: string, element: HTMLButtonElement | null) => {
+      const map = actionButtonRefs.current;
+      if (element) {
+        map.set(id, element);
+      } else {
+        map.delete(id);
+      }
+    },
+    [],
+  );
+
   useEffect(
     () => () => {
       const timeouts = activeEffectTimeoutsRef.current;
@@ -89,6 +156,43 @@ export const AttackLogPanel: FC = () => {
       timeouts.clear();
     },
     [],
+  );
+
+  const handleUndo = useCallback(() => {
+    actions.undoLastAttack();
+  }, [actions]);
+
+  const handleRedo = useCallback(() => {
+    actions.redoLastAttack();
+  }, [actions]);
+
+  const handleResetLog = useCallback(() => {
+    actions.resetLog();
+  }, [actions]);
+
+  const handleResetSequence = useCallback(() => {
+    actions.resetSequence();
+  }, [actions]);
+
+  const handleToggleFight = useCallback(() => {
+    if (canEndFight) {
+      actions.endFight();
+    } else if (canStartFight) {
+      actions.startFight();
+    }
+  }, [actions, canEndFight, canStartFight]);
+
+  const handleLogAttack = useCallback(
+    (attack: {
+      id: string;
+      label: string;
+      damage: number;
+      category: string;
+      soulCost: number | null;
+    }) => {
+      actions.logAttack(attack);
+    },
+    [actions],
   );
 
   useEffect(() => {
@@ -113,26 +217,20 @@ export const AttackLogPanel: FC = () => {
 
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
+      const getActionButton = (id: string) => actionButtonRefs.current.get(id) ?? null;
+
       if (key === 'Enter') {
         if (canEndFight) {
           event.preventDefault();
           actions.endFight();
-          triggerActiveEffect(
-            panelRef.current?.querySelector<HTMLButtonElement>(
-              "[data-control='end-fight']",
-            ),
-          );
+          triggerActiveEffect(getActionButton('end-fight'));
           return;
         }
 
         if (canStartFight) {
           event.preventDefault();
           actions.startFight();
-          triggerActiveEffect(
-            panelRef.current?.querySelector<HTMLButtonElement>(
-              "[data-control='end-fight']",
-            ),
-          );
+          triggerActiveEffect(getActionButton('end-fight'));
           return;
         }
       }
@@ -144,11 +242,7 @@ export const AttackLogPanel: FC = () => {
           }
           event.preventDefault();
           actions.resetSequence();
-          triggerActiveEffect(
-            panelRef.current?.querySelector<HTMLButtonElement>(
-              "[data-control='reset-sequence']",
-            ),
-          );
+          triggerActiveEffect(getActionButton('reset-sequence'));
           return;
         }
 
@@ -157,11 +251,7 @@ export const AttackLogPanel: FC = () => {
         }
         event.preventDefault();
         actions.resetLog();
-        triggerActiveEffect(
-          panelRef.current?.querySelector<HTMLButtonElement>(
-            "[data-control='reset-log']",
-          ),
-        );
+        triggerActiveEffect(getActionButton('reset-log'));
         return;
       }
 
@@ -182,7 +272,7 @@ export const AttackLogPanel: FC = () => {
         triggerActiveEffect(
           panelRef.current?.querySelector<HTMLButtonElement>(
             `[data-attack-id='${attack.id}']`,
-          ),
+          ) ?? null,
         );
       }
     };
@@ -200,114 +290,157 @@ export const AttackLogPanel: FC = () => {
     triggerActiveEffect,
   ]);
 
+  const contextValue = useMemo<AttackLogContextValue>(
+    () => ({
+      panelRef,
+      groupsWithMetadata,
+      logAttack: handleLogAttack,
+      undoLastAttack: handleUndo,
+      redoLastAttack: handleRedo,
+      resetLog: handleResetLog,
+      resetSequence: handleResetSequence,
+      toggleFight: handleToggleFight,
+      canUndo: damageLog.length > 0,
+      canRedo: redoStack.length > 0,
+      canResetLog: damageLog.length > 0 || redoStack.length > 0,
+      canResetSequence,
+      showResetSequence: isSequenceActive,
+      fightButtonLabel: canStartFight ? 'Start fight (Enter)' : 'End fight (Enter)',
+      fightButtonShortcut: 'Enter',
+      fightButtonDisabled: !canEndFight && !canStartFight,
+      triggerActiveEffect,
+      registerActionButton,
+    }),
+    [
+      canResetSequence,
+      canStartFight,
+      canEndFight,
+      damageLog.length,
+      redoStack.length,
+      groupsWithMetadata,
+      handleLogAttack,
+      handleUndo,
+      handleRedo,
+      handleResetLog,
+      handleResetSequence,
+      handleToggleFight,
+      isSequenceActive,
+      triggerActiveEffect,
+      registerActionButton,
+    ],
+  );
+
   return (
-    <div ref={panelRef}>
-      <div className="quick-actions" role="group" aria-label="Attack log controls">
-        <button
+    <AttackLogContext.Provider value={contextValue}>{children}</AttackLogContext.Provider>
+  );
+};
+
+export const AttackLogActions: FC = () => {
+  const {
+    undoLastAttack,
+    redoLastAttack,
+    resetLog,
+    resetSequence,
+    toggleFight,
+    canUndo,
+    canRedo,
+    canResetLog,
+    canResetSequence,
+    showResetSequence,
+    fightButtonDisabled,
+    fightButtonLabel,
+    triggerActiveEffect,
+    registerActionButton,
+  } = useAttackLogContext();
+
+  const handlePointerEffect = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      triggerActiveEffect(event.currentTarget);
+    },
+    [triggerActiveEffect],
+  );
+
+  const handleKeyEffect = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (isActivationKey(event.key)) {
+        triggerActiveEffect(event.currentTarget);
+      }
+    },
+    [triggerActiveEffect],
+  );
+
+  return (
+    <div className="attack-log__actions" role="group" aria-label="Attack controls">
+      <AppButton
+        ref={(element) => registerActionButton('undo', element)}
+        type="button"
+        onPointerDown={handlePointerEffect}
+        onKeyDown={handleKeyEffect}
+        onClick={undoLastAttack}
+        data-control="undo"
+        disabled={!canUndo}
+      >
+        Undo
+      </AppButton>
+      <AppButton
+        ref={(element) => registerActionButton('redo', element)}
+        type="button"
+        onPointerDown={handlePointerEffect}
+        onKeyDown={handleKeyEffect}
+        onClick={redoLastAttack}
+        data-control="redo"
+        disabled={!canRedo}
+      >
+        Redo
+      </AppButton>
+      <AppButton
+        ref={(element) => registerActionButton('reset-log', element)}
+        type="button"
+        onPointerDown={handlePointerEffect}
+        onKeyDown={handleKeyEffect}
+        onClick={resetLog}
+        data-control="reset-log"
+        aria-keyshortcuts="Esc"
+        disabled={!canResetLog}
+      >
+        Quick reset (Esc)
+      </AppButton>
+      {showResetSequence ? (
+        <AppButton
+          ref={(element) => registerActionButton('reset-sequence', element)}
           type="button"
-          className="quick-actions__button"
-          data-control="undo"
-          onPointerDown={(event) => {
-            triggerActiveEffect(event.currentTarget);
-          }}
-          onKeyDown={(event) => {
-            if (isActivationKey(event.key)) {
-              triggerActiveEffect(event.currentTarget);
-            }
-          }}
-          onClick={() => {
-            actions.undoLastAttack();
-          }}
-          disabled={damageLog.length === 0}
+          onPointerDown={handlePointerEffect}
+          onKeyDown={handleKeyEffect}
+          onClick={resetSequence}
+          data-control="reset-sequence"
+          aria-keyshortcuts={RESET_SEQUENCE_SHORTCUT}
+          disabled={!canResetSequence}
         >
-          Undo
-        </button>
-        <button
-          type="button"
-          className="quick-actions__button"
-          data-control="redo"
-          onPointerDown={(event) => {
-            triggerActiveEffect(event.currentTarget);
-          }}
-          onKeyDown={(event) => {
-            if (isActivationKey(event.key)) {
-              triggerActiveEffect(event.currentTarget);
-            }
-          }}
-          onClick={() => {
-            actions.redoLastAttack();
-          }}
-          disabled={redoStack.length === 0}
-        >
-          Redo
-        </button>
-        <button
-          type="button"
-          className="quick-actions__button"
-          data-control="reset-log"
-          onPointerDown={(event) => {
-            triggerActiveEffect(event.currentTarget);
-          }}
-          onKeyDown={(event) => {
-            if (isActivationKey(event.key)) {
-              triggerActiveEffect(event.currentTarget);
-            }
-          }}
-          onClick={() => {
-            actions.resetLog();
-          }}
-          aria-keyshortcuts="Esc"
-          disabled={damageLog.length === 0 && redoStack.length === 0}
-        >
-          Quick reset (Esc)
-        </button>
-        {isSequenceActive ? (
-          <button
-            type="button"
-            className="quick-actions__button"
-            data-control="reset-sequence"
-            onPointerDown={(event) => {
-              triggerActiveEffect(event.currentTarget);
-            }}
-            onKeyDown={(event) => {
-              if (isActivationKey(event.key)) {
-                triggerActiveEffect(event.currentTarget);
-              }
-            }}
-            onClick={() => {
-              actions.resetSequence();
-            }}
-            aria-keyshortcuts={RESET_SEQUENCE_SHORTCUT}
-            disabled={!canResetSequence}
-          >
-            Reset sequence (Shift+Esc)
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="quick-actions__button"
-          data-control="end-fight"
-          onPointerDown={(event) => {
-            triggerActiveEffect(event.currentTarget);
-          }}
-          onKeyDown={(event) => {
-            if (isActivationKey(event.key)) {
-              triggerActiveEffect(event.currentTarget);
-            }
-          }}
-          onClick={() => {
-            if (canEndFight) {
-              actions.endFight();
-            } else if (canStartFight) {
-              actions.startFight();
-            }
-          }}
-          aria-keyshortcuts="Enter"
-          disabled={!canEndFight && !canStartFight}
-        >
-          {canStartFight ? 'Start fight (Enter)' : 'End fight (Enter)'}
-        </button>
-      </div>
+          Reset sequence (Shift+Esc)
+        </AppButton>
+      ) : null}
+      <AppButton
+        ref={(element) => registerActionButton('end-fight', element)}
+        type="button"
+        onPointerDown={handlePointerEffect}
+        onKeyDown={handleKeyEffect}
+        onClick={toggleFight}
+        data-control="end-fight"
+        aria-keyshortcuts="Enter"
+        disabled={fightButtonDisabled}
+      >
+        {fightButtonLabel}
+      </AppButton>
+    </div>
+  );
+};
+
+export const AttackLogPanel: FC = () => {
+  const { groupsWithMetadata, logAttack, panelRef, triggerActiveEffect } =
+    useAttackLogContext();
+
+  return (
+    <div ref={panelRef} className="attack-log">
       <div className="attack-groups">
         {groupsWithMetadata.map((group) => (
           <section key={group.id} className="attack-group">
@@ -330,7 +463,7 @@ export const AttackLogPanel: FC = () => {
                     }
                   }}
                   onClick={() => {
-                    actions.logAttack({
+                    logAttack({
                       id: attack.id,
                       label: attack.label,
                       damage: attack.damage,
@@ -358,15 +491,15 @@ export const AttackLogPanel: FC = () => {
                     </span>
                     {typeof attack.soulCost === 'number' ? (
                       <span className="button-grid__soul" aria-label="Soul cost">
-                        {attack.soulCost} SOUL
+                        {attack.soulCost}
                       </span>
                     ) : null}
                     {typeof attack.hitsRemaining === 'number' ? (
                       <span
                         className="button-grid__hits"
-                        aria-label="Hits to finish with this attack"
+                        aria-label={`Hits to finish: ${attack.hitsRemaining}`}
                       >
-                        Hits to finish: {attack.hitsRemaining}
+                        ×{attack.hitsRemaining}
                       </span>
                     ) : null}
                   </span>

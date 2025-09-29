@@ -1,5 +1,7 @@
 import type { FC } from 'react';
 
+import { AppButton } from '../../components/AppButton';
+import { SurfaceSection } from '../../components/SurfaceSection';
 import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
 import { EncounterBrand } from './EncounterBrand';
 import { TargetScoreboard } from './TargetScoreboard';
@@ -37,34 +39,41 @@ export const HeaderBar: FC<HeaderBarProps> = ({
   hasNextStage,
   hasPreviousStage,
 }) => (
-  <header className="encounter-hud app-navbar" role="banner">
-    <div className="encounter-hud__primary">
+  <SurfaceSection
+    as="header"
+    role="banner"
+    className="encounter-hud app-navbar"
+    variant="navbar"
+    titleId="app-header-title"
+    titleAs="div"
+    title={
       <EncounterBrand
         encounterName={encounterName}
         versionLabel={versionLabel}
         arenaLabel={arenaLabel}
       />
+    }
+    actions={
       <div className="hud-actions">
-        <button
+        <AppButton
           type="button"
-          className="hud-actions__button"
           onClick={onToggleSetup}
           aria-expanded={isSetupOpen}
           aria-controls="encounter-setup"
+          icon="⚙️"
         >
-          <span aria-hidden="true">⚙️</span>
-          <span className="hud-actions__label">Change encounter</span>
-        </button>
-        <button type="button" className="hud-actions__button" onClick={onOpenLoadout}>
-          <span aria-hidden="true">👤</span>
-          <span className="hud-actions__label">Player loadout</span>
-        </button>
-        <button type="button" className="hud-actions__button" onClick={onOpenHelp}>
-          <span aria-hidden="true">❓</span>
-          <span className="hud-actions__label">Help</span>
-        </button>
+          Change encounter
+        </AppButton>
+        <AppButton type="button" onClick={onOpenLoadout} icon="👤">
+          Player loadout
+        </AppButton>
+        <AppButton type="button" onClick={onOpenHelp} icon="❓">
+          Help
+        </AppButton>
       </div>
-    </div>
+    }
+    bodyClassName="encounter-hud__body"
+  >
     <TargetScoreboard
       derived={derived}
       stageLabel={stageLabel}
@@ -74,5 +83,5 @@ export const HeaderBar: FC<HeaderBarProps> = ({
       hasNextStage={hasNextStage}
       hasPreviousStage={hasPreviousStage}
     />
-  </header>
+  </SurfaceSection>
 );
