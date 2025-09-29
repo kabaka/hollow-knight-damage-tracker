@@ -72,10 +72,10 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
               <h3 id="help-getting-started-heading">Getting started</h3>
             </div>
             <p className="modal-section__description">
-              Use <strong>Change encounter</strong> to pick a boss, version, and arena.
-              For custom practice scenarios, choose the Custom option and provide an HP
-              target. The selected encounter drives the numbers shown throughout the
-              tracker.
+              Use <strong>Change encounter</strong> to pick a Hollow Knight boss, version,
+              and arena. For custom practice scenarios, choose the Custom option and
+              provide an HP target. The selected encounter drives the numbers shown
+              throughout the tracker.
             </p>
           </section>
 

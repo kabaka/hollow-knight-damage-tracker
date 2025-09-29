@@ -101,9 +101,7 @@ test('generate a mid-combat screenshot', async ({ page }) => {
   );
 
   await page.goto('/', { waitUntil: 'networkidle' });
-  await expect(
-    page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Damage Tracker' })).toBeVisible();
 
   const encounterBanner = page.getByRole('banner');
   await expect(encounterBanner).toContainText('Gruz Mother');

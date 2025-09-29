@@ -12,7 +12,7 @@ export const EncounterBrand: FC<EncounterBrandProps> = ({
   arenaLabel,
 }) => (
   <div className="hud-brand" aria-live="polite">
-    <h1 className="hud-brand__title">Hollow Knight Damage Tracker</h1>
+    <h1 className="hud-brand__title">Damage Tracker</h1>
     <div className="hud-brand__context">
       <span className="hud-brand__divider" aria-hidden="true">
         ◆
