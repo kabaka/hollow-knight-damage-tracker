@@ -22,6 +22,99 @@ export interface AttackEvent {
   soulCost?: number;
 }
 
+export interface DamageLogAggregates {
+  totalDamage: number;
+  attacksLogged: number;
+  firstAttackTimestamp: number | null;
+  lastAttackTimestamp: number | null;
+}
+
+const createEmptyAggregates = (): DamageLogAggregates => ({
+  totalDamage: 0,
+  attacksLogged: 0,
+  firstAttackTimestamp: null,
+  lastAttackTimestamp: null,
+});
+
+const cloneAggregates = (aggregates: DamageLogAggregates): DamageLogAggregates => ({
+  totalDamage: aggregates.totalDamage,
+  attacksLogged: aggregates.attacksLogged,
+  firstAttackTimestamp: aggregates.firstAttackTimestamp,
+  lastAttackTimestamp: aggregates.lastAttackTimestamp,
+});
+
+export const deriveDamageLogAggregates = (
+  damageLog: AttackEvent[],
+): DamageLogAggregates => {
+  if (damageLog.length === 0) {
+    return createEmptyAggregates();
+  }
+
+  let totalDamage = 0;
+  let firstAttackTimestamp: number | null = null;
+  let lastAttackTimestamp: number | null = null;
+
+  for (const event of damageLog) {
+    totalDamage += event.damage;
+
+    if (firstAttackTimestamp === null || event.timestamp < firstAttackTimestamp) {
+      firstAttackTimestamp = event.timestamp;
+    }
+
+    if (lastAttackTimestamp === null || event.timestamp > lastAttackTimestamp) {
+      lastAttackTimestamp = event.timestamp;
+    }
+  }
+
+  return {
+    totalDamage,
+    attacksLogged: damageLog.length,
+    firstAttackTimestamp,
+    lastAttackTimestamp,
+  };
+};
+
+const appendEventAggregates = (
+  aggregates: DamageLogAggregates,
+  event: AttackEvent,
+): DamageLogAggregates => {
+  const isFirstEvent = aggregates.attacksLogged === 0;
+  const firstAttackTimestamp = isFirstEvent
+    ? event.timestamp
+    : Math.min(aggregates.firstAttackTimestamp ?? event.timestamp, event.timestamp);
+  const lastAttackTimestamp = isFirstEvent
+    ? event.timestamp
+    : Math.max(aggregates.lastAttackTimestamp ?? event.timestamp, event.timestamp);
+
+  return {
+    totalDamage: aggregates.totalDamage + event.damage,
+    attacksLogged: aggregates.attacksLogged + 1,
+    firstAttackTimestamp,
+    lastAttackTimestamp,
+  };
+};
+
+const removeLastEventAggregates = (
+  nextDamageLog: AttackEvent[],
+  removedEvent: AttackEvent,
+  aggregates: DamageLogAggregates,
+): DamageLogAggregates => {
+  const nextAttacksLogged = Math.max(0, aggregates.attacksLogged - 1);
+  if (nextAttacksLogged === 0) {
+    return createEmptyAggregates();
+  }
+
+  const firstAttackTimestamp = nextDamageLog[0]?.timestamp ?? null;
+  const lastAttackTimestamp = nextDamageLog[nextDamageLog.length - 1]?.timestamp ?? null;
+
+  return {
+    totalDamage: aggregates.totalDamage - removedEvent.damage,
+    attacksLogged: nextAttacksLogged,
+    firstAttackTimestamp,
+    lastAttackTimestamp,
+  };
+};
+
 export interface BuildState {
   nailUpgradeId: string;
   activeCharmIds: string[];
@@ -34,11 +127,13 @@ export interface FightState {
   customTargetHp: number;
   build: BuildState;
   damageLog: AttackEvent[];
+  damageLogAggregates: DamageLogAggregates;
   damageLogVersion: number;
   redoStack: AttackEvent[];
   activeSequenceId: string | null;
   sequenceIndex: number;
   sequenceLogs: Partial<Record<string, AttackEvent[]>>;
+  sequenceLogAggregates: Partial<Record<string, DamageLogAggregates>>;
   sequenceRedoStacks: Partial<Record<string, AttackEvent[]>>;
   sequenceConditions: Partial<Record<string, Record<string, boolean>>>;
   fightStartTimestamp: number | null;
@@ -153,11 +248,13 @@ export const createInitialState = (): FightState => ({
     notchLimit: MAX_NOTCH_LIMIT,
   },
   damageLog: [],
+  damageLogAggregates: createEmptyAggregates(),
   damageLogVersion: 0,
   redoStack: [],
   activeSequenceId: null,
   sequenceIndex: 0,
   sequenceLogs: {},
+  sequenceLogAggregates: {},
   sequenceRedoStacks: {},
   sequenceConditions: {},
   fightStartTimestamp: null,
@@ -177,24 +274,27 @@ const getTargetHp = (state: FightState) =>
     ? Math.max(1, Math.round(state.customTargetHp))
     : (bossMap.get(state.selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
 
-const getTotalDamage = (damageLog: AttackEvent[]) =>
-  damageLog.reduce((total, event) => total + event.damage, 0);
-
-const withDamageLog = (state: FightState, damageLog: AttackEvent[]): FightState => ({
+const withDamageLog = (
+  state: FightState,
+  damageLog: AttackEvent[],
+  aggregates: DamageLogAggregates,
+): FightState => ({
   ...state,
   damageLog,
+  damageLogAggregates: cloneAggregates(aggregates),
   damageLogVersion: state.damageLogVersion + 1,
 });
 
 const resolveFightCompletion = (
   state: FightState,
   damageLog: AttackEvent[],
+  aggregates: DamageLogAggregates,
   options?: {
     preserveEndTimestamp?: boolean;
   },
 ) => {
   const preserveEndTimestamp = options?.preserveEndTimestamp ?? false;
-  const totalDamage = getTotalDamage(damageLog);
+  const totalDamage = aggregates.totalDamage;
   const targetHp = getTargetHp(state);
 
   if (preserveEndTimestamp && state.fightEndTimestamp !== null) {
@@ -243,6 +343,10 @@ export const persistCurrentSequenceStage = (state: FightState): FightState => {
     sequenceLogs: {
       ...state.sequenceLogs,
       [key]: [...state.damageLog],
+    },
+    sequenceLogAggregates: {
+      ...state.sequenceLogAggregates,
+      [key]: cloneAggregates(state.damageLogAggregates),
     },
     sequenceRedoStacks: {
       ...state.sequenceRedoStacks,
@@ -312,9 +416,18 @@ export const loadSequenceStage = (
   const storedManualStart = state.sequenceManualStartFlags[key] ?? false;
   const storedEndTimestamp = state.sequenceFightEndTimestamps[key] ?? null;
   const storedManualEnd = state.sequenceManualEndFlags[key] ?? false;
+  const storedAggregates = state.sequenceLogAggregates[key];
   const nextTarget = entries[clampedIndex].target;
 
-  const baseState = withDamageLog(state, [...storedLog]);
+  const aggregates = storedAggregates ?? deriveDamageLogAggregates(storedLog);
+  const baseState = withDamageLog(state, [...storedLog], aggregates);
+  const nextSequenceLogAggregates =
+    storedAggregates === undefined
+      ? {
+          ...state.sequenceLogAggregates,
+          [key]: cloneAggregates(aggregates),
+        }
+      : state.sequenceLogAggregates;
 
   return {
     ...baseState,
@@ -326,6 +439,7 @@ export const loadSequenceStage = (
     fightManuallyStarted: storedManualStart,
     fightEndTimestamp: storedEndTimestamp,
     fightManuallyEnded: storedManualEnd,
+    sequenceLogAggregates: nextSequenceLogAggregates,
   };
 };
 
@@ -345,11 +459,12 @@ export const exitSequence = (state: FightState): FightState => {
 export const applyLogUpdate = (
   state: FightState,
   damageLog: AttackEvent[],
+  aggregates: DamageLogAggregates,
   redoStack: AttackEvent[],
   fightCompletion: { fightEndTimestamp: number | null; fightManuallyEnded: boolean },
   fightStart: { timestamp: number | null; manuallyStarted: boolean },
 ): FightState => {
-  const baseState = withDamageLog(state, damageLog);
+  const baseState = withDamageLog(state, damageLog, aggregates);
 
   if (!state.activeSequenceId) {
     return {
@@ -373,6 +488,10 @@ export const applyLogUpdate = (
     sequenceLogs: {
       ...state.sequenceLogs,
       [key]: damageLog,
+    },
+    sequenceLogAggregates: {
+      ...state.sequenceLogAggregates,
+      [key]: cloneAggregates(aggregates),
     },
     sequenceRedoStacks: {
       ...state.sequenceRedoStacks,
@@ -460,8 +579,17 @@ export const ensureSequenceState = (state: FightState): FightState => {
   const fightEndTimestamp = state.sequenceFightEndTimestamps[key] ?? null;
   const fightManuallyEnded = state.sequenceManualEndFlags[key] ?? false;
   const targetId = entries[clampedIndex].target.id;
+  const storedAggregates = state.sequenceLogAggregates[key];
+  const aggregates = storedAggregates ?? deriveDamageLogAggregates(damageLog);
 
-  const baseState = withDamageLog(state, [...damageLog]);
+  const baseState = withDamageLog(state, [...damageLog], aggregates);
+  const nextSequenceLogAggregates =
+    storedAggregates === undefined
+      ? {
+          ...state.sequenceLogAggregates,
+          [key]: cloneAggregates(aggregates),
+        }
+      : state.sequenceLogAggregates;
 
   return {
     ...baseState,
@@ -472,6 +600,7 @@ export const ensureSequenceState = (state: FightState): FightState => {
     fightManuallyStarted,
     fightEndTimestamp,
     fightManuallyEnded,
+    sequenceLogAggregates: nextSequenceLogAggregates,
   };
 };
 
@@ -539,9 +668,11 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       };
 
       const nextDamageLog = [...state.damageLog, event];
+      const nextAggregates = appendEventAggregates(state.damageLogAggregates, event);
       const fightCompletion = resolveFightCompletion(
         state,
         nextDamageLog,
+        nextAggregates,
         state.fightEndTimestamp !== null && !state.fightManuallyEnded
           ? { preserveEndTimestamp: true }
           : undefined,
@@ -552,7 +683,7 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       const nextFightManuallyStarted =
         state.fightStartTimestamp !== null ? state.fightManuallyStarted : false;
 
-      return applyLogUpdate(state, nextDamageLog, [], fightCompletion, {
+      return applyLogUpdate(state, nextDamageLog, nextAggregates, [], fightCompletion, {
         timestamp: nextFightStartTimestamp,
         manuallyStarted: nextFightManuallyStarted,
       });
@@ -563,8 +694,20 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       }
       const undoneEvent = state.damageLog[state.damageLog.length - 1];
       const nextDamageLog = state.damageLog.slice(0, -1);
+      const nextAggregates =
+        nextDamageLog.length === 0
+          ? createEmptyAggregates()
+          : removeLastEventAggregates(
+              nextDamageLog,
+              undoneEvent,
+              state.damageLogAggregates,
+            );
       const nextRedoStack = [undoneEvent, ...state.redoStack];
-      const fightCompletion = resolveFightCompletion(state, nextDamageLog);
+      const fightCompletion = resolveFightCompletion(
+        state,
+        nextDamageLog,
+        nextAggregates,
+      );
       let nextFightStartTimestamp: number | null;
       let nextFightManuallyStarted: boolean;
 
@@ -579,10 +722,17 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         nextFightManuallyStarted = false;
       }
 
-      return applyLogUpdate(state, nextDamageLog, nextRedoStack, fightCompletion, {
-        timestamp: nextFightStartTimestamp,
-        manuallyStarted: nextFightManuallyStarted,
-      });
+      return applyLogUpdate(
+        state,
+        nextDamageLog,
+        nextAggregates,
+        nextRedoStack,
+        fightCompletion,
+        {
+          timestamp: nextFightStartTimestamp,
+          manuallyStarted: nextFightManuallyStarted,
+        },
+      );
     }
     case 'redoLastAttack': {
       if (state.redoStack.length === 0) {
@@ -590,9 +740,11 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       }
       const [nextEvent, ...remaining] = state.redoStack;
       const nextDamageLog = [...state.damageLog, nextEvent];
+      const nextAggregates = appendEventAggregates(state.damageLogAggregates, nextEvent);
       const fightCompletion = resolveFightCompletion(
         state,
         nextDamageLog,
+        nextAggregates,
         state.fightEndTimestamp !== null && !state.fightManuallyEnded
           ? { preserveEndTimestamp: true }
           : undefined,
@@ -604,15 +756,23 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
       const nextFightManuallyStarted =
         state.fightStartTimestamp !== null ? state.fightManuallyStarted : false;
 
-      return applyLogUpdate(state, nextDamageLog, remaining, fightCompletion, {
-        timestamp: nextFightStartTimestamp,
-        manuallyStarted: nextFightManuallyStarted,
-      });
+      return applyLogUpdate(
+        state,
+        nextDamageLog,
+        nextAggregates,
+        remaining,
+        fightCompletion,
+        {
+          timestamp: nextFightStartTimestamp,
+          manuallyStarted: nextFightManuallyStarted,
+        },
+      );
     }
     case 'resetLog':
       return applyLogUpdate(
         state,
         [],
+        createEmptyAggregates(),
         [],
         {
           fightEndTimestamp: null,
@@ -625,6 +785,7 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         return applyLogUpdate(
           state,
           [],
+          createEmptyAggregates(),
           [],
           {
             fightEndTimestamp: null,
@@ -636,7 +797,7 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
 
       const sequenceId = state.activeSequenceId;
       const persisted = persistCurrentSequenceStage(state);
-      const clearedBase = withDamageLog(persisted, []);
+      const clearedBase = withDamageLog(persisted, [], createEmptyAggregates());
       const cleared: FightState = {
         ...clearedBase,
         redoStack: [],
@@ -645,6 +806,10 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         fightEndTimestamp: null,
         fightManuallyEnded: false,
         sequenceLogs: filterSequenceRecords(persisted.sequenceLogs, sequenceId),
+        sequenceLogAggregates: filterSequenceRecords(
+          persisted.sequenceLogAggregates,
+          sequenceId,
+        ),
         sequenceRedoStacks: filterSequenceRecords(
           persisted.sequenceRedoStacks,
           sequenceId,
@@ -779,7 +944,7 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         return nextState;
       }
 
-      const clearedLogsStateBase = withDamageLog(nextState, []);
+      const clearedLogsStateBase = withDamageLog(nextState, [], createEmptyAggregates());
       const clearedLogsState: FightState = {
         ...clearedLogsStateBase,
         redoStack: [],
@@ -788,6 +953,10 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         fightEndTimestamp: null,
         fightManuallyEnded: false,
         sequenceLogs: filterSequenceRecords(nextState.sequenceLogs, action.sequenceId),
+        sequenceLogAggregates: filterSequenceRecords(
+          nextState.sequenceLogAggregates,
+          action.sequenceId,
+        ),
         sequenceRedoStacks: filterSequenceRecords(
           nextState.sequenceRedoStacks,
           action.sequenceId,

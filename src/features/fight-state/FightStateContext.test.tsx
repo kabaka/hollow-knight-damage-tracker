@@ -27,7 +27,7 @@ describe('FightStateProvider persistence', () => {
 
   it('hydrates state from localStorage when data is available', () => {
     const persistedState = {
-      version: 4,
+      version: 5,
       state: {
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: 3333.7,
@@ -116,7 +116,7 @@ describe('FightStateProvider persistence', () => {
         version: number;
         state: { selectedBossId: string; customTargetHp: number };
       };
-      expect(parsed.version).toBe(4);
+      expect(parsed.version).toBe(5);
       expect(parsed.state.selectedBossId).toBe(CUSTOM_BOSS_ID);
       expect(parsed.state.customTargetHp).toBe(4321);
     });

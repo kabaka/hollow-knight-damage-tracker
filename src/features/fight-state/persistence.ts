@@ -1,10 +1,12 @@
 import {
   AttackCategory,
   AttackEvent,
+  DamageLogAggregates,
   FightState,
   MAX_NOTCH_LIMIT,
   MIN_NOTCH_LIMIT,
   SpellLevel,
+  deriveDamageLogAggregates,
   ensureSequenceState,
   ensureSpellLevels,
 } from './fightReducer';
@@ -14,7 +16,7 @@ import type { NailArtId } from '../attack-log/attackData';
 const isNailArtId = (id: string): id is NailArtId => NAIL_ART_IDS.has(id as NailArtId);
 
 export const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
-export const STORAGE_VERSION = 4;
+export const STORAGE_VERSION = 5;
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -283,6 +285,7 @@ export const mergePersistedState = (
 
   const damageLog = sanitizeAttackEvents(persisted.damageLog, fallback.damageLog);
   const redoStack = sanitizeAttackEvents(persisted.redoStack, fallback.redoStack);
+  const damageLogAggregates = deriveDamageLogAggregates(damageLog);
   const damageLogVersion = sanitizeNonNegativeInteger(
     persisted.damageLogVersion,
     fallback.damageLogVersion,
@@ -298,6 +301,10 @@ export const mergePersistedState = (
     persisted.sequenceLogs,
     fallback.sequenceLogs,
   );
+  const sequenceLogAggregates: Record<string, DamageLogAggregates> = {};
+  for (const [key, events] of Object.entries(sequenceLogs)) {
+    sequenceLogAggregates[key] = deriveDamageLogAggregates(events);
+  }
   const sequenceRedoStacks = sanitizeSequenceEventMap(
     persisted.sequenceRedoStacks,
     fallback.sequenceRedoStacks,
@@ -350,11 +357,13 @@ export const mergePersistedState = (
         notchLimit,
       },
       damageLog,
+      damageLogAggregates,
       damageLogVersion,
       redoStack,
       activeSequenceId,
       sequenceIndex,
       sequenceLogs,
+      sequenceLogAggregates,
       sequenceRedoStacks,
       sequenceConditions,
       fightStartTimestamp,

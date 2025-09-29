@@ -281,7 +281,23 @@ const useCombatLogController = (): CombatLogContextValue => {
       lastFightEndRef.current = null;
     }
 
-    for (const event of damageLog) {
+    const previousCount = lastDamageCountRef.current;
+    let startIndex = previousCount;
+
+    if (previousCount > damageLog.length) {
+      startIndex = damageLog.length;
+      processedEventIds.clear();
+      runningDamageRef.current = 0;
+      for (const event of damageLog) {
+        processedEventIds.add(event.id);
+        runningDamageRef.current += event.damage;
+      }
+    } else {
+      startIndex = Math.max(0, Math.min(previousCount, damageLog.length));
+    }
+
+    for (let index = startIndex; index < damageLog.length; index += 1) {
+      const event = damageLog[index];
       if (processedEventIds.has(event.id)) {
         continue;
       }
