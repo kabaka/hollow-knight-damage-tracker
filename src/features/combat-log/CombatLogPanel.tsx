@@ -1,5 +1,13 @@
-import type { FC } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FC, PropsWithChildren, RefObject } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { bossMap } from '../../data';
 import { formatNumber, formatRelativeTime } from '../../utils/format';
@@ -71,7 +79,23 @@ type PersistedCombatLogState = {
   processedEventIds: string[];
 };
 
-export const CombatLogPanel: FC = () => {
+type CombatLogContextValue = {
+  entries: CombatLogEntry[];
+  logViewportRef: RefObject<HTMLDivElement>;
+  handleResetLog: () => void;
+};
+
+const CombatLogContext = createContext<CombatLogContextValue | null>(null);
+
+const useCombatLogContext = () => {
+  const context = useContext(CombatLogContext);
+  if (!context) {
+    throw new Error('useCombatLogContext must be used within a CombatLogProvider');
+  }
+  return context;
+};
+
+const useCombatLogController = (): CombatLogContextValue => {
   const {
     state: { damageLog, redoStack, selectedBossId },
     actions,
@@ -433,39 +457,30 @@ export const CombatLogPanel: FC = () => {
     actions.resetLog();
   }, [actions, resetToInitialBanner]);
 
-  if (entries.length === 0) {
-    return (
-      <div className="combat-log__wrapper">
-        <button
-          type="button"
-          className="combat-log__reset-button"
-          onClick={handleResetLog}
-          aria-label="Clear combat log"
-        >
-          Clear
-        </button>
-        <div
-          className="combat-log"
-          role="log"
-          aria-live="polite"
-          aria-label="Combat history"
-        >
-          <div className="combat-log__placeholder">Combat log will appear here.</div>
-        </div>
-      </div>
-    );
-  }
+  return {
+    entries,
+    logViewportRef,
+    handleResetLog,
+  };
+};
+
+export const CombatLogProvider: FC<PropsWithChildren> = ({ children }) => {
+  const { entries, logViewportRef, handleResetLog } = useCombatLogController();
+  const contextValue = useMemo(
+    () => ({ entries, logViewportRef, handleResetLog }),
+    [entries, handleResetLog, logViewportRef],
+  );
+
+  return (
+    <CombatLogContext.Provider value={contextValue}>{children}</CombatLogContext.Provider>
+  );
+};
+
+export const CombatLogPanel: FC = () => {
+  const { entries, logViewportRef } = useCombatLogContext();
 
   return (
     <div className="combat-log__wrapper">
-      <button
-        type="button"
-        className="combat-log__reset-button"
-        onClick={handleResetLog}
-        aria-label="Clear combat log"
-      >
-        Clear
-      </button>
       <div
         ref={logViewportRef}
         className="combat-log"
@@ -473,31 +488,54 @@ export const CombatLogPanel: FC = () => {
         aria-live="polite"
         aria-label="Combat history"
       >
-        <ol className="combat-log__entries">
-          {entries.map((entry) => (
-            <li key={entry.id} className="combat-log__entry" data-entry-type={entry.type}>
-              {entry.type === 'event' ? (
-                <>
-                  <span className="combat-log__timestamp">{entry.timestamp}</span>
-                  <div className="combat-log__content">
+        {entries.length === 0 ? (
+          <div className="combat-log__placeholder">Combat log will appear here.</div>
+        ) : (
+          <ol className="combat-log__entries">
+            {entries.map((entry) => (
+              <li
+                key={entry.id}
+                className="combat-log__entry"
+                data-entry-type={entry.type}
+              >
+                {entry.type === 'event' ? (
+                  <>
+                    <span className="combat-log__timestamp">{entry.timestamp}</span>
+                    <div className="combat-log__content">
+                      <span className="combat-log__message">{entry.message}</span>
+                      {entry.detail ? (
+                        <span className="combat-log__detail">{entry.detail}</span>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <div className="combat-log__banner">
                     <span className="combat-log__message">{entry.message}</span>
-                    {entry.detail ? (
-                      <span className="combat-log__detail">{entry.detail}</span>
+                    {entry.context ? (
+                      <span className="combat-log__context">{entry.context}</span>
                     ) : null}
                   </div>
-                </>
-              ) : (
-                <div className="combat-log__banner">
-                  <span className="combat-log__message">{entry.message}</span>
-                  {entry.context ? (
-                    <span className="combat-log__context">{entry.context}</span>
-                  ) : null}
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
     </div>
+  );
+};
+
+export const CombatLogClearButton: FC = () => {
+  const { handleResetLog } = useCombatLogContext();
+
+  return (
+    <button
+      type="button"
+      className="combat-log__reset-button"
+      onClick={handleResetLog}
+      aria-label="Clear combat log"
+    >
+      Clear
+    </button>
   );
 };
