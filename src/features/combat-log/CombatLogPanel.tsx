@@ -101,13 +101,8 @@ const useCombatLogController = (): CombatLogContextValue => {
     state: { damageLog, redoStack, selectedBossId },
     actions,
   } = useFightState();
-  const {
-    targetHp,
-    fightStartTimestamp,
-    fightEndTimestamp,
-    frameTimestamp,
-    totalDamage,
-  } = useFightDerivedStats();
+  const { targetHp, fightStartTimestamp, fightEndTimestamp, totalDamage } =
+    useFightDerivedStats();
   const {
     activeSequenceId,
     sequenceIndex,
@@ -359,7 +354,6 @@ const useCombatLogController = (): CombatLogContextValue => {
     damageLog,
     fightEndTimestamp,
     fightStartTimestamp,
-    frameTimestamp,
     redoStack.length,
     selectedBossId,
     sequenceLabels,

@@ -1,6 +1,6 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useEffect } from 'react';
 
 import {
@@ -24,6 +24,98 @@ const ActionsBridge = ({ onReady }: { onReady: (actions: FightActions) => void }
 describe('CombatLogPanel', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    window.localStorage.clear();
+  });
+
+  it('processes new damage entries only once despite animation frame updates', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    const originalRequestAnimationFrame = window.requestAnimationFrame;
+    const originalCancelAnimationFrame = window.cancelAnimationFrame;
+    const rafCallbacks = new Map<number, FrameRequestCallback>();
+    let rafId = 0;
+
+    window.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+      rafId += 1;
+      rafCallbacks.set(rafId, callback);
+      return rafId;
+    }) as typeof window.requestAnimationFrame;
+
+    window.cancelAnimationFrame = ((handle: number) => {
+      rafCallbacks.delete(handle);
+    }) as typeof window.cancelAnimationFrame;
+
+    const hasSpy = vi.spyOn(Set.prototype, 'has');
+
+    let actions: FightActions | null = null;
+    let currentTime = 1_000;
+    vi.setSystemTime(currentTime);
+
+    try {
+      renderWithFightProvider(
+        <CombatLogProvider>
+          <ActionsBridge
+            onReady={(value) => {
+              actions = value;
+            }}
+          />
+          <CombatLogClearButton />
+          <CombatLogPanel />
+        </CombatLogProvider>,
+      );
+
+      await waitFor(() => {
+        expect(actions).not.toBeNull();
+      });
+
+      const initialHasCalls = hasSpy.mock.calls.length;
+
+      act(() => {
+        actions?.startFight(currentTime);
+      });
+
+      act(() => {
+        currentTime += 200;
+        vi.setSystemTime(currentTime);
+        actions?.logAttack({
+          id: 'nail-strike',
+          label: 'Nail Strike',
+          category: 'nail',
+          damage: 75,
+          timestamp: currentTime,
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Nail Strike')).toBeInTheDocument();
+      });
+
+      const callsAfterProcessing = hasSpy.mock.calls.length;
+      expect(callsAfterProcessing).toBeGreaterThan(initialHasCalls);
+
+      const runQueuedFrames = (iterations: number) => {
+        for (let iteration = 0; iteration < iterations; iteration += 1) {
+          const callbacks = Array.from(rafCallbacks.values());
+          rafCallbacks.clear();
+          callbacks.forEach((callback) => {
+            currentTime += 16;
+            vi.setSystemTime(currentTime);
+            callback(currentTime);
+          });
+        }
+      };
+
+      act(() => {
+        runQueuedFrames(5);
+      });
+
+      expect(hasSpy.mock.calls.length).toBe(callsAfterProcessing);
+    } finally {
+      hasSpy.mockRestore();
+      window.requestAnimationFrame = originalRequestAnimationFrame;
+      window.cancelAnimationFrame = originalCancelAnimationFrame;
+      vi.useRealTimers();
+    }
   });
 
   it('records fight lifecycle entries with timestamps', async () => {
