@@ -1305,6 +1305,17 @@ h6 {
   gap: 0.45rem;
 }
 
+.app-panel__header--with-actions {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.6vw, 1.4rem);
+}
+
+.app-panel__header--with-actions h2 {
+  flex: 1 1 auto;
+}
+
 .app-panel__header h2 {
   margin: 0;
   font-size: var(--font-size-headline);
@@ -1421,35 +1432,38 @@ h6 {
 }
 
 .combat-log__reset-button {
-  position: absolute;
-  top: clamp(0.45rem, 1.6vw, 0.85rem);
-  right: clamp(0.6rem, 1.8vw, 1.1rem);
-  padding: 0.25rem 0.65rem;
-  border: 1px solid rgb(255 255 255 / 8%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid rgb(200 220 255 / 26%);
   border-radius: 999px;
-  background-color: rgb(17 26 45 / 65%);
-  color: rgb(224 235 255 / 72%);
+  background-color: rgb(16 28 52 / 45%);
+  color: rgb(224 235 255 / 78%);
   font-size: var(--font-size-caption);
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   transition:
     color 160ms ease,
     border-color 160ms ease,
-    background-color 160ms ease;
-  z-index: 2;
+    background-color 160ms ease,
+    transform 160ms ease;
 }
 
 .combat-log__reset-button:hover,
 .combat-log__reset-button:focus-visible {
   outline: none;
   color: var(--color-accent);
-  border-color: var(--color-accent);
-  background-color: rgb(30 47 76 / 80%);
+  border-color: rgb(130 207 255 / 55%);
+  background-color: rgb(28 44 74 / 65%);
+  transform: translateY(-1px);
 }
 
 .combat-log__reset-button:active {
-  background-color: rgb(24 38 64 / 88%);
+  background-color: rgb(24 38 64 / 76%);
+  transform: translateY(0);
 }
 
 .quick-actions__button {

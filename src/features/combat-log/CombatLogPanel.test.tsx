@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useEffect } from 'react';
 
-import { CombatLogPanel } from './CombatLogPanel';
+import {
+  CombatLogClearButton,
+  CombatLogPanel,
+  CombatLogProvider,
+} from './CombatLogPanel';
 import { useFightActions } from '../fight-state/FightStateContext';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 
@@ -26,14 +30,15 @@ describe('CombatLogPanel', () => {
     let actions: FightActions | null = null;
 
     renderWithFightProvider(
-      <>
+      <CombatLogProvider>
         <ActionsBridge
           onReady={(value) => {
             actions = value;
           }}
         />
+        <CombatLogClearButton />
         <CombatLogPanel />
-      </>,
+      </CombatLogProvider>,
     );
 
     await waitFor(() => {
@@ -84,14 +89,15 @@ describe('CombatLogPanel', () => {
     let actions: FightActions | null = null;
 
     renderWithFightProvider(
-      <>
+      <CombatLogProvider>
         <ActionsBridge
           onReady={(value) => {
             actions = value;
           }}
         />
+        <CombatLogClearButton />
         <CombatLogPanel />
-      </>,
+      </CombatLogProvider>,
     );
 
     await waitFor(() => {
@@ -141,14 +147,15 @@ describe('CombatLogPanel', () => {
     let actions: FightActions | null = null;
 
     renderWithFightProvider(
-      <>
+      <CombatLogProvider>
         <ActionsBridge
           onReady={(value) => {
             actions = value;
           }}
         />
+        <CombatLogClearButton />
         <CombatLogPanel />
-      </>,
+      </CombatLogProvider>,
     );
 
     await waitFor(() => {
@@ -195,14 +202,15 @@ describe('CombatLogPanel', () => {
     let actions: FightActions | null = null;
 
     renderWithFightProvider(
-      <>
+      <CombatLogProvider>
         <ActionsBridge
           onReady={(value) => {
             actions = value;
           }}
         />
+        <CombatLogClearButton />
         <CombatLogPanel />
-      </>,
+      </CombatLogProvider>,
     );
 
     await waitFor(() => {

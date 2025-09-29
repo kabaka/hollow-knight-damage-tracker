@@ -3,7 +3,11 @@ import { useEffect, useRef, useState, type FC } from 'react';
 import { AttackLogPanel } from '../features/attack-log/AttackLogPanel';
 import { PlayerConfigModal } from '../features/build-config/PlayerConfigModal';
 import { useBuildConfiguration } from '../features/build-config/useBuildConfiguration';
-import { CombatLogPanel } from '../features/combat-log/CombatLogPanel';
+import {
+  CombatLogClearButton,
+  CombatLogPanel,
+  CombatLogProvider,
+} from '../features/combat-log/CombatLogPanel';
 import {
   FightStateProvider,
   useFightDerivedStats,
@@ -186,17 +190,20 @@ const AppContent: FC = () => {
             <AttackLogPanel />
           </div>
         </section>
-        <section
-          className={`app-panel app-panel--log${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
-          aria-labelledby="combat-log-heading"
-        >
-          <div className="app-panel__header">
-            <h2 id="combat-log-heading">Combat Log</h2>
-          </div>
-          <div className="app-panel__body">
-            <CombatLogPanel />
-          </div>
-        </section>
+        <CombatLogProvider>
+          <section
+            className={`app-panel app-panel--log${panelGlowClass ? ` ${panelGlowClass}` : ''}`}
+            aria-labelledby="combat-log-heading"
+          >
+            <div className="app-panel__header app-panel__header--with-actions">
+              <h2 id="combat-log-heading">Combat Log</h2>
+              <CombatLogClearButton />
+            </div>
+            <div className="app-panel__body">
+              <CombatLogPanel />
+            </div>
+          </section>
+        </CombatLogProvider>
       </main>
 
       <PlayerConfigModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
