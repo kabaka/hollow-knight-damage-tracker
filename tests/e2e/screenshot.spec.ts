@@ -130,8 +130,11 @@ test('generate a mid-combat screenshot', async ({ page }) => {
 
   await page.screenshot({ path: 'test-results/demo.png', fullPage: true });
 
-  await test.step('capture mobile layout screenshots', async () => {
-    await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('group', { name: 'Attack log controls' })).toBeVisible();
+  await expect(page.getByRole('log', { name: 'Combat history' })).toBeVisible();
+
+  await test.step('capture a mobile layout screenshot', async () => {
+    await page.setViewportSize({ width: 430, height: 932 });
     await page.waitForTimeout(250);
     await page.evaluate(() => window.scrollTo(0, 0));
 

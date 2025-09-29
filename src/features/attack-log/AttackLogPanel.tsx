@@ -375,7 +375,7 @@ export const AttackLogActions: FC = () => {
   );
 
   return (
-    <div className="attack-log__actions" role="group" aria-label="Attack controls">
+    <div className="attack-log__actions" role="group" aria-label="Attack log controls">
       <AppButton
         ref={(element) => registerActionButton('undo', element)}
         type="button"
