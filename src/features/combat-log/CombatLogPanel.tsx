@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { bossMap } from '../../data';
 import { formatNumber, formatRelativeTime } from '../../utils/format';
@@ -52,9 +52,29 @@ const createAttackDetail = (
   return segments.join(' · ');
 };
 
+const STORAGE_KEY = 'hollow-knight-damage-tracker:combat-log';
+const STORAGE_VERSION = 1;
+
+type PersistedCombatLogState = {
+  version: number;
+  entries: CombatLogEntry[];
+  entryId: number;
+  currentFight: {
+    startTimestamp: number | null;
+    targetId: string | null;
+    sequenceId: string | null;
+    sequenceIndex: number;
+  };
+  runningDamage: number;
+  targetHp: number | null;
+  lastFightEnd: number | null;
+  processedEventIds: string[];
+};
+
 export const CombatLogPanel: FC = () => {
   const {
     state: { damageLog, redoStack, selectedBossId },
+    actions,
   } = useFightState();
   const {
     targetHp,
@@ -86,12 +106,76 @@ export const CombatLogPanel: FC = () => {
   const targetHpRef = useRef<number | null>(null);
   const lastFightEndRef = useRef<number | null>(null);
   const lastDamageCountRef = useRef<number>(0);
+  const hasHydratedRef = useRef<boolean>(false);
 
   const logViewportRef = useRef<HTMLDivElement>(null);
   const entryIdRef = useRef(0);
   const allocateEntryId = (prefix: string) => `${prefix}-${entryIdRef.current++}`;
 
   const targetName = useMemo(() => getTargetName(selectedBossId), [selectedBossId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || hasHydratedRef.current) {
+      return;
+    }
+
+    try {
+      const serialized = window.sessionStorage.getItem(STORAGE_KEY);
+      if (!serialized) {
+        hasHydratedRef.current = true;
+        return;
+      }
+
+      const parsed = JSON.parse(serialized) as PersistedCombatLogState | null;
+      if (!parsed || parsed.version !== STORAGE_VERSION) {
+        hasHydratedRef.current = true;
+        return;
+      }
+
+      const {
+        entries: storedEntries,
+        entryId,
+        currentFight,
+        runningDamage,
+        targetHp: storedTargetHp,
+        lastFightEnd,
+        processedEventIds,
+      } = parsed;
+
+      const sanitizedEntries = Array.isArray(storedEntries) ? storedEntries : [];
+      if (sanitizedEntries.length > 0) {
+        setEntries(sanitizedEntries);
+      }
+
+      entryIdRef.current = Number.isFinite(entryId) ? entryId : sanitizedEntries.length;
+      currentFightRef.current = {
+        startTimestamp:
+          typeof currentFight.startTimestamp === 'number'
+            ? currentFight.startTimestamp
+            : null,
+        targetId:
+          typeof currentFight.targetId === 'string' ? currentFight.targetId : null,
+        sequenceId:
+          typeof currentFight.sequenceId === 'string' ? currentFight.sequenceId : null,
+        sequenceIndex:
+          typeof currentFight.sequenceIndex === 'number' ? currentFight.sequenceIndex : 0,
+      };
+      runningDamageRef.current = Number.isFinite(runningDamage) ? runningDamage : 0;
+      targetHpRef.current =
+        storedTargetHp === null || Number.isFinite(storedTargetHp)
+          ? (storedTargetHp ?? null)
+          : null;
+      lastFightEndRef.current = Number.isFinite(lastFightEnd) ? lastFightEnd : null;
+      processedEventIdsRef.current = new Set(
+        Array.isArray(processedEventIds) ? processedEventIds : [],
+      );
+    } catch {
+      // Ignore hydration issues so the log can rebuild from fight state.
+    } finally {
+      hasHydratedRef.current = true;
+    }
+  }, []);
+
   useEffect(() => {
     const nextEntries: CombatLogEntry[] = [];
     const processedEventIds = processedEventIdsRef.current;
@@ -260,6 +344,28 @@ export const CombatLogPanel: FC = () => {
   ]);
 
   useEffect(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const payload: PersistedCombatLogState = {
+        version: STORAGE_VERSION,
+        entries,
+        entryId: entryIdRef.current,
+        currentFight: { ...currentFightRef.current },
+        runningDamage: runningDamageRef.current,
+        targetHp: targetHpRef.current,
+        lastFightEnd: lastFightEndRef.current,
+        processedEventIds: Array.from(processedEventIdsRef.current),
+      };
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Ignore persistence errors to keep the log responsive.
+    }
+  }, [entries]);
+
+  useEffect(() => {
     if (entries.length === 0) {
       return;
     }
@@ -286,51 +392,112 @@ export const CombatLogPanel: FC = () => {
     }
   }, [damageLog.length, totalDamage]);
 
+  const resetToInitialBanner = useCallback(() => {
+    const contextLabel = sequenceLabels
+      ? `${sequenceLabels.sequenceName} – Stage ${sequenceLabels.stageNumber}`
+      : undefined;
+
+    entryIdRef.current = 0;
+    processedEventIdsRef.current = new Set();
+    runningDamageRef.current = 0;
+    targetHpRef.current = targetHp;
+    lastFightEndRef.current = null;
+    lastDamageCountRef.current = 0;
+    currentFightRef.current = {
+      startTimestamp: null,
+      targetId: selectedBossId,
+      sequenceId: activeSequenceId,
+      sequenceIndex,
+    };
+
+    const entryId = `target-${entryIdRef.current++}`;
+    setEntries([
+      {
+        id: entryId,
+        type: 'banner',
+        message: `Target: ${targetName}`,
+        context: contextLabel ?? undefined,
+      },
+    ]);
+  }, [
+    activeSequenceId,
+    selectedBossId,
+    sequenceIndex,
+    sequenceLabels,
+    targetHp,
+    targetName,
+  ]);
+
+  const handleResetLog = useCallback(() => {
+    resetToInitialBanner();
+    actions.resetLog();
+  }, [actions, resetToInitialBanner]);
+
   if (entries.length === 0) {
     return (
-      <div
-        className="combat-log"
-        role="log"
-        aria-live="polite"
-        aria-label="Combat history"
-      >
-        <div className="combat-log__placeholder">Combat log will appear here.</div>
+      <div className="combat-log__wrapper">
+        <button
+          type="button"
+          className="combat-log__reset-button"
+          onClick={handleResetLog}
+          aria-label="Clear combat log"
+        >
+          Clear
+        </button>
+        <div
+          className="combat-log"
+          role="log"
+          aria-live="polite"
+          aria-label="Combat history"
+        >
+          <div className="combat-log__placeholder">Combat log will appear here.</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      ref={logViewportRef}
-      className="combat-log"
-      role="log"
-      aria-live="polite"
-      aria-label="Combat history"
-    >
-      <ol className="combat-log__entries">
-        {entries.map((entry) => (
-          <li key={entry.id} className="combat-log__entry" data-entry-type={entry.type}>
-            {entry.type === 'event' ? (
-              <>
-                <span className="combat-log__timestamp">{entry.timestamp}</span>
-                <div className="combat-log__content">
+    <div className="combat-log__wrapper">
+      <button
+        type="button"
+        className="combat-log__reset-button"
+        onClick={handleResetLog}
+        aria-label="Clear combat log"
+      >
+        Clear
+      </button>
+      <div
+        ref={logViewportRef}
+        className="combat-log"
+        role="log"
+        aria-live="polite"
+        aria-label="Combat history"
+      >
+        <ol className="combat-log__entries">
+          {entries.map((entry) => (
+            <li key={entry.id} className="combat-log__entry" data-entry-type={entry.type}>
+              {entry.type === 'event' ? (
+                <>
+                  <span className="combat-log__timestamp">{entry.timestamp}</span>
+                  <div className="combat-log__content">
+                    <span className="combat-log__message">{entry.message}</span>
+                    {entry.detail ? (
+                      <span className="combat-log__detail">{entry.detail}</span>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <div className="combat-log__banner">
                   <span className="combat-log__message">{entry.message}</span>
-                  {entry.detail ? (
-                    <span className="combat-log__detail">{entry.detail}</span>
+                  {entry.context ? (
+                    <span className="combat-log__context">{entry.context}</span>
                   ) : null}
                 </div>
-              </>
-            ) : (
-              <div className="combat-log__banner">
-                <span className="combat-log__message">{entry.message}</span>
-                {entry.context ? (
-                  <span className="combat-log__context">{entry.context}</span>
-                ) : null}
-              </div>
-            )}
-          </li>
-        ))}
-      </ol>
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 };
