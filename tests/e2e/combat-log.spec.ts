@@ -18,10 +18,6 @@ const recordNailStrike = async (page: Page) => {
 
 test.describe('Combat log', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      window.localStorage.clear();
-      window.sessionStorage.clear();
-    });
     await page.goto('/');
   });
 
@@ -31,7 +27,8 @@ test.describe('Combat log', () => {
     await expect(page.getByText(/Target:/i)).toBeVisible();
 
     await recordNailStrike(page);
-    await expect(page.getByText('Nail Strike')).toBeVisible();
+    const getCombatHistory = () => page.getByRole('log', { name: 'Combat history' });
+    await expect(getCombatHistory().getByText('Nail Strike')).toHaveCount(1);
 
     const setupPanel = await openEncounterSetup(page);
     await setupPanel.getByRole('radio', { name: 'Custom' }).click();
@@ -40,16 +37,16 @@ test.describe('Combat log', () => {
     await expect(page.getByText(/Target: Custom target/i)).toBeVisible();
 
     await recordNailStrike(page);
-    await expect(page.getAllByText('Nail Strike')).toHaveCount(2);
+    await expect(getCombatHistory().getByText('Nail Strike')).toHaveCount(2);
 
     await page.reload({ waitUntil: 'networkidle' });
 
-    await expect(page.getAllByText('Nail Strike')).toHaveCount(2);
+    await expect(getCombatHistory().getByText('Nail Strike')).toHaveCount(2);
     await expect(page.getByText(/Target: Custom target/i)).toBeVisible();
 
     await page.getByRole('button', { name: 'Clear combat log' }).click();
 
-    const nailStrikeEntries = page.getByText('Nail Strike');
+    const nailStrikeEntries = getCombatHistory().getByText('Nail Strike');
     await expect(nailStrikeEntries).toHaveCount(0);
     await expect(page.locator('.combat-log__entry')).toHaveCount(1);
 
@@ -61,6 +58,6 @@ test.describe('Combat log', () => {
     await expect(nailStrikeEntries).toHaveCount(0);
 
     await recordNailStrike(page);
-    await expect(page.getAllByText('Nail Strike')).toHaveCount(1);
+    await expect(getCombatHistory().getByText('Nail Strike')).toHaveCount(1);
   });
 });
