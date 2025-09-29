@@ -27,14 +27,14 @@ const getAttackDamage = async (page: Page, attackId: string) => {
 };
 
 const openEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Change Encounter' }).click();
+  await page.getByRole('button', { name: 'Setup' }).click();
   const panel = page.locator('#encounter-setup');
   await expect(panel).toBeVisible();
   return panel;
 };
 
 const closeEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Change Encounter' }).click();
+  await page.getByRole('button', { name: 'Setup' }).click();
   await expect(page.locator('#encounter-setup')).toBeHidden();
 };
 
@@ -196,8 +196,10 @@ test.describe('Landing page', () => {
 
   test('displays the core sections', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Damage Tracker' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Change Encounter' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Player loadout/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Setup' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Open loadout configuration/i }),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Attack' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Combat Log' })).toBeVisible();
@@ -210,19 +212,19 @@ test.describe('Landing page', () => {
     const helpDialog = page.getByRole('dialog', { name: 'App help' });
     await expect(helpDialog).toBeVisible();
     await expect(
-      helpDialog.getByRole('heading', { name: 'Player loadout and advanced setup' }),
+      helpDialog.getByRole('heading', { name: 'Loadout and advanced setup' }),
     ).toBeVisible();
     await helpDialog.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(helpDialog).not.toBeVisible();
   });
 
   test('restores build configuration and logs after a reload', async ({ page }) => {
-    await page.getByRole('button', { name: 'Change Encounter' }).click();
+    await page.getByRole('button', { name: 'Setup' }).click();
     await page.getByRole('radio', { name: 'Custom target' }).click();
     const customTargetInput = page.getByLabel(/custom target hp/i);
     await customTargetInput.fill('3333');
 
-    await page.getByRole('button', { name: /Player loadout/i }).click();
+    await page.getByRole('button', { name: /Open loadout configuration/i }).click();
 
     const modal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(modal).toBeVisible();
@@ -255,7 +257,7 @@ test.describe('Landing page', () => {
 
     await page.reload();
 
-    await page.getByRole('button', { name: 'Change Encounter' }).click();
+    await page.getByRole('button', { name: 'Setup' }).click();
     const restoredCustomOption = page.getByRole('radio', {
       name: 'Custom target',
       checked: true,
@@ -263,7 +265,7 @@ test.describe('Landing page', () => {
     await expect(restoredCustomOption).toBeVisible();
     await expect(page.getByLabel(/custom target hp/i)).toHaveValue('3333');
 
-    await page.getByRole('button', { name: /Player loadout/i }).click();
+    await page.getByRole('button', { name: /Open loadout configuration/i }).click();
     const reopenedModal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(reopenedModal).toBeVisible();
 
@@ -480,7 +482,7 @@ test.describe('UI controls and shortcuts', () => {
       formatNumber(nailDamage + spellDamage),
     );
 
-    await page.getByRole('button', { name: /Quick reset/ }).click();
+    await page.getByRole('button', { name: 'Clear attack log' }).click();
     await expect(getScoreboardValue(page)).toHaveText(formatHpText(targetHp, targetHp));
     await expect(getMetricSublabel(page, 'dps')).toHaveText('0');
     await expect(getMetricSublabel(page, 'actions-per-minute')).toHaveText('0');
@@ -488,7 +490,7 @@ test.describe('UI controls and shortcuts', () => {
 
   test('shows overcharmed warnings and resolves charm conflicts', async ({ page }) => {
     await reloadApp(page);
-    await page.getByRole('button', { name: /Player loadout/i }).click();
+    await page.getByRole('button', { name: /Open loadout configuration/i }).click();
     const modal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(modal).toBeVisible();
 

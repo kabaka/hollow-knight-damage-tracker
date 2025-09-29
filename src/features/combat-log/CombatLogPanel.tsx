@@ -530,13 +530,7 @@ export const CombatLogClearButton: FC = () => {
   const { handleResetLog } = useCombatLogContext();
 
   return (
-    <AppButton
-      type="button"
-      variant="pill"
-      size="sm"
-      onClick={handleResetLog}
-      aria-label="Clear combat log"
-    >
+    <AppButton type="button" onClick={handleResetLog} aria-label="Clear combat log">
       Clear
     </AppButton>
   );

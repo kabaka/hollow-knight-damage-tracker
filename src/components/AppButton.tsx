@@ -1,19 +1,12 @@
 import type { ButtonHTMLAttributes, ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
-type AppButtonVariant = 'bevel' | 'pill';
 type AppButtonSize = 'md' | 'sm';
 
 type AppButtonProps = {
-  readonly variant?: AppButtonVariant;
   readonly size?: AppButtonSize;
-  readonly icon?: string;
+  readonly shortcut?: string;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
-
-const variantClassMap: Record<AppButtonVariant, string> = {
-  bevel: 'app-button--bevel',
-  pill: 'app-button--pill',
-};
 
 const sizeClassMap: Record<AppButtonSize, string> = {
   md: 'app-button--md',
@@ -22,32 +15,41 @@ const sizeClassMap: Record<AppButtonSize, string> = {
 
 const AppButtonComponent = (
   {
-    variant = 'bevel',
     size = 'md',
+    shortcut,
     className,
     children,
-    icon,
     type = 'button',
     ...rest
   }: AppButtonProps,
   ref: ForwardedRef<HTMLButtonElement>,
-) => (
-  <button
-    ref={ref}
-    className={['app-button', variantClassMap[variant], sizeClassMap[size], className]
-      .filter(Boolean)
-      .join(' ')}
-    type={type}
-    {...rest}
-  >
-    {icon ? (
-      <span aria-hidden="true" className="app-button__icon">
-        {icon}
-      </span>
-    ) : null}
-    <span className="app-button__label">{children}</span>
-  </button>
-);
+) => {
+  const displayShortcut = shortcut?.trim();
+
+  return (
+    <button
+      ref={ref}
+      className={[
+        'app-button',
+        'app-button--bevel',
+        sizeClassMap[size],
+        displayShortcut ? 'app-button--has-shortcut' : null,
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      type={type}
+      {...rest}
+    >
+      <span className="app-button__label">{children}</span>
+      {displayShortcut ? (
+        <span aria-hidden="true" className="app-button__shortcut">
+          {displayShortcut}
+        </span>
+      ) : null}
+    </button>
+  );
+};
 
 export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
   AppButtonComponent,

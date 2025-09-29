@@ -207,10 +207,6 @@ button.is-active-effect {
   );
 }
 
-.app-button--pill::after {
-  border-radius: 999px;
-}
-
 .app-button.is-active-effect::after,
 .button-grid__button.is-active-effect::after {
   animation: button-flare 700ms cubic-bezier(0.28, 0.65, 0.35, 1) forwards;
@@ -273,7 +269,8 @@ button.is-active-effect {
 .app-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 0.45rem;
   padding: 0;
   border: 1px solid transparent;
   background: none;
@@ -294,14 +291,19 @@ button.is-active-effect {
 }
 
 .app-button--md {
-  padding: 0.45rem 1rem;
+  padding: 0.45rem 1.05rem;
 }
 
 .app-button--sm {
-  padding: 0.3rem 0.85rem;
+  padding: 0.3rem 0.9rem;
   font-size: calc(var(--font-size-caption) * 0.92);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.app-button--has-shortcut {
+  justify-content: space-between;
+  min-width: clamp(6rem, 18vw, 9rem);
 }
 
 .app-button--bevel {
@@ -339,43 +341,23 @@ button.is-active-effect {
     inset 0 0 0 1px rgb(255 255 255 / 16%);
 }
 
-.app-button--pill {
-  border-radius: 999px;
-  border: 1px solid rgb(200 220 255 / 26%);
-  background-color: rgb(16 28 52 / 45%);
-  color: rgb(224 235 255 / 78%);
-}
-
-.app-button--pill:hover,
-.app-button--pill:focus-visible {
-  outline: none;
-  color: var(--color-accent);
-  border-color: rgb(130 207 255 / 55%);
-  background-color: rgb(28 44 74 / 65%);
-  transform: translateY(-1px);
-}
-
-.app-button--pill:active {
-  background-color: rgb(24 38 64 / 76%);
-  transform: translateY(0);
-}
-
 .app-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
 }
 
-.app-button__icon {
-  display: inline-flex;
-  align-items: center;
-  font-size: 1.05em;
-}
-
 .app-button__label {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
+}
+
+.app-button__shortcut {
+  font-size: calc(var(--font-size-caption) * 0.9);
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
+  text-transform: uppercase;
 }
 
 h1,

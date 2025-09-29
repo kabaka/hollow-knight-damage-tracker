@@ -20,8 +20,10 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /attack/i, level: 2 })).toBeVisible();
     expect(screen.getByRole('heading', { name: /combat log/i, level: 2 })).toBeVisible();
-    expect(screen.getByRole('button', { name: /player loadout/i })).toBeVisible();
-    const changeEncounter = screen.getByRole('button', { name: /change encounter/i });
+    expect(
+      screen.getByRole('button', { name: /open loadout configuration/i }),
+    ).toBeVisible();
+    const changeEncounter = screen.getByRole('button', { name: /setup/i });
     expect(changeEncounter).toHaveAttribute('aria-expanded', 'false');
     expect(
       within(screen.getByRole('banner')).getByRole('progressbar', { name: /boss hp/i }),
@@ -32,7 +34,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /change encounter/i }));
+    await user.click(screen.getByRole('button', { name: /setup/i }));
     const optionsToggle = screen.getByRole('button', {
       name: /toggle advanced target options/i,
     });
@@ -71,7 +73,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /change encounter/i }));
+    await user.click(screen.getByRole('button', { name: /setup/i }));
     await user.click(screen.getByRole('radio', { name: /gruz mother/i }));
     const optionsToggle = screen.getByRole('button', {
       name: /toggle advanced target options/i,
@@ -89,7 +91,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /player loadout/i }));
+    await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
 
     const modal = await screen.findByRole('dialog', { name: /player loadout/i });
 
@@ -126,7 +128,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /player loadout/i }));
+    await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
     const modal = await screen.findByRole('dialog', { name: /player loadout/i });
     const modalBody = modal.querySelector('.modal__body') as HTMLElement | null;
     if (!modalBody) {
@@ -147,7 +149,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /change encounter/i }));
+    await user.click(screen.getByRole('button', { name: /setup/i }));
     await user.selectOptions(screen.getByLabelText(/mode/i), 'pantheon-of-the-sage');
 
     const conditionsGroup = await screen.findByRole('group', {

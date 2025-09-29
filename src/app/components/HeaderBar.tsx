@@ -60,14 +60,17 @@ export const HeaderBar: FC<HeaderBarProps> = ({
           onClick={onToggleSetup}
           aria-expanded={isSetupOpen}
           aria-controls="encounter-setup"
-          icon="⚙️"
         >
-          Change encounter
+          Setup
         </AppButton>
-        <AppButton type="button" onClick={onOpenLoadout} icon="👤">
-          Player loadout
+        <AppButton
+          type="button"
+          onClick={onOpenLoadout}
+          aria-label="Open loadout configuration"
+        >
+          Loadout
         </AppButton>
-        <AppButton type="button" onClick={onOpenHelp} icon="❓">
+        <AppButton type="button" onClick={onOpenHelp}>
           Help
         </AppButton>
       </div>
