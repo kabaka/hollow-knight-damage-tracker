@@ -8,6 +8,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   useSyncExternalStore,
 } from 'react';
 
@@ -18,7 +19,7 @@ import {
   resolveSequenceEntries,
   strengthCharmIds,
 } from '../../data';
-import type { AttackInput, FightState, SpellLevel } from './fightReducer';
+import type { AttackEvent, AttackInput, FightState, SpellLevel } from './fightReducer';
 import {
   createInitialState,
   ensureSequenceState,
@@ -143,12 +144,66 @@ const assertStore = <T,>(value: T | null, message: string): T => {
   return value;
 };
 
+type DamageLogAggregates = {
+  totalDamage: number;
+  attacksLogged: number;
+  firstAttackTimestamp: number | null;
+  lastAttackTimestamp: number | null;
+};
+
+let aggregateComputationCount = 0;
+let aggregateMismatchCount = 0;
+
+const calculateDamageLogAggregates = (damageLog: AttackEvent[]): DamageLogAggregates => {
+  aggregateComputationCount += 1;
+
+  let totalDamage = 0;
+  let firstAttackTimestamp: number | null = null;
+  let lastAttackTimestamp: number | null = null;
+
+  for (const event of damageLog) {
+    totalDamage += event.damage;
+
+    if (firstAttackTimestamp === null || event.timestamp < firstAttackTimestamp) {
+      firstAttackTimestamp = event.timestamp;
+    }
+
+    if (lastAttackTimestamp === null || event.timestamp > lastAttackTimestamp) {
+      lastAttackTimestamp = event.timestamp;
+    }
+  }
+
+  return {
+    totalDamage,
+    attacksLogged: damageLog.length,
+    firstAttackTimestamp,
+    lastAttackTimestamp,
+  };
+};
+
+const testingApi = {
+  getAggregateComputationCount: () => aggregateComputationCount,
+  getAggregateMismatchCount: () => aggregateMismatchCount,
+  resetAggregateComputationCount: () => {
+    aggregateComputationCount = 0;
+    aggregateMismatchCount = 0;
+  },
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const __TESTING__ = testingApi;
+
+type DamageLogAggregateCache = {
+  version: number;
+  aggregates: DamageLogAggregates;
+};
+
 const calculateDerivedStats = (
   state: FightState,
   frameTimestamp: number,
+  aggregates: DamageLogAggregates,
 ): DerivedStats => {
   const {
-    damageLog,
     selectedBossId,
     customTargetHp,
     fightEndTimestamp,
@@ -157,13 +212,12 @@ const calculateDerivedStats = (
   const targetHp = isCustomBoss(selectedBossId)
     ? Math.max(1, Math.round(customTargetHp))
     : (bossMap.get(selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
-  const totalDamage = damageLog.reduce((total, event) => total + event.damage, 0);
-  const attacksLogged = damageLog.length;
+  const { totalDamage, attacksLogged, firstAttackTimestamp } = aggregates;
   const remainingHp = Math.max(0, targetHp - totalDamage);
   const averageDamage = attacksLogged === 0 ? null : totalDamage / attacksLogged;
   let fightStartTimestamp = storedFightStartTimestamp;
   if (fightStartTimestamp === null) {
-    fightStartTimestamp = damageLog[0]?.timestamp ?? null;
+    fightStartTimestamp = firstAttackTimestamp;
   }
 
   const hasFightStartTimestamp = typeof fightStartTimestamp === 'number';
@@ -223,9 +277,19 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
   const stateRef = useRef(state);
   const frameTimestampRef = useRef<number>(Date.now());
-  const derivedRef = useRef<DerivedStats>(
-    calculateDerivedStats(state, frameTimestampRef.current),
+  const [initialAggregateCache] = useState<DamageLogAggregateCache>(() => ({
+    version: state.damageLogVersion,
+    aggregates: calculateDamageLogAggregates(state.damageLog),
+  }));
+  const aggregateCacheRef = useRef<DamageLogAggregateCache>(initialAggregateCache);
+  const [initialDerivedStats] = useState<DerivedStats>(() =>
+    calculateDerivedStats(
+      state,
+      frameTimestampRef.current,
+      initialAggregateCache.aggregates,
+    ),
   );
+  const derivedRef = useRef<DerivedStats>(initialDerivedStats);
   const stateListenersRef = useRef<Set<() => void>>(new Set());
   const derivedListenersRef = useRef<Set<() => void>>(new Set());
   const derivedStoreRef = useRef<DerivedStatsStore | null>(null);
@@ -236,13 +300,32 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     stateListenersRef.current.forEach((listener) => listener());
   }, []);
 
+  const ensureAggregateCache = useCallback((): DamageLogAggregates => {
+    const stateSnapshot = stateRef.current;
+    const { damageLogVersion } = stateSnapshot;
+    const cache = aggregateCacheRef.current;
+    if (cache.version !== damageLogVersion) {
+      aggregateMismatchCount += 1;
+      const aggregates = calculateDamageLogAggregates(stateSnapshot.damageLog);
+      aggregateCacheRef.current = {
+        version: damageLogVersion,
+        aggregates,
+      };
+      return aggregates;
+    }
+
+    return cache.aggregates;
+  }, []);
+
   const notifyDerived = useCallback(() => {
+    const aggregates = ensureAggregateCache();
     derivedRef.current = calculateDerivedStats(
       stateRef.current,
       frameTimestampRef.current,
+      aggregates,
     );
     derivedListenersRef.current.forEach((listener) => listener());
-  }, []);
+  }, [ensureAggregateCache]);
 
   const flushPersist = useCallback(() => {
     cancelPersistRef.current?.();

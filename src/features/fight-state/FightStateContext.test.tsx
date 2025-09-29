@@ -11,6 +11,8 @@ import {
   useFightState,
   useFightStateSelector,
 } from './FightStateContext';
+import type { FightState } from './FightStateContext';
+import * as FightStateContextModule from './FightStateContext';
 import { STORAGE_KEY } from './persistence';
 import { bossSequenceMap } from '../../data';
 
@@ -372,5 +374,133 @@ describe('derived stats context', () => {
     unmount();
 
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(42);
+  });
+});
+
+describe('derived stats caching', () => {
+  it('reuses aggregated damage metrics between animation frames', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
+
+    const rafSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) =>
+        window.setTimeout(() => callback(Date.now()), 16),
+      );
+    const cafSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((handle: number) => {
+        window.clearTimeout(handle as unknown as number);
+      });
+
+    let capturedActions!: ReturnType<typeof useFightActions>;
+    let capturedState!: FightState;
+    const Harness = () => {
+      const { state, actions: contextActions } = useFightState();
+      capturedActions = contextActions;
+      capturedState = state;
+      return null;
+    };
+
+    const instrumentation = FightStateContextModule.__TESTING__;
+
+    try {
+      window.localStorage.clear();
+      instrumentation.resetAggregateComputationCount();
+
+      render(
+        <FightStateProvider>
+          <Harness />
+        </FightStateProvider>,
+      );
+
+      const actions = capturedActions;
+      const readCapturedState = () => capturedState;
+      const initialCalls = instrumentation.getAggregateComputationCount();
+      const initialMismatches = instrumentation.getAggregateMismatchCount();
+      const initialVersion = readCapturedState().damageLogVersion;
+
+      expect(initialCalls).toBeGreaterThan(0);
+      expect(initialVersion).toBeGreaterThanOrEqual(0);
+
+      act(() => {
+        actions.startFight(Date.now());
+      });
+
+      const startVersion = readCapturedState().damageLogVersion;
+      expect(startVersion).toBe(initialVersion);
+
+      const postStartCount = instrumentation.getAggregateComputationCount();
+      const postStartMismatch = instrumentation.getAggregateMismatchCount();
+      expect(postStartCount).toBe(initialCalls);
+      expect(postStartMismatch).toBe(initialMismatches);
+
+      act(() => {
+        vi.advanceTimersByTime(16);
+      });
+
+      expect(instrumentation.getAggregateComputationCount()).toBe(postStartCount);
+      expect(instrumentation.getAggregateMismatchCount()).toBe(postStartMismatch);
+
+      act(() => {
+        actions.logAttack({
+          id: 'cached-hit',
+          label: 'Cached Hit',
+          damage: 25,
+          category: 'nail',
+          timestamp: Date.now(),
+        });
+      });
+
+      const logVersion = readCapturedState().damageLogVersion;
+      expect(logVersion).toBe(startVersion + 1);
+
+      const afterLogCount = instrumentation.getAggregateComputationCount();
+      const afterLogMismatch = instrumentation.getAggregateMismatchCount();
+      expect(afterLogCount).toBeGreaterThan(postStartCount);
+      expect(afterLogMismatch).toBeGreaterThan(postStartMismatch);
+
+      act(() => {
+        vi.advanceTimersByTime(48);
+      });
+
+      expect(instrumentation.getAggregateComputationCount()).toBe(afterLogCount);
+      expect(instrumentation.getAggregateMismatchCount()).toBe(afterLogMismatch);
+
+      act(() => {
+        actions.undoLastAttack();
+      });
+
+      const undoVersion = readCapturedState().damageLogVersion;
+      expect(undoVersion).toBe(startVersion + 2);
+
+      const afterUndoCount = instrumentation.getAggregateComputationCount();
+      const afterUndoMismatch = instrumentation.getAggregateMismatchCount();
+      expect(afterUndoCount).toBeGreaterThan(afterLogCount);
+      expect(afterUndoMismatch).toBeGreaterThan(afterLogMismatch);
+
+      act(() => {
+        vi.advanceTimersByTime(16);
+      });
+
+      expect(instrumentation.getAggregateComputationCount()).toBe(afterUndoCount);
+      expect(instrumentation.getAggregateMismatchCount()).toBe(afterUndoMismatch);
+
+      act(() => {
+        actions.endFight(Date.now());
+      });
+
+      const afterEndCount = instrumentation.getAggregateComputationCount();
+      const afterEndMismatch = instrumentation.getAggregateMismatchCount();
+      expect(afterEndCount).toBe(afterUndoCount);
+      expect(afterEndMismatch).toBe(afterUndoMismatch);
+      const endVersion = readCapturedState().damageLogVersion;
+      expect(endVersion).toBe(undoVersion);
+    } finally {
+      instrumentation.resetAggregateComputationCount();
+      cafSpy.mockRestore();
+      rafSpy.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });
