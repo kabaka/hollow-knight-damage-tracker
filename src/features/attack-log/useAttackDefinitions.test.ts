@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { nailUpgrades, spells } from '../../data';
 import type { FightState } from '../fight-state/FightStateContext';
@@ -11,6 +11,7 @@ import {
   buildAttackMetadata,
   useAttackDefinitions,
 } from './useAttackDefinitions';
+import * as attackDefinitionBuildersModule from './attackDefinitionBuilders';
 
 const DEFAULT_SPELL_LEVELS = Object.fromEntries(
   spells.map((spell) => [spell.id, 'base'] as const),
@@ -159,5 +160,47 @@ describe('useAttackDefinitions helpers', () => {
 
     expect(result.current.groupsWithMetadata).toBe(initialGroups);
     expect(result.current.shortcutMap).toBe(initialShortcutMap);
+  });
+
+  it('reuses attack groups while updating metadata when only hp changes', () => {
+    const state = createFightState();
+    const buildAttackGroupsSpy = vi.spyOn(
+      attackDefinitionBuildersModule,
+      'buildAttackGroups',
+    );
+
+    try {
+      const { result, rerender } = renderHook(
+        ({ currentState, hp }) => useAttackDefinitions(currentState, hp),
+        { initialProps: { currentState: state, hp: 100 } },
+      );
+
+      const initialGroup = result.current.groupsWithMetadata[0];
+      expect(initialGroup).toBeDefined();
+      const initialAttack = initialGroup.attacks[0];
+      expect(initialAttack).toBeDefined();
+      const initialHitsRemaining = initialAttack.hitsRemaining;
+
+      expect(buildAttackGroupsSpy).toHaveBeenCalledTimes(1);
+
+      rerender({ currentState: state, hp: 80 });
+
+      expect(buildAttackGroupsSpy).toHaveBeenCalledTimes(1);
+
+      const updatedGroup = result.current.groupsWithMetadata[0];
+      expect(updatedGroup).toBeDefined();
+      const updatedAttack = updatedGroup.attacks[0];
+      expect(updatedAttack).toBeDefined();
+      const updatedHitsRemaining = updatedAttack.hitsRemaining;
+
+      expect(updatedHitsRemaining).not.toBe(initialHitsRemaining);
+      if (updatedAttack.damage > 0) {
+        expect(updatedHitsRemaining).toBe(Math.ceil(80 / updatedAttack.damage));
+      } else {
+        expect(updatedHitsRemaining).toBeNull();
+      }
+    } finally {
+      buildAttackGroupsSpy.mockRestore();
+    }
   });
 });
