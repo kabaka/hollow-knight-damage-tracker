@@ -1,4 +1,5 @@
 import { act, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useEffect } from 'react';
 
@@ -17,6 +18,10 @@ const ActionsBridge = ({ onReady }: { onReady: (actions: FightActions) => void }
 };
 
 describe('CombatLogPanel', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
   it('records fight lifecycle entries with timestamps', async () => {
     let actions: FightActions | null = null;
 
@@ -183,5 +188,48 @@ describe('CombatLogPanel', () => {
     });
 
     expect(screen.queryByText('Fight reset')).not.toBeInTheDocument();
+  });
+
+  it('clears the log when the reset button is pressed', async () => {
+    const user = userEvent.setup();
+    let actions: FightActions | null = null;
+
+    renderWithFightProvider(
+      <>
+        <ActionsBridge
+          onReady={(value) => {
+            actions = value;
+          }}
+        />
+        <CombatLogPanel />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(actions).not.toBeNull();
+    });
+
+    act(() => {
+      actions?.logAttack({
+        id: 'nail-strike',
+        label: 'Nail Strike',
+        category: 'nail',
+        damage: 75,
+        timestamp: 500,
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Nail Strike').length).toBeGreaterThan(0);
+    });
+
+    const resetButton = screen.getByRole('button', { name: /clear combat log/i });
+    await user.click(resetButton);
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Nail Strike')).toHaveLength(0);
+      expect(screen.getByText(/Target:/i)).toBeInTheDocument();
+      expect(screen.queryByText('Fight reset')).not.toBeInTheDocument();
+    });
   });
 });
