@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 
+import { AppButton } from '../../components/AppButton';
 import { bossMap } from '../../data';
 import { formatNumber, formatRelativeTime } from '../../utils/format';
 import {
@@ -529,13 +530,14 @@ export const CombatLogClearButton: FC = () => {
   const { handleResetLog } = useCombatLogContext();
 
   return (
-    <button
+    <AppButton
       type="button"
-      className="combat-log__reset-button"
+      variant="pill"
+      size="sm"
       onClick={handleResetLog}
       aria-label="Clear combat log"
     >
       Clear
-    </button>
+    </AppButton>
   );
 };

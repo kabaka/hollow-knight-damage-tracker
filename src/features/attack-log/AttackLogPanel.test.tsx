@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 
-import { AttackLogPanel } from './AttackLogPanel';
+import { AttackLogActions, AttackLogPanel, AttackLogProvider } from './AttackLogPanel';
 import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, bossSequenceMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
@@ -63,10 +63,11 @@ describe('AttackLogPanel', () => {
     const user = userEvent.setup();
 
     renderWithFightProvider(
-      <>
+      <AttackLogProvider>
         <PlayerConfigModal isOpen onClose={() => {}} />
+        <AttackLogActions />
         <AttackLogPanel />
-      </>,
+      </AttackLogProvider>,
     );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
@@ -84,10 +85,11 @@ describe('AttackLogPanel', () => {
     const user = userEvent.setup();
 
     renderWithFightProvider(
-      <>
+      <AttackLogProvider>
         <PlayerConfigModal isOpen onClose={() => {}} />
+        <AttackLogActions />
         <AttackLogPanel />
-      </>,
+      </AttackLogProvider>,
     );
 
     await user.click(
@@ -106,25 +108,37 @@ describe('AttackLogPanel', () => {
   it('shows hits remaining for each attack and updates after logging damage', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(<AttackLogPanel />);
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     const hitsDisplay = within(nailStrikeButton).getByLabelText(/hits to finish/i);
-    expect(hitsDisplay).toHaveTextContent(
-      new RegExp(`hits to finish: ${initialHitsToFinish}`, 'i'),
+    expect(hitsDisplay).toHaveAttribute(
+      'aria-label',
+      `Hits to finish: ${initialHitsToFinish}`,
     );
 
     await user.click(nailStrikeButton);
 
-    expect(hitsDisplay).toHaveTextContent(
-      new RegExp(`hits to finish: ${hitsToFinishAfterOneHit}`, 'i'),
+    expect(hitsDisplay).toHaveAttribute(
+      'aria-label',
+      `Hits to finish: ${hitsToFinishAfterOneHit}`,
     );
   });
 
   it('supports undo, redo, and quick reset controls', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(<AttackLogPanel />);
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
 
     const undoButton = screen.getByRole('button', { name: /undo/i });
     const redoButton = screen.getByRole('button', { name: /redo/i });
@@ -161,7 +175,12 @@ describe('AttackLogPanel', () => {
   it('starts fights via the Enter key without logging damage', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(<AttackLogPanel />);
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
 
     const startButton = screen.getByRole('button', { name: /start fight \(enter\)/i });
     expect(startButton).not.toBeDisabled();
@@ -184,7 +203,12 @@ describe('AttackLogPanel', () => {
   it('supports keyboard shortcuts for logging attacks and resetting', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(<AttackLogPanel />);
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
 
     await user.keyboard('1');
 
@@ -200,10 +224,11 @@ describe('AttackLogPanel', () => {
     const user = userEvent.setup();
 
     renderWithFightProvider(
-      <>
+      <AttackLogProvider>
         <SequenceHarness />
+        <AttackLogActions />
         <AttackLogPanel />
-      </>,
+      </AttackLogProvider>,
     );
 
     await waitFor(() => {
@@ -260,7 +285,12 @@ describe('AttackLogPanel', () => {
   it('allows ending fights early via the quick actions', async () => {
     const user = userEvent.setup();
 
-    renderWithFightProvider(<AttackLogPanel />);
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
@@ -286,10 +316,11 @@ describe('AttackLogPanel', () => {
     const user = userEvent.setup();
 
     renderWithFightProvider(
-      <>
+      <AttackLogProvider>
         <PlayerConfigModal isOpen onClose={() => {}} />
+        <AttackLogActions />
         <AttackLogPanel />
-      </>,
+      </AttackLogProvider>,
     );
 
     await user.click(screen.getByRole('button', { name: /thorns of agony/i }));
@@ -306,10 +337,11 @@ describe('AttackLogPanel', () => {
     const user = userEvent.setup();
 
     renderWithFightProvider(
-      <>
+      <AttackLogProvider>
         <PlayerConfigModal isOpen onClose={() => {}} />
+        <AttackLogActions />
         <AttackLogPanel />
-      </>,
+      </AttackLogProvider>,
     );
 
     const vengefulSpiritButton = screen.getByRole('button', {
