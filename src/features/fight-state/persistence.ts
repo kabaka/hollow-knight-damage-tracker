@@ -283,6 +283,10 @@ export const mergePersistedState = (
 
   const damageLog = sanitizeAttackEvents(persisted.damageLog, fallback.damageLog);
   const redoStack = sanitizeAttackEvents(persisted.redoStack, fallback.redoStack);
+  const damageLogVersion = sanitizeNonNegativeInteger(
+    persisted.damageLogVersion,
+    fallback.damageLogVersion,
+  );
 
   const activeSequenceId =
     typeof persisted.activeSequenceId === 'string' ? persisted.activeSequenceId : null;
@@ -346,6 +350,7 @@ export const mergePersistedState = (
         notchLimit,
       },
       damageLog,
+      damageLogVersion,
       redoStack,
       activeSequenceId,
       sequenceIndex,

@@ -34,6 +34,7 @@ export interface FightState {
   customTargetHp: number;
   build: BuildState;
   damageLog: AttackEvent[];
+  damageLogVersion: number;
   redoStack: AttackEvent[];
   activeSequenceId: string | null;
   sequenceIndex: number;
@@ -152,6 +153,7 @@ export const createInitialState = (): FightState => ({
     notchLimit: MAX_NOTCH_LIMIT,
   },
   damageLog: [],
+  damageLogVersion: 0,
   redoStack: [],
   activeSequenceId: null,
   sequenceIndex: 0,
@@ -177,6 +179,12 @@ const getTargetHp = (state: FightState) =>
 
 const getTotalDamage = (damageLog: AttackEvent[]) =>
   damageLog.reduce((total, event) => total + event.damage, 0);
+
+const withDamageLog = (state: FightState, damageLog: AttackEvent[]): FightState => ({
+  ...state,
+  damageLog,
+  damageLogVersion: state.damageLogVersion + 1,
+});
 
 const resolveFightCompletion = (
   state: FightState,
@@ -306,12 +314,13 @@ export const loadSequenceStage = (
   const storedManualEnd = state.sequenceManualEndFlags[key] ?? false;
   const nextTarget = entries[clampedIndex].target;
 
+  const baseState = withDamageLog(state, [...storedLog]);
+
   return {
-    ...state,
+    ...baseState,
     activeSequenceId: sequenceId,
     sequenceIndex: clampedIndex,
     selectedBossId: nextTarget.id,
-    damageLog: [...storedLog],
     redoStack: [...storedRedo],
     fightStartTimestamp: storedStartTimestamp,
     fightManuallyStarted: storedManualStart,
@@ -340,10 +349,11 @@ export const applyLogUpdate = (
   fightCompletion: { fightEndTimestamp: number | null; fightManuallyEnded: boolean },
   fightStart: { timestamp: number | null; manuallyStarted: boolean },
 ): FightState => {
+  const baseState = withDamageLog(state, damageLog);
+
   if (!state.activeSequenceId) {
     return {
-      ...state,
-      damageLog,
+      ...baseState,
       redoStack,
       fightEndTimestamp: fightCompletion.fightEndTimestamp,
       fightManuallyEnded: fightCompletion.fightManuallyEnded,
@@ -354,8 +364,7 @@ export const applyLogUpdate = (
 
   const key = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
   return {
-    ...state,
-    damageLog,
+    ...baseState,
     redoStack,
     fightEndTimestamp: fightCompletion.fightEndTimestamp,
     fightManuallyEnded: fightCompletion.fightManuallyEnded,
@@ -452,11 +461,12 @@ export const ensureSequenceState = (state: FightState): FightState => {
   const fightManuallyEnded = state.sequenceManualEndFlags[key] ?? false;
   const targetId = entries[clampedIndex].target.id;
 
+  const baseState = withDamageLog(state, [...damageLog]);
+
   return {
-    ...state,
+    ...baseState,
     sequenceIndex: clampedIndex,
     selectedBossId: targetId,
-    damageLog: [...damageLog],
     redoStack: [...redoStack],
     fightStartTimestamp,
     fightManuallyStarted,
@@ -626,9 +636,9 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
 
       const sequenceId = state.activeSequenceId;
       const persisted = persistCurrentSequenceStage(state);
+      const clearedBase = withDamageLog(persisted, []);
       const cleared: FightState = {
-        ...persisted,
-        damageLog: [],
+        ...clearedBase,
         redoStack: [],
         fightStartTimestamp: null,
         fightManuallyStarted: false,
@@ -769,9 +779,9 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         return nextState;
       }
 
+      const clearedLogsStateBase = withDamageLog(nextState, []);
       const clearedLogsState: FightState = {
-        ...nextState,
-        damageLog: [],
+        ...clearedLogsStateBase,
         redoStack: [],
         fightStartTimestamp: null,
         fightManuallyStarted: false,
