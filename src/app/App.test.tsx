@@ -49,6 +49,24 @@ describe('App', () => {
     ).toBeInTheDocument();
   });
 
+  it('filters the boss list with fuzzy search', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /change encounter/i }));
+    const search = await screen.findByLabelText(/search bosses/i);
+
+    await user.type(search, 'rdnc');
+
+    expect(
+      await screen.findByRole('radio', { name: /the radiance/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /gruz mother/i })).not.toBeInTheDocument();
+
+    await user.clear(search);
+    expect(screen.getByRole('radio', { name: /gruz mother/i })).toBeInTheDocument();
+  });
+
   it('switches boss versions to reflect Godhome health pools', async () => {
     const user = userEvent.setup();
     render(<App />);
