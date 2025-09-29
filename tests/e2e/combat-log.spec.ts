@@ -31,7 +31,7 @@ test.describe('Combat log', () => {
     await expect(getCombatHistory().getByText('Nail Strike')).toHaveCount(1);
 
     const setupPanel = await openEncounterSetup(page);
-    await setupPanel.getByRole('radio', { name: 'Custom' }).click();
+    await setupPanel.getByRole('radio', { name: 'Custom target' }).click();
     await closeEncounterSetup(page);
 
     await expect(page.getByText(/Target: Custom target/i)).toBeVisible();
