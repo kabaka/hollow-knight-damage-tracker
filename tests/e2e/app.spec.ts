@@ -165,9 +165,7 @@ const persistFightStateOverrides = async (page: Page, overrides: FightStateOverr
 
 const reloadApp = async (page: Page) => {
   await page.goto('/', { waitUntil: 'networkidle' });
-  await expect(
-    page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Damage Tracker' })).toBeVisible();
 };
 
 const configurePureNailStrengthShamanBuild = async (page: Page) => {
@@ -197,9 +195,7 @@ test.describe('Landing page', () => {
   });
 
   test('displays the core sections', async ({ page }) => {
-    await expect(
-      page.getByRole('heading', { name: 'Hollow Knight Damage Tracker' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Damage Tracker' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change Encounter' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Player loadout/i })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
