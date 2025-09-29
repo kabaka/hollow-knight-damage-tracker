@@ -1533,12 +1533,15 @@ h6 {
 
 .combat-log__wrapper {
   position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .combat-log {
   position: relative;
-  min-height: 220px;
-  flex: 1 1 220px;
+  flex: 1 1 auto;
+  min-height: clamp(200px, 42vh, 520px);
   max-height: 100%;
   overflow-y: auto;
 }
