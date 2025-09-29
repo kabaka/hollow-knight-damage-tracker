@@ -47,6 +47,8 @@ type AttackLogContextValue = {
   readonly canResetSequence: boolean;
   readonly showResetSequence: boolean;
   readonly fightButtonLabel: string;
+  readonly fightButtonAriaLabel: string;
+  readonly fightButtonShortcut: string;
   readonly fightButtonDisabled: boolean;
   readonly triggerActiveEffect: (element: HTMLElement | null) => void;
   readonly registerActionButton: (id: string, element: HTMLButtonElement | null) => void;
@@ -305,7 +307,8 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
       canResetLog: damageLog.length > 0 || redoStack.length > 0,
       canResetSequence,
       showResetSequence: isSequenceActive,
-      fightButtonLabel: canStartFight ? 'Start fight (Enter)' : 'End fight (Enter)',
+      fightButtonLabel: canStartFight ? 'Start' : 'End',
+      fightButtonAriaLabel: canStartFight ? 'Start fight' : 'End fight',
       fightButtonShortcut: 'Enter',
       fightButtonDisabled: !canEndFight && !canStartFight,
       triggerActiveEffect,
@@ -349,6 +352,8 @@ export const AttackLogActions: FC = () => {
     showResetSequence,
     fightButtonDisabled,
     fightButtonLabel,
+    fightButtonAriaLabel,
+    fightButtonShortcut,
     triggerActiveEffect,
     registerActionButton,
   } = useAttackLogContext();
@@ -401,9 +406,11 @@ export const AttackLogActions: FC = () => {
         onClick={resetLog}
         data-control="reset-log"
         aria-keyshortcuts="Esc"
+        aria-label="Clear attack log"
+        shortcut="Esc"
         disabled={!canResetLog}
       >
-        Quick reset (Esc)
+        Clear
       </AppButton>
       {showResetSequence ? (
         <AppButton
@@ -414,9 +421,11 @@ export const AttackLogActions: FC = () => {
           onClick={resetSequence}
           data-control="reset-sequence"
           aria-keyshortcuts={RESET_SEQUENCE_SHORTCUT}
+          aria-label="Reset sequence progress"
+          shortcut="Shift+Esc"
           disabled={!canResetSequence}
         >
-          Reset sequence (Shift+Esc)
+          Sequence
         </AppButton>
       ) : null}
       <AppButton
@@ -426,7 +435,9 @@ export const AttackLogActions: FC = () => {
         onKeyDown={handleKeyEffect}
         onClick={toggleFight}
         data-control="end-fight"
-        aria-keyshortcuts="Enter"
+        aria-keyshortcuts={fightButtonShortcut}
+        aria-label={fightButtonAriaLabel}
+        shortcut={fightButtonShortcut}
         disabled={fightButtonDisabled}
       >
         {fightButtonLabel}

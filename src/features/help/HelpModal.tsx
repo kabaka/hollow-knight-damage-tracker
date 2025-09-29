@@ -72,10 +72,10 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
               <h3 id="help-getting-started-heading">Getting started</h3>
             </div>
             <p className="modal-section__description">
-              Use <strong>Change encounter</strong> to pick a Hollow Knight boss, version,
-              and arena. For custom practice scenarios, choose the Custom option and
-              provide an HP target. The selected encounter drives the numbers shown
-              throughout the tracker.
+              Use <strong>Setup</strong> to pick a Hollow Knight boss, version, and arena.
+              For custom practice scenarios, choose the Custom option and provide an HP
+              target. The selected encounter drives the numbers shown throughout the
+              tracker.
             </p>
           </section>
 
@@ -130,10 +130,10 @@ const HelpModalContent: FC<Pick<HelpModalProps, 'onClose'>> = ({ onClose }) => {
 
           <section className="modal-section" aria-labelledby="help-loadout-heading">
             <div className="modal-section__header">
-              <h3 id="help-loadout-heading">Player loadout and advanced setup</h3>
+              <h3 id="help-loadout-heading">Loadout and advanced setup</h3>
             </div>
             <p className="modal-section__description">
-              Open <strong>Player loadout</strong> to configure nail upgrades, spells, and
+              Open <strong>Loadout</strong> to configure nail upgrades, spells, and
               charms. Presets offer quick starting points, and you can toggle individual
               charms to match your build. The tracker automatically adjusts damage values
               and charm effects based on your selection.

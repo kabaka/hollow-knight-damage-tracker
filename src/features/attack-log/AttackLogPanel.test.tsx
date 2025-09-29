@@ -142,8 +142,8 @@ describe('AttackLogPanel', () => {
 
     const undoButton = screen.getByRole('button', { name: /undo/i });
     const redoButton = screen.getByRole('button', { name: /redo/i });
-    const resetButton = screen.getByRole('button', { name: /quick reset/i });
-    const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
+    const resetButton = screen.getByRole('button', { name: 'Clear attack log' });
+    const endFightButton = screen.getByRole('button', { name: /fight/i });
 
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
@@ -182,21 +182,19 @@ describe('AttackLogPanel', () => {
       </AttackLogProvider>,
     );
 
-    const startButton = screen.getByRole('button', { name: /start fight \(enter\)/i });
+    const startButton = screen.getByRole('button', { name: /start fight/i });
     expect(startButton).not.toBeDisabled();
 
     await user.keyboard('{Enter}');
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /end fight \(enter\)/i }),
-      ).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: /end fight/i })).not.toBeDisabled();
     });
 
     await user.keyboard('{Enter}');
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /fight \(enter\)/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /fight/i })).toBeDisabled();
     });
   });
 
@@ -214,7 +212,7 @@ describe('AttackLogPanel', () => {
 
     await user.keyboard('{Enter}');
 
-    const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
+    const endFightButton = screen.getByRole('button', { name: /fight/i });
     expect(endFightButton).toBeDisabled();
 
     await user.keyboard('{Escape}');
@@ -236,7 +234,7 @@ describe('AttackLogPanel', () => {
     });
 
     const resetSequenceButton = await screen.findByRole('button', {
-      name: /reset sequence/i,
+      name: /reset sequence progress/i,
     });
 
     expect(resetSequenceButton).toBeDisabled();
@@ -293,8 +291,8 @@ describe('AttackLogPanel', () => {
     );
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
-    const endFightButton = screen.getByRole('button', { name: /fight \(enter\)/i });
-    const resetButton = screen.getByRole('button', { name: /quick reset/i });
+    const endFightButton = screen.getByRole('button', { name: /start fight/i });
+    const resetButton = screen.getByRole('button', { name: 'Clear attack log' });
 
     expect(endFightButton).not.toBeDisabled();
 
