@@ -201,7 +201,9 @@ test.describe('Landing page', () => {
       page.getByRole('button', { name: /Open loadout configuration/i }),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Help' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Attack' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Attack', exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Combat Log' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Boss HP' })).toBeVisible();
   });

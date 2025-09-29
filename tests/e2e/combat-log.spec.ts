@@ -1,14 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const openEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Change Encounter' }).click();
+  await page.getByRole('button', { name: 'Setup' }).click();
   const panel = page.locator('#encounter-setup');
   await expect(panel).toBeVisible();
   return panel;
 };
 
 const closeEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Change Encounter' }).click();
+  await page.getByRole('button', { name: 'Setup' }).click();
   await expect(page.locator('#encounter-setup')).toBeHidden();
 };
 
