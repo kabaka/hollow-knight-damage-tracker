@@ -55,7 +55,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /change encounter/i }));
+    await user.click(screen.getByRole('button', { name: /setup/i }));
     const search = await screen.findByLabelText(/search bosses/i);
 
     await user.type(search, 'rdnc');

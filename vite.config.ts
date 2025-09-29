@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react-swc';
 
 export default defineConfig({
@@ -13,7 +14,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './vitest.setup.ts',
+    // Resolve setup file relative to this config file to avoid monorepo root issues
+    setupFiles: fileURLToPath(new URL('./vitest.setup.ts', import.meta.url)),
     css: true,
     exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
     coverage: {
