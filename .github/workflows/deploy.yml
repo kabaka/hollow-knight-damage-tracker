@@ -42,7 +42,8 @@ jobs:
         run: |
           mkdir -p dist/docs
           mv artifacts/test-results/demo.png dist/docs/app.png
-          mv artifacts/test-results/mobile-app.png dist/docs/mobile-app.png
+          mv artifacts/test-results/mobile-app-overview.png dist/docs/mobile-app-overview.png
+          mv artifacts/test-results/mobile-app-log.png dist/docs/mobile-app-log.png
 
       - uses: actions/upload-pages-artifact@v4
         with:
