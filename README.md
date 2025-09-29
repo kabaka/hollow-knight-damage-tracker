@@ -23,7 +23,7 @@ Hollow Knight Damage Tracker is a responsive companion app that captures your Kn
   <img
     src="https://kabaka.github.io/hollow-knight-damage-tracker/docs/mobile-app.png"
     alt="Mobile screenshot of the Hollow Knight Damage Tracker interface showing combat controls and analytics."
-    style="max-width: 480px; width: 100%; height: auto;"
+    width="320"
   />
 </div>
 
