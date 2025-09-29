@@ -132,18 +132,40 @@ test('generate a mid-combat screenshot', async ({ page }) => {
 
   await page.screenshot({ path: 'test-results/demo.png', fullPage: true });
 
-  await test.step('capture a mobile layout screenshot', async () => {
-    await page.setViewportSize({ width: 430, height: 932 });
+  await test.step('capture mobile layout screenshots', async () => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(250);
     await page.evaluate(() => window.scrollTo(0, 0));
+
+    const header = page.locator('header[role="banner"]');
 
     await expect(
       page.getByRole('region', { name: 'Encounter scoreboard' }),
     ).toBeVisible();
 
     await page.screenshot({
-      path: 'test-results/mobile-app.png',
-      fullPage: true,
+      path: 'test-results/mobile-app-overview.png',
+    });
+
+    const headerHeight = await header.evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+
+    await page.evaluate((offset) => {
+      window.scrollTo({ top: offset, behavior: 'instant' });
+    }, headerHeight + 360);
+    await page.waitForTimeout(250);
+
+    const headerBottom = await header.evaluate(
+      (element) => element.getBoundingClientRect().bottom,
+    );
+    expect(headerBottom).toBeLessThanOrEqual(1);
+
+    await expect(page.getByRole('group', { name: 'Attack log controls' })).toBeVisible();
+    await expect(page.getByRole('log', { name: 'Combat history' })).toBeVisible();
+
+    await page.screenshot({
+      path: 'test-results/mobile-app-log.png',
     });
   });
 });
