@@ -40,7 +40,7 @@ const closeEncounterSetup = async (page: Page) => {
 
 const setCustomTargetHp = async (page: Page, hp: number) => {
   const panel = await openEncounterSetup(page);
-  await panel.getByRole('radio', { name: 'Custom' }).click();
+  await panel.getByRole('radio', { name: 'Custom target' }).click();
   const customTargetInput = panel.getByLabel(/custom target hp/i);
   await customTargetInput.fill(hp.toString());
   await closeEncounterSetup(page);
@@ -222,7 +222,7 @@ test.describe('Landing page', () => {
 
   test('restores build configuration and logs after a reload', async ({ page }) => {
     await page.getByRole('button', { name: 'Change Encounter' }).click();
-    await page.getByRole('radio', { name: 'Custom' }).click();
+    await page.getByRole('radio', { name: 'Custom target' }).click();
     const customTargetInput = page.getByLabel(/custom target hp/i);
     await customTargetInput.fill('3333');
 
@@ -261,7 +261,7 @@ test.describe('Landing page', () => {
 
     await page.getByRole('button', { name: 'Change Encounter' }).click();
     const restoredCustomOption = page.getByRole('radio', {
-      name: 'Custom',
+      name: 'Custom target',
       checked: true,
     });
     await expect(restoredCustomOption).toBeVisible();
