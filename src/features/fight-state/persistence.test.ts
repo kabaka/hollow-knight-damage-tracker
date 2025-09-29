@@ -165,6 +165,9 @@ describe('fight-state persistence', () => {
       label: 'Stage Hit',
       damage: 50,
     });
+    expect(merged.damageLogAggregates.totalDamage).toBe(50);
+    expect(merged.damageLogAggregates.attacksLogged).toBe(1);
+    expect(merged.damageLogAggregates.firstAttackTimestamp).toBe(12);
     expect(merged.redoStack).toHaveLength(1);
     expect(merged.fightEndTimestamp).toBe(42);
     expect(merged.fightManuallyEnded).toBe(true);
@@ -179,6 +182,7 @@ describe('fight-state persistence', () => {
       damage: 50,
       category: 'nail',
     });
+    expect(merged.sequenceLogAggregates[stageKey]?.totalDamage).toBe(50);
     expect(merged.sequenceRedoStacks[stageKey]).toHaveLength(1);
     expect(merged.sequenceFightEndTimestamps[stageKey]).toBe(42);
     expect(merged.sequenceManualEndFlags[stageKey]).toBe(true);
@@ -193,7 +197,7 @@ describe('fight-state persistence', () => {
     const fallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
 
     const persisted = {
-      version: 4,
+      version: 5,
       state: {
         selectedBossId: CUSTOM_BOSS_ID,
         customTargetHp: 4242,
@@ -225,6 +229,7 @@ describe('fight-state persistence', () => {
     expect(restored.build.nailUpgradeId).toBe('coiled-nail');
     expect(restored.build.spellLevels['howling-wraiths']).toBe('upgrade');
     expect(restored.build.notchLimit).toBe(4);
+    expect(restored.damageLogAggregates.attacksLogged).toBe(0);
   });
 
   it('ignores malformed or incompatible persisted payloads', () => {
@@ -254,7 +259,7 @@ describe('fight-state persistence', () => {
     }
 
     const parsed = JSON.parse(stored) as { version: number; state: unknown };
-    expect(parsed.version).toBe(4);
+    expect(parsed.version).toBe(5);
     expect(parsed.state).toBeTruthy();
   });
 

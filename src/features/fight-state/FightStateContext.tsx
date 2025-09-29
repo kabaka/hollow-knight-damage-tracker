@@ -19,7 +19,12 @@ import {
   resolveSequenceEntries,
   strengthCharmIds,
 } from '../../data';
-import type { AttackEvent, AttackInput, FightState, SpellLevel } from './fightReducer';
+import type {
+  AttackInput,
+  DamageLogAggregates,
+  FightState,
+  SpellLevel,
+} from './fightReducer';
 import {
   createInitialState,
   ensureSequenceState,
@@ -32,6 +37,7 @@ export type {
   AttackCategory,
   AttackEvent,
   AttackInput,
+  DamageLogAggregates,
   BuildState,
   FightState,
   SpellLevel,
@@ -144,42 +150,17 @@ const assertStore = <T,>(value: T | null, message: string): T => {
   return value;
 };
 
-type DamageLogAggregates = {
-  totalDamage: number;
-  attacksLogged: number;
-  firstAttackTimestamp: number | null;
-  lastAttackTimestamp: number | null;
-};
-
 let aggregateComputationCount = 0;
 let aggregateMismatchCount = 0;
 
-const calculateDamageLogAggregates = (damageLog: AttackEvent[]): DamageLogAggregates => {
-  aggregateComputationCount += 1;
-
-  let totalDamage = 0;
-  let firstAttackTimestamp: number | null = null;
-  let lastAttackTimestamp: number | null = null;
-
-  for (const event of damageLog) {
-    totalDamage += event.damage;
-
-    if (firstAttackTimestamp === null || event.timestamp < firstAttackTimestamp) {
-      firstAttackTimestamp = event.timestamp;
-    }
-
-    if (lastAttackTimestamp === null || event.timestamp > lastAttackTimestamp) {
-      lastAttackTimestamp = event.timestamp;
-    }
-  }
-
-  return {
-    totalDamage,
-    attacksLogged: damageLog.length,
-    firstAttackTimestamp,
-    lastAttackTimestamp,
-  };
-};
+const cloneDamageLogAggregates = (
+  aggregates: DamageLogAggregates,
+): DamageLogAggregates => ({
+  totalDamage: aggregates.totalDamage,
+  attacksLogged: aggregates.attacksLogged,
+  firstAttackTimestamp: aggregates.firstAttackTimestamp,
+  lastAttackTimestamp: aggregates.lastAttackTimestamp,
+});
 
 const testingApi = {
   getAggregateComputationCount: () => aggregateComputationCount,
@@ -277,10 +258,13 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
   const stateRef = useRef(state);
   const frameTimestampRef = useRef<number>(Date.now());
-  const [initialAggregateCache] = useState<DamageLogAggregateCache>(() => ({
-    version: state.damageLogVersion,
-    aggregates: calculateDamageLogAggregates(state.damageLog),
-  }));
+  const [initialAggregateCache] = useState<DamageLogAggregateCache>(() => {
+    aggregateComputationCount += 1;
+    return {
+      version: state.damageLogVersion,
+      aggregates: cloneDamageLogAggregates(state.damageLogAggregates),
+    };
+  });
   const aggregateCacheRef = useRef<DamageLogAggregateCache>(initialAggregateCache);
   const [initialDerivedStats] = useState<DerivedStats>(() =>
     calculateDerivedStats(
@@ -302,11 +286,12 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const ensureAggregateCache = useCallback((): DamageLogAggregates => {
     const stateSnapshot = stateRef.current;
-    const { damageLogVersion } = stateSnapshot;
+    const { damageLogVersion, damageLogAggregates } = stateSnapshot;
     const cache = aggregateCacheRef.current;
     if (cache.version !== damageLogVersion) {
       aggregateMismatchCount += 1;
-      const aggregates = calculateDamageLogAggregates(stateSnapshot.damageLog);
+      aggregateComputationCount += 1;
+      const aggregates = cloneDamageLogAggregates(damageLogAggregates);
       aggregateCacheRef.current = {
         version: damageLogVersion,
         aggregates,
@@ -473,7 +458,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     const targetHp = isCustomBoss(state.selectedBossId)
       ? Math.max(1, Math.round(state.customTargetHp))
       : (bossMap.get(state.selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
-    const totalDamage = state.damageLog.reduce((total, event) => total + event.damage, 0);
+    const totalDamage = state.damageLogAggregates.totalDamage;
     const remainingHp = Math.max(0, targetHp - totalDamage);
 
     if (state.damageLog.length === 0 || remainingHp > 0) {
@@ -497,6 +482,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     state.activeSequenceId,
     state.sequenceIndex,
     state.damageLog,
+    state.damageLogAggregates.totalDamage,
     state.sequenceConditions,
     state.selectedBossId,
     state.customTargetHp,
