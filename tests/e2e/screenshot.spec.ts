@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
-const STORAGE_VERSION = 4;
+const STORAGE_VERSION = 5;
 
 const MID_COMBAT_STATE = {
   selectedBossId: 'gruz-mother__radiant',
