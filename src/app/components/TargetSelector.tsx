@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from 'react';
+import { useEffect, useMemo, useState, type FC } from 'react';
 
 import type { useBuildConfiguration } from '../../features/build-config/useBuildConfiguration';
 import { CUSTOM_BOSS_ID } from '../../features/fight-state/FightStateContext';
@@ -16,6 +16,33 @@ export type TargetSelectorProps = {
   readonly onCustomHpChange: (value: string) => void;
 };
 
+const normalizeForSearch = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+const fuzzyIncludes = (source: string, query: string) => {
+  const normalizedSource = normalizeForSearch(source);
+  const normalizedQuery = normalizeForSearch(query).replace(/\s+/g, '');
+
+  if (normalizedQuery === '') {
+    return true;
+  }
+
+  let searchIndex = 0;
+  for (const character of normalizedQuery) {
+    searchIndex = normalizedSource.indexOf(character, searchIndex);
+    if (searchIndex === -1) {
+      return false;
+    }
+    searchIndex += 1;
+  }
+  return true;
+};
+
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
+
 export const TargetSelector: FC<TargetSelectorProps> = ({
   bosses,
   bossSelectValue,
@@ -30,6 +57,7 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
 }) => {
   const [isOptionsOpen, setOptionsOpen] = useState(false);
   const [customHpDraft, setCustomHpDraft] = useState(() => customTargetHp.toString());
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (selectedBossId === CUSTOM_BOSS_ID) {
@@ -40,6 +68,25 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
   useEffect(() => {
     setCustomHpDraft(customTargetHp.toString());
   }, [customTargetHp]);
+
+  const sortedBosses = useMemo(
+    () => [...bosses].sort((first, second) => collator.compare(first.name, second.name)),
+    [bosses],
+  );
+
+  const filteredBosses = useMemo(
+    () =>
+      sortedBosses.filter((boss) =>
+        searchQuery.trim() === '' ? true : fuzzyIncludes(boss.name, searchQuery),
+      ),
+    [sortedBosses, searchQuery],
+  );
+
+  const shouldShowCustomOption =
+    searchQuery.trim() === '' || fuzzyIncludes('Custom target', searchQuery);
+
+  const totalMatches = filteredBosses.length + (shouldShowCustomOption ? 1 : 0);
+  const resultsLabel = `${totalMatches} ${totalMatches === 1 ? 'match' : 'matches'} available`;
 
   const handleCustomHpDraftChange = (value: string) => {
     const sanitized = value.replace(/[^0-9]/g, '');
@@ -64,33 +111,89 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
           <span className="sr-only">Toggle advanced target options</span>
         </button>
       </div>
-      <div className="segmented-control" role="radiogroup" aria-label="Boss target">
-        {bosses.map((boss) => {
-          const isSelected = bossSelectValue === boss.id;
-          return (
-            <button
-              key={boss.id}
-              type="button"
-              className="segmented-control__option"
-              data-selected={isSelected}
-              onClick={() => onBossChange(boss.id)}
-              role="radio"
-              aria-checked={isSelected}
-            >
-              {boss.name}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          className="segmented-control__option"
-          data-selected={bossSelectValue === CUSTOM_BOSS_ID}
-          onClick={() => onBossChange(CUSTOM_BOSS_ID)}
-          role="radio"
-          aria-checked={bossSelectValue === CUSTOM_BOSS_ID}
+      <div className="target-selector__boss-browser">
+        <label className="target-selector__field" htmlFor="boss-search">
+          <span className="target-selector__field-label">Search bosses</span>
+          <input
+            id="boss-search"
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search by name"
+            autoComplete="off"
+            aria-describedby="boss-search-results"
+          />
+        </label>
+        <p
+          id="boss-search-results"
+          className="target-selector__assist"
+          aria-live="polite"
         >
-          Custom
-        </button>
+          {resultsLabel}
+        </p>
+        <ul className="target-selector__boss-list">
+          {filteredBosses.map((boss) => {
+            const isSelected = bossSelectValue === boss.id;
+            const optionId = `boss-target-${boss.id}`;
+            return (
+              <li key={boss.id}>
+                <label
+                  className="target-selector__boss-option"
+                  data-selected={isSelected}
+                  htmlFor={optionId}
+                  aria-label={boss.name}
+                >
+                  <input
+                    type="radio"
+                    className="target-selector__boss-input"
+                    name="boss-target"
+                    id={optionId}
+                    value={boss.id}
+                    checked={isSelected}
+                    onChange={() => onBossChange(boss.id)}
+                  />
+                  <span className="target-selector__boss-marker" aria-hidden="true" />
+                  <span className="target-selector__boss-copy">
+                    <span className="target-selector__boss-name">{boss.name}</span>
+                    {boss.location ? (
+                      <span className="target-selector__boss-meta">{boss.location}</span>
+                    ) : null}
+                  </span>
+                </label>
+              </li>
+            );
+          })}
+          {shouldShowCustomOption ? (
+            <li>
+              <label
+                className="target-selector__boss-option"
+                data-selected={bossSelectValue === CUSTOM_BOSS_ID}
+                htmlFor="boss-target-custom"
+                aria-label="Custom target"
+              >
+                <input
+                  type="radio"
+                  className="target-selector__boss-input"
+                  name="boss-target"
+                  id="boss-target-custom"
+                  value={CUSTOM_BOSS_ID}
+                  checked={bossSelectValue === CUSTOM_BOSS_ID}
+                  onChange={() => onBossChange(CUSTOM_BOSS_ID)}
+                />
+                <span className="target-selector__boss-marker" aria-hidden="true" />
+                <span className="target-selector__boss-copy">
+                  <span className="target-selector__boss-name">Custom target</span>
+                  <span className="target-selector__boss-meta">Set a custom HP goal</span>
+                </span>
+              </label>
+            </li>
+          ) : null}
+        </ul>
+        {filteredBosses.length === 0 && !shouldShowCustomOption ? (
+          <p className="target-selector__boss-empty" role="status">
+            No bosses match your search. Try a different name.
+          </p>
+        ) : null}
       </div>
       <div
         id="target-selector-options"
