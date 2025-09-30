@@ -2066,7 +2066,12 @@ h6 {
 
 .charm-workbench__grid {
   --charm-size: clamp(2.8rem, 6vw, 4.6rem);
-  --charm-gap: clamp(0.5rem, 0.8vw, 0.8rem);
+  --charm-gap-max: clamp(0.5rem, 0.8vw, 0.8rem);
+  --charm-gap: min(var(--charm-gap-max), calc(100% / 18));
+  --charm-track-size: min(
+    var(--charm-size),
+    max(0px, calc((100% - (9 * var(--charm-gap))) / 10))
+  );
 
   overflow-x: auto;
   padding-bottom: 0.5rem;
@@ -2091,7 +2096,7 @@ h6 {
 @media (width >= 1280px) {
   .charm-workbench__grid {
     --charm-size: 4.9rem;
-    --charm-gap: 0.85rem;
+    --charm-gap-max: 0.85rem;
   }
 }
 
@@ -2431,31 +2436,30 @@ h6 {
 .charm-grid {
   display: grid;
   gap: calc(var(--charm-gap) * 1.1);
-  min-width: max-content;
 }
 
 .charm-grid__row {
   display: grid;
-  grid-template-columns: repeat(10, var(--charm-size));
+  grid-template-columns: repeat(10, minmax(0, var(--charm-track-size)));
   gap: var(--charm-gap);
 }
 
 .charm-grid__row--offset {
-  margin-left: calc((var(--charm-size) + var(--charm-gap)) / 2);
+  margin-left: calc((var(--charm-track-size) + var(--charm-gap)) / 2);
 }
 
 .charm-slot {
   display: grid;
   place-items: center;
-  min-height: var(--charm-size);
+  min-height: var(--charm-track-size);
 }
 
 .charm-token {
   position: relative;
   display: grid;
   place-items: center;
-  width: var(--charm-size);
-  height: var(--charm-size);
+  width: var(--charm-track-size);
+  height: var(--charm-track-size);
   padding: 0;
   border: none;
   background: none;
@@ -2491,8 +2495,10 @@ h6 {
 }
 
 .charm-token__icon {
-  width: calc(var(--charm-size) * 0.92);
-  height: calc(var(--charm-size) * 0.92);
+  position: relative;
+  z-index: 1;
+  width: calc(var(--charm-track-size) * 0.92);
+  height: calc(var(--charm-track-size) * 0.92);
   object-fit: contain;
   pointer-events: none;
 }
@@ -2514,7 +2520,7 @@ h6 {
     opacity 120ms ease,
     transform 120ms ease;
   white-space: nowrap;
-  z-index: 2;
+  z-index: 4;
   box-shadow: 0 6px 14px rgb(0 0 0 / 35%);
 }
 
@@ -2661,7 +2667,7 @@ h6 {
   }
 
   .charm-grid__row--offset {
-    margin-left: calc((var(--charm-size) + var(--charm-gap)) / 1.6);
+    margin-left: calc((var(--charm-track-size) + var(--charm-gap)) / 1.6);
   }
 
   .button-grid {
