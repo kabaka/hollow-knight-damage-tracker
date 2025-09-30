@@ -19,12 +19,6 @@ import {
 } from '../../data';
 import { useSequenceContext } from '../fight-state/useSequenceContext';
 
-const orderCharmIds = (selected: string[]) => {
-  const ordered = supportedCharmIds.filter((charmId) => selected.includes(charmId));
-  const extras = selected.filter((id) => !ordered.includes(id));
-  return [...ordered, ...extras];
-};
-
 const getCharmCost = (charmId: string) => charmMap.get(charmId)?.cost ?? 0;
 
 const calculateCharmCost = (charmIds: string[]) =>
@@ -42,6 +36,11 @@ const REPLACEABLE_CHARMS = new Map<string, string>([
   ['kingsoul', 'void-heart'],
   ['void-heart', 'kingsoul'],
 ]);
+
+const resolveCharmConflict = (charmIds: string[], charmId: string) => {
+  const conflict = REPLACEABLE_CHARMS.get(charmId);
+  return conflict ? charmIds.filter((id) => id !== conflict) : charmIds;
+};
 
 export const charmGridLayout = [
   [
@@ -162,7 +161,7 @@ export const useBuildConfiguration = () => {
 
   const setActiveCharms = useCallback(
     (charmIds: string[]) => {
-      actions.setActiveCharms(orderCharmIds(charmIds));
+      actions.setActiveCharms(charmIds);
     },
     [actions],
   );
@@ -175,13 +174,41 @@ export const useBuildConfiguration = () => {
         return;
       }
 
-      const conflict = REPLACEABLE_CHARMS.get(charmId);
-      const withoutConflict = conflict
-        ? activeCharmIds.filter((id) => id !== conflict)
-        : activeCharmIds;
+      const withoutConflict = resolveCharmConflict(activeCharmIds, charmId);
 
       const nextIds = [...withoutConflict, charmId];
       setActiveCharms(nextIds);
+    },
+    [activeCharmIds, setActiveCharms],
+  );
+
+  const cycleCharmSlot = useCallback(
+    (charmIds: readonly string[]) => {
+      if (charmIds.length === 0) {
+        return;
+      }
+
+      const activeIndex = charmIds.findIndex((id) => activeCharmIds.includes(id));
+
+      if (activeIndex === -1) {
+        const targetId = charmIds[0];
+        const withoutConflict = resolveCharmConflict(activeCharmIds, targetId);
+        setActiveCharms([...withoutConflict, targetId]);
+        return;
+      }
+
+      const currentId = charmIds[activeIndex];
+      const nextIndex = activeIndex + 1;
+
+      if (nextIndex < charmIds.length) {
+        const nextId = charmIds[nextIndex];
+        const withoutCurrent = activeCharmIds.filter((id) => id !== currentId);
+        const withoutConflict = resolveCharmConflict(withoutCurrent, nextId);
+        setActiveCharms([...withoutConflict, nextId]);
+        return;
+      }
+
+      setActiveCharms(activeCharmIds.filter((id) => id !== currentId));
     },
     [activeCharmIds, setActiveCharms],
   );
@@ -337,6 +364,7 @@ export const useBuildConfiguration = () => {
     activeCharmCost,
     canEquipCharm,
     toggleCharm,
+    cycleCharmSlot,
     applyCharmPreset,
     setNotchLimit,
     setNailUpgrade,
