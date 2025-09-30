@@ -128,6 +128,102 @@ describe('CombatLogPanel', () => {
     }
   });
 
+  it('auto-scrolls only when the user is near the bottom of the viewport', async () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    let actions: FightActions | null = null;
+
+    try {
+      renderWithFightProvider(
+        <CombatLogProvider>
+          <ActionsBridge
+            onReady={(value) => {
+              actions = value;
+            }}
+          />
+          <CombatLogPanel />
+        </CombatLogProvider>,
+      );
+
+      await waitFor(() => {
+        expect(actions).not.toBeNull();
+      });
+
+      const viewport = screen.getByRole('log');
+      const scrollTo = vi.fn();
+
+      Object.defineProperty(viewport, 'clientHeight', {
+        configurable: true,
+        value: 100,
+        writable: true,
+      });
+      Object.defineProperty(viewport, 'scrollHeight', {
+        configurable: true,
+        value: 200,
+        writable: true,
+      });
+      Object.defineProperty(viewport, 'scrollTop', {
+        configurable: true,
+        value: 95,
+        writable: true,
+      });
+
+      // @ts-expect-error jsdom does not implement scrollTo natively
+      viewport.scrollTo = scrollTo;
+
+      act(() => {
+        viewport.dispatchEvent(new Event('scroll'));
+      });
+
+      act(() => {
+        actions?.startFight(Date.now());
+      });
+
+      act(() => {
+        actions?.logAttack({
+          id: 'nail-strike',
+          label: 'Nail Strike',
+          category: 'nail',
+          damage: 50,
+          timestamp: Date.now(),
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Nail Strike')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(scrollTo).toHaveBeenCalled();
+      });
+
+      scrollTo.mockClear();
+      viewport.scrollTop = 0;
+
+      act(() => {
+        viewport.dispatchEvent(new Event('scroll'));
+      });
+
+      act(() => {
+        actions?.logAttack({
+          id: 'nail-strike-2',
+          label: 'Nail Strike',
+          category: 'nail',
+          damage: 60,
+          timestamp: Date.now(),
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getAllByText('Nail Strike').length).toBeGreaterThan(1);
+      });
+
+      expect(scrollTo).not.toHaveBeenCalled();
+    } finally {
+      setItemSpy.mockRestore();
+    }
+  });
+
   it('processes new damage entries only once despite animation frame updates', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 

@@ -166,7 +166,15 @@ const useCombatLogController = (): CombatLogContextValue => {
   const lastDamageCountRef = useRef<number>(0);
   const hasHydratedRef = useRef<boolean>(false);
   const cancelPersistRef = useRef<(() => void) | null>(null);
-  const pendingPersistPayloadRef = useRef<string | null>(null);
+  const persistDebounceTimeoutRef = useRef<number | null>(null);
+  const persistDirtyRef = useRef(false);
+  const lastPersistTimestampRef = useRef(0);
+  const entriesRef = useRef<CombatLogEntry[]>([]);
+  const shouldAutoScrollRef = useRef(true);
+
+  const PERSIST_DEBOUNCE_MS = 800;
+  const PERSIST_IDLE_TIMEOUT_MS = 1000;
+  const AUTO_SCROLL_EPSILON_PX = 48;
 
   const logViewportRef = useRef<HTMLDivElement>(null);
   const entryIdRef = useRef(0);
@@ -418,36 +426,20 @@ const useCombatLogController = (): CombatLogContextValue => {
     targetName,
   ]);
 
-  const flushPersist = useCallback(() => {
-    if (!hasHydratedRef.current || typeof window === 'undefined') {
-      return;
+  const clearPersistTimers = useCallback(() => {
+    if (persistDebounceTimeoutRef.current !== null) {
+      window.clearTimeout(persistDebounceTimeoutRef.current);
+      persistDebounceTimeoutRef.current = null;
     }
 
     cancelPersistRef.current?.();
     cancelPersistRef.current = null;
-
-    const pendingPayload = pendingPersistPayloadRef.current;
-    pendingPersistPayloadRef.current = null;
-
-    if (pendingPayload == null) {
-      return;
-    }
-
-    try {
-      window.sessionStorage.setItem(STORAGE_KEY, pendingPayload);
-    } catch {
-      // Ignore persistence errors to keep the log responsive.
-    }
   }, []);
 
-  useEffect(() => {
-    if (!hasHydratedRef.current || typeof window === 'undefined') {
-      return;
-    }
-
-    const payload: PersistedCombatLogState = {
+  const buildPersistPayload = useCallback((): PersistedCombatLogState => {
+    return {
       version: STORAGE_VERSION,
-      entries,
+      entries: entriesRef.current,
       entryId: entryIdRef.current,
       currentFight: { ...currentFightRef.current },
       runningDamage: runningDamageRef.current,
@@ -455,29 +447,104 @@ const useCombatLogController = (): CombatLogContextValue => {
       lastFightEnd: lastFightEndRef.current,
       processedEventIds: Array.from(processedEventIdsRef.current),
     };
+  }, []);
 
-    pendingPersistPayloadRef.current = JSON.stringify(payload);
+  const persistNow = useCallback(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') {
+      return;
+    }
 
-    cancelPersistRef.current?.();
-    cancelPersistRef.current = scheduleIdleTask(
-      () => {
-        const pendingPayload = pendingPersistPayloadRef.current;
-        pendingPersistPayloadRef.current = null;
-        cancelPersistRef.current = null;
+    const payload = buildPersistPayload();
 
-        if (pendingPayload == null) {
-          return;
-        }
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      lastPersistTimestampRef.current = Date.now();
+      persistDirtyRef.current = false;
+    } catch {
+      // Ignore persistence errors to keep the log responsive.
+    }
+  }, [buildPersistPayload]);
 
-        try {
-          window.sessionStorage.setItem(STORAGE_KEY, pendingPayload);
-        } catch {
-          // Ignore persistence errors to keep the log responsive.
-        }
-      },
-      { timeout: 500 },
-    );
-  }, [entries]);
+  const schedulePersist = useCallback(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') {
+      return;
+    }
+
+    persistDirtyRef.current = true;
+
+    const scheduleIdle = () => {
+      cancelPersistRef.current?.();
+      cancelPersistRef.current = scheduleIdleTask(
+        () => {
+          cancelPersistRef.current = null;
+
+          if (!persistDirtyRef.current) {
+            return;
+          }
+
+          const now = Date.now();
+          const lastPersist = lastPersistTimestampRef.current;
+          const hasPersistedBefore = lastPersist > 0;
+          const elapsed = hasPersistedBefore
+            ? now - lastPersist
+            : Number.POSITIVE_INFINITY;
+          if (hasPersistedBefore && elapsed < PERSIST_DEBOUNCE_MS) {
+            if (persistDebounceTimeoutRef.current === null) {
+              const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
+              persistDebounceTimeoutRef.current = window.setTimeout(() => {
+                persistDebounceTimeoutRef.current = null;
+                schedulePersist();
+              }, delay);
+            }
+            return;
+          }
+
+          persistNow();
+        },
+        { timeout: PERSIST_IDLE_TIMEOUT_MS },
+      );
+    };
+
+    if (cancelPersistRef.current || persistDebounceTimeoutRef.current !== null) {
+      return;
+    }
+
+    const now = Date.now();
+    const lastPersist = lastPersistTimestampRef.current;
+    const hasPersistedBefore = lastPersist > 0;
+    const elapsed = hasPersistedBefore ? now - lastPersist : Number.POSITIVE_INFINITY;
+    if (!hasPersistedBefore || elapsed >= PERSIST_DEBOUNCE_MS) {
+      scheduleIdle();
+    } else {
+      const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
+      persistDebounceTimeoutRef.current = window.setTimeout(() => {
+        persistDebounceTimeoutRef.current = null;
+        scheduleIdle();
+      }, delay);
+    }
+  }, [PERSIST_DEBOUNCE_MS, PERSIST_IDLE_TIMEOUT_MS, persistNow]);
+
+  const flushPersist = useCallback(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') {
+      return;
+    }
+
+    clearPersistTimers();
+
+    if (!persistDirtyRef.current) {
+      return;
+    }
+
+    persistNow();
+  }, [clearPersistTimers, persistNow]);
+
+  useEffect(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') {
+      return;
+    }
+    entriesRef.current = entries;
+    schedulePersist();
+  }, [entries, schedulePersist]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -518,18 +585,42 @@ const useCombatLogController = (): CombatLogContextValue => {
 
   useEffect(() => {
     if (entries.length === 0) {
+      shouldAutoScrollRef.current = true;
       return;
     }
+
+    const viewport = logViewportRef.current;
+    if (!viewport || !shouldAutoScrollRef.current) {
+      return;
+    }
+
+    const nextTop = viewport.scrollHeight;
+    if (typeof viewport.scrollTo === 'function') {
+      viewport.scrollTo({ top: nextTop });
+    } else {
+      viewport.scrollTop = nextTop;
+    }
+  }, [entries]);
+
+  useEffect(() => {
     const viewport = logViewportRef.current;
     if (!viewport) {
       return;
     }
-    if (typeof viewport.scrollTo === 'function') {
-      viewport.scrollTo({ top: viewport.scrollHeight });
-    } else {
-      viewport.scrollTop = viewport.scrollHeight;
-    }
-  }, [entries]);
+
+    const updateAutoScrollFlag = () => {
+      const distanceFromBottom =
+        viewport.scrollHeight - (viewport.scrollTop + viewport.clientHeight);
+      shouldAutoScrollRef.current = distanceFromBottom <= AUTO_SCROLL_EPSILON_PX;
+    };
+
+    updateAutoScrollFlag();
+    viewport.addEventListener('scroll', updateAutoScrollFlag, { passive: true });
+
+    return () => {
+      viewport.removeEventListener('scroll', updateAutoScrollFlag);
+    };
+  }, []);
 
   useEffect(() => {
     if (damageLog.length === 0) {
