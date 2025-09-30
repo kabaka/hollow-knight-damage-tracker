@@ -5,6 +5,7 @@ import type { Charm } from '../../data';
 
 import { MAX_NOTCH_LIMIT, MIN_NOTCH_LIMIT } from '../fight-state/fightReducer';
 import { charmGridLayout, useBuildConfiguration } from './useBuildConfiguration';
+import { useHapticFeedback } from '../../utils/haptics';
 
 const CHARM_PRESETS = [
   {
@@ -153,6 +154,8 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   const charmSlotRefs = useRef(new Map<string, HTMLButtonElement | null>());
   const equippedCharmRefs = useRef(new Map<string, HTMLDivElement | null>());
   const previousCharmIdsRef = useRef<string[]>(activeCharmIds);
+  const overcharmRef = useRef(isOvercharmed);
+  const { trigger: triggerHaptics } = useHapticFeedback();
   const [charmFlights, setCharmFlights] = useState<CharmFlight[]>([]);
 
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
@@ -186,6 +189,19 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  useEffect(() => {
+    const wasOvercharmed = overcharmRef.current;
+    if (isOvercharmed && !wasOvercharmed) {
+      triggerHaptics('warning');
+    }
+
+    if (!isOvercharmed && wasOvercharmed) {
+      triggerHaptics('success');
+    }
+
+    overcharmRef.current = isOvercharmed;
+  }, [isOvercharmed, triggerHaptics]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;

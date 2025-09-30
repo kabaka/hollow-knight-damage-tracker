@@ -46,6 +46,7 @@ Hollow Knight Damage Tracker is a responsive companion app for players, co-comme
 
 - **Build-aware damage:** Charms, nail upgrades, and spell levels combine automatically so every button shows the exact hit value left.
 - **Live analytics:** Remaining HP, DPS, average damage, and actions per minute update in real time with undo/redo support.
+- **Mobile haptics:** Distinct vibration cues for attacks, fight completions, sequence milestones, and overcharm warnings keep mobile logging effortless.
 - **Session persistence:** Loadouts and fight logs survive refreshes, rage quits, and accidental tab closes.
 
 ### Built for streams & VOD dives

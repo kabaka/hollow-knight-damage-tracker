@@ -16,6 +16,9 @@ import {
 
 import { AppButton } from '../../components/AppButton';
 import { useFightDerivedStats, useFightState } from '../fight-state/FightStateContext';
+import { toSequenceStageKey } from '../fight-state/fightReducer';
+import { useSequenceContext } from '../fight-state/useSequenceContext';
+import { useHapticFeedback } from '../../utils/haptics';
 import { RESET_SHORTCUT_KEY, useAttackDefinitions } from './useAttackDefinitions';
 
 const RESET_SEQUENCE_SHORTCUT = 'Shift+Escape';
@@ -69,6 +72,8 @@ type AttackLogProviderProps = PropsWithChildren;
 export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   const fight = useFightState();
   const derived = useFightDerivedStats();
+  const sequenceContext = useSequenceContext();
+  const { trigger: triggerHaptics } = useHapticFeedback();
   const { actions, state } = fight;
   const { damageLog, redoStack } = state;
   const canEndFight = derived.fightStartTimestamp != null && !derived.isFightComplete;
@@ -111,6 +116,15 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const activeEffectTimeoutsRef = useRef<Map<HTMLElement, number>>(new Map());
   const actionButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const sequenceFeedbackRef = useRef<{
+    previousIndex: number | null;
+    lastCompletionKey: string | null;
+    wasCompleted: boolean;
+  }>({
+    previousIndex: null,
+    lastCompletionKey: null,
+    wasCompleted: false,
+  });
 
   const triggerActiveEffect = useCallback((element: HTMLElement | null) => {
     if (!element) {
@@ -179,10 +193,11 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   const handleToggleFight = useCallback(() => {
     if (canEndFight) {
       actions.endFight();
+      triggerHaptics('fight-complete');
     } else if (canStartFight) {
       actions.startFight();
     }
-  }, [actions, canEndFight, canStartFight]);
+  }, [actions, canEndFight, canStartFight, triggerHaptics]);
 
   const handleLogAttack = useCallback(
     (attack: {
@@ -193,8 +208,9 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
       soulCost: number | null;
     }) => {
       actions.logAttack(attack);
+      triggerHaptics('attack');
     },
-    [actions],
+    [actions, triggerHaptics],
   );
 
   useEffect(() => {
@@ -222,16 +238,9 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
       const getActionButton = (id: string) => actionButtonRefs.current.get(id) ?? null;
 
       if (key === 'Enter') {
-        if (canEndFight) {
+        if (canEndFight || canStartFight) {
           event.preventDefault();
-          actions.endFight();
-          triggerActiveEffect(getActionButton('end-fight'));
-          return;
-        }
-
-        if (canStartFight) {
-          event.preventDefault();
-          actions.startFight();
+          handleToggleFight();
           triggerActiveEffect(getActionButton('end-fight'));
           return;
         }
@@ -271,6 +280,7 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
           category: attack.category,
           soulCost: attack.soulCost,
         });
+        triggerHaptics('attack');
         triggerActiveEffect(
           panelRef.current?.querySelector<HTMLButtonElement>(
             `[data-attack-id='${attack.id}']`,
@@ -289,7 +299,70 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
     canEndFight,
     canStartFight,
     canResetSequence,
+    handleToggleFight,
+    triggerHaptics,
     triggerActiveEffect,
+  ]);
+
+  useEffect(() => {
+    if (!sequenceContext.isSequenceActive) {
+      sequenceFeedbackRef.current.previousIndex = null;
+      sequenceFeedbackRef.current.lastCompletionKey = null;
+      sequenceFeedbackRef.current.wasCompleted = false;
+      return;
+    }
+
+    const previousIndex = sequenceFeedbackRef.current.previousIndex;
+    const nextIndex = sequenceContext.cappedSequenceIndex;
+
+    if (previousIndex !== null && nextIndex > previousIndex) {
+      triggerHaptics('sequence-advance');
+      sequenceFeedbackRef.current.wasCompleted = false;
+      sequenceFeedbackRef.current.lastCompletionKey = null;
+    }
+
+    sequenceFeedbackRef.current.previousIndex = nextIndex;
+  }, [
+    sequenceContext.cappedSequenceIndex,
+    sequenceContext.isSequenceActive,
+    triggerHaptics,
+  ]);
+
+  useEffect(() => {
+    if (!sequenceContext.isSequenceActive || !sequenceContext.activeSequenceId) {
+      sequenceFeedbackRef.current.lastCompletionKey = null;
+      sequenceFeedbackRef.current.wasCompleted = false;
+      return;
+    }
+
+    const key = toSequenceStageKey(
+      sequenceContext.activeSequenceId,
+      sequenceContext.cappedSequenceIndex,
+    );
+    const hasEnded = state.sequenceManualEndFlags[key] ?? false;
+    const { lastCompletionKey, wasCompleted } = sequenceFeedbackRef.current;
+
+    if (hasEnded && (!wasCompleted || lastCompletionKey !== key)) {
+      triggerHaptics(
+        sequenceContext.hasNextSequenceStage
+          ? 'sequence-stage-complete'
+          : 'sequence-complete',
+      );
+      sequenceFeedbackRef.current.lastCompletionKey = key;
+      sequenceFeedbackRef.current.wasCompleted = true;
+      return;
+    }
+
+    if (!hasEnded && lastCompletionKey === key) {
+      sequenceFeedbackRef.current.wasCompleted = false;
+    }
+  }, [
+    sequenceContext.activeSequenceId,
+    sequenceContext.cappedSequenceIndex,
+    sequenceContext.hasNextSequenceStage,
+    sequenceContext.isSequenceActive,
+    state.sequenceManualEndFlags,
+    triggerHaptics,
   ]);
 
   const contextValue = useMemo<AttackLogContextValue>(
