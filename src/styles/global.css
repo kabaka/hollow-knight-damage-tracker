@@ -2449,7 +2449,7 @@ h6 {
 
 .charm-grid__row--offset::before {
   content: '';
-  flex: 0 0 var(--charm-indent);
+  flex: 0 0 max(0px, calc(var(--charm-indent) - var(--charm-gap)));
   display: block;
 }
 
@@ -2715,10 +2715,6 @@ h6 {
   .modal {
     --modal-padding-inline: 1rem;
     --modal-padding-block: clamp(1.5rem, 10vh, 3.5rem);
-  }
-
-  .charm-grid__row--offset {
-    margin-left: var(--charm-indent);
   }
 
   .button-grid {
