@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { Charm } from '../../data';
 
@@ -74,6 +74,58 @@ const getCharmAriaLabel = (charm: Charm) => {
   return detail ? `${base} ${detail}` : base;
 };
 
+type CharmFlight = {
+  key: string;
+  charmId: string;
+  icon: string;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  size: { width: number; height: number };
+};
+
+const CharmFlightSprite: FC<{
+  readonly animation: CharmFlight;
+  readonly onComplete: (key: string) => void;
+}> = ({ animation, onComplete }) => {
+  const elementRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) {
+      return;
+    }
+
+    const handleTransitionEnd = () => {
+      onComplete(animation.key);
+    };
+
+    element.addEventListener('transitionend', handleTransitionEnd);
+    const frame = requestAnimationFrame(() => {
+      element.style.transform = `translate(${animation.to.x}px, ${animation.to.y}px)`;
+    });
+
+    return () => {
+      element.removeEventListener('transitionend', handleTransitionEnd);
+      cancelAnimationFrame(frame);
+    };
+  }, [animation, onComplete]);
+
+  return (
+    <img
+      ref={elementRef}
+      src={animation.icon}
+      alt=""
+      aria-hidden="true"
+      className="charm-flight"
+      style={{
+        width: `${animation.size.width}px`,
+        height: `${animation.size.height}px`,
+        transform: `translate(${animation.from.x}px, ${animation.from.y}px)`,
+      }}
+    />
+  );
+};
+
 const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   onClose,
 }) => {
@@ -82,7 +134,7 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
     activeCharmIds,
     activeCharmCost,
     canEquipCharm,
-    toggleCharm,
+    cycleCharmSlot,
     applyCharmPreset,
     setNotchLimit,
     nailUpgrades,
@@ -97,15 +149,26 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const onCloseRef = useRef<PlayerConfigModalProps['onClose']>(onClose);
   const charmIconMap = useMemo(createCharmIconMap, []);
+  const workbenchRef = useRef<HTMLDivElement | null>(null);
+  const charmSlotRefs = useRef(new Map<string, HTMLButtonElement | null>());
+  const equippedCharmRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const previousCharmIdsRef = useRef<string[]>(activeCharmIds);
+  const [charmFlights, setCharmFlights] = useState<CharmFlight[]>([]);
 
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
-  const equippedCharms = useMemo(
-    () =>
-      activeCharmIds
-        .map((id) => charmDetails.get(id))
-        .filter((charm): charm is Charm => Boolean(charm)),
-    [activeCharmIds, charmDetails],
-  );
+  const equippedCharms = useMemo(() => {
+    const ordered = activeCharmIds
+      .map((id) => charmDetails.get(id))
+      .filter((charm): charm is Charm => Boolean(charm));
+
+    const voidHeartIndex = ordered.findIndex((charm) => charm.id === 'void-heart');
+    if (voidHeartIndex > 0) {
+      const [voidHeart] = ordered.splice(voidHeartIndex, 1);
+      ordered.unshift(voidHeart);
+    }
+
+    return ordered;
+  }, [activeCharmIds, charmDetails]);
   const notchIndicators = useMemo(
     () =>
       Array.from({ length: MAX_NOTCH_LIMIT }, (_, index) => {
@@ -144,6 +207,68 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
+  }, []);
+
+  useEffect(() => {
+    const previous = previousCharmIdsRef.current;
+    const newlyEquipped = activeCharmIds.filter((id) => !previous.includes(id));
+    previousCharmIdsRef.current = activeCharmIds;
+
+    if (newlyEquipped.length === 0) {
+      return;
+    }
+
+    const container = workbenchRef.current;
+    if (!container) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const containerRect = container.getBoundingClientRect();
+      const updates: CharmFlight[] = [];
+
+      for (const charmId of newlyEquipped) {
+        const source = charmSlotRefs.current.get(charmId);
+        const target = equippedCharmRefs.current.get(charmId);
+        const icon = charmIconMap.get(charmId);
+
+        if (!source || !target || !icon) {
+          continue;
+        }
+
+        const sourceRect = source.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const width = targetRect.width || sourceRect.width;
+        const height = targetRect.height || sourceRect.height;
+
+        updates.push({
+          key: `${charmId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          charmId,
+          icon,
+          from: {
+            x: sourceRect.left - containerRect.left + (sourceRect.width - width) / 2,
+            y: sourceRect.top - containerRect.top + (sourceRect.height - height) / 2,
+          },
+          to: {
+            x: targetRect.left - containerRect.left,
+            y: targetRect.top - containerRect.top,
+          },
+          size: { width, height },
+        });
+      }
+
+      if (updates.length > 0) {
+        setCharmFlights((current) => [...current, ...updates]);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [activeCharmIds, charmIconMap]);
+
+  const handleCharmFlightComplete = useCallback((key: string) => {
+    setCharmFlights((current) => current.filter((flight) => flight.key !== key));
   }, []);
 
   return (
@@ -189,7 +314,16 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
               Manage equipped charms, adjust your notch bracelet, and browse the staggered
               inventory grid.
             </p>
-            <div className="charm-workbench">
+            <div className="charm-workbench" ref={workbenchRef}>
+              <div className="charm-animation-layer" aria-hidden="true">
+                {charmFlights.map((flight) => (
+                  <CharmFlightSprite
+                    key={flight.key}
+                    animation={flight}
+                    onComplete={handleCharmFlightComplete}
+                  />
+                ))}
+              </div>
               <div className="charm-workbench__overview">
                 <div className="equipped-panel">
                   <h4 className="equipped-panel__title">Equipped</h4>
@@ -203,6 +337,13 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                             role="listitem"
                             className="equipped-panel__item"
                             title={getCharmTooltip(charm)}
+                            ref={(element) => {
+                              if (element) {
+                                equippedCharmRefs.current.set(charm.id, element);
+                              } else {
+                                equippedCharmRefs.current.delete(charm.id);
+                              }
+                            }}
                           >
                             {icon ? (
                               <img
@@ -291,38 +432,59 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                         <div
                           key={`${rowIndex}-${columnIndex}`}
                           role="gridcell"
-                          className={[
-                            'charm-slot',
-                            options.length > 1 ? 'charm-slot--paired' : '',
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
+                          className="charm-slot"
                         >
-                          {options.map((charmId) => {
-                            const charm = charmDetails.get(charmId);
-                            if (!charm) {
+                          {(() => {
+                            const activeId = options.find((id) =>
+                              activeCharmIds.includes(id),
+                            );
+                            const displayId = activeId ?? options[0];
+                            const displayCharm = charmDetails.get(displayId);
+                            if (!displayCharm) {
                               return null;
                             }
-                            const isActive = activeCharmIds.includes(charmId);
-                            const canEquip = canEquipCharm(charmId);
-                            const icon = charmIconMap.get(charmId);
+                            const icon = charmIconMap.get(displayCharm.id);
+                            const isActive = Boolean(activeId);
+                            const canEquip = options.some((id) => canEquipCharm(id));
+                            const variantNames = options
+                              .map((id) => charmDetails.get(id)?.name)
+                              .filter((name): name is string => Boolean(name));
+                            const slotLabel =
+                              variantNames.length > 1
+                                ? (() => {
+                                    const detail = getCharmDetailText(displayCharm);
+                                    const base = `${variantNames.join(' or ')}, ${formatNotchLabel(
+                                      displayCharm.cost,
+                                    )}.`;
+                                    return detail ? `${base} ${detail}` : base;
+                                  })()
+                                : getCharmAriaLabel(displayCharm);
                             const classes = [
                               'charm-token',
                               isActive ? 'charm-token--active' : 'charm-token--idle',
-                              !canEquip && !isActive ? 'charm-token--locked' : '',
+                              !isActive && !canEquip ? 'charm-token--locked' : '',
+                              options.length > 1 ? 'charm-token--variant' : '',
                             ]
                               .filter(Boolean)
                               .join(' ');
                             return (
                               <button
-                                key={charmId}
                                 type="button"
                                 className={classes}
-                                onClick={() => toggleCharm(charmId)}
-                                disabled={!canEquip && !isActive}
+                                onClick={() => cycleCharmSlot(options)}
+                                disabled={!isActive && !canEquip}
                                 aria-pressed={isActive}
-                                aria-label={getCharmAriaLabel(charm)}
-                                title={getCharmTooltip(charm)}
+                                aria-label={slotLabel}
+                                title={getCharmTooltip(displayCharm)}
+                                ref={(element) => {
+                                  for (const option of options) {
+                                    if (element) {
+                                      charmSlotRefs.current.set(option, element);
+                                    } else {
+                                      charmSlotRefs.current.delete(option);
+                                    }
+                                  }
+                                }}
                               >
                                 {icon ? (
                                   <img
@@ -332,13 +494,16 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                                     aria-hidden="true"
                                   />
                                 ) : null}
-                                <span className="charm-token__name">{charm.name}</span>
-                                <span className="charm-token__cost" aria-hidden="true">
-                                  {charm.cost}
+                                <span
+                                  className="charm-token__hover-label"
+                                  aria-hidden="true"
+                                >
+                                  {displayCharm.name}
                                 </span>
+                                <span className="visually-hidden">{slotLabel}</span>
                               </button>
                             );
-                          })}
+                          })()}
                         </div>
                       ))}
                     </div>
