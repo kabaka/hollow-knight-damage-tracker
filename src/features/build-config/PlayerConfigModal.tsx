@@ -443,65 +443,85 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                             if (!displayCharm) {
                               return null;
                             }
-                            const icon = charmIconMap.get(displayCharm.id);
-                            const isActive = Boolean(activeId);
-                            const canEquip = options.some((id) => canEquipCharm(id));
-                            const variantNames = options
-                              .map((id) => charmDetails.get(id)?.name)
-                              .filter((name): name is string => Boolean(name));
-                            const slotLabel =
-                              variantNames.length > 1
-                                ? (() => {
-                                    const detail = getCharmDetailText(displayCharm);
-                                    const base = `${variantNames.join(' or ')}, ${formatNotchLabel(
-                                      displayCharm.cost,
-                                    )}.`;
-                                    return detail ? `${base} ${detail}` : base;
-                                  })()
-                                : getCharmAriaLabel(displayCharm);
-                            const classes = [
-                              'charm-token',
-                              isActive ? 'charm-token--active' : 'charm-token--idle',
-                              !isActive && !canEquip ? 'charm-token--locked' : '',
-                              options.length > 1 ? 'charm-token--variant' : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' ');
-                            return (
-                              <button
-                                type="button"
-                                className={classes}
-                                onClick={() => cycleCharmSlot(options)}
-                                disabled={!isActive && !canEquip}
-                                aria-pressed={isActive}
-                                aria-label={slotLabel}
-                                title={getCharmTooltip(displayCharm)}
-                                ref={(element) => {
-                                  for (const option of options) {
+
+                            const renderVariantButton = (charmId: string) => {
+                              const variantCharm = charmDetails.get(charmId);
+                              if (!variantCharm) {
+                                return null;
+                              }
+                              const variantIcon = charmIconMap.get(variantCharm.id);
+                              const isVariantActive = activeCharmIds.includes(
+                                variantCharm.id,
+                              );
+                              const canEquipVariant = canEquipCharm(variantCharm.id);
+                              const variantClasses = [
+                                'charm-token',
+                                'charm-token--variant-layer',
+                                isVariantActive
+                                  ? 'charm-token--active'
+                                  : 'charm-token--idle',
+                                !isVariantActive && !canEquipVariant
+                                  ? 'charm-token--locked'
+                                  : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ');
+                              const handleVariantClick = () => {
+                                if (isVariantActive) {
+                                  cycleCharmSlot(options);
+                                } else {
+                                  cycleCharmSlot(options, variantCharm.id);
+                                }
+                              };
+                              return (
+                                <button
+                                  key={variantCharm.id}
+                                  type="button"
+                                  className={variantClasses}
+                                  onClick={handleVariantClick}
+                                  disabled={!isVariantActive && !canEquipVariant}
+                                  aria-pressed={isVariantActive}
+                                  aria-label={getCharmAriaLabel(variantCharm)}
+                                  title={getCharmTooltip(variantCharm)}
+                                  ref={(element) => {
                                     if (element) {
-                                      charmSlotRefs.current.set(option, element);
+                                      charmSlotRefs.current.set(variantCharm.id, element);
                                     } else {
-                                      charmSlotRefs.current.delete(option);
+                                      charmSlotRefs.current.delete(variantCharm.id);
                                     }
-                                  }
-                                }}
-                              >
-                                {icon ? (
-                                  <img
-                                    src={icon}
-                                    alt=""
-                                    className="charm-token__icon"
-                                    aria-hidden="true"
-                                  />
-                                ) : null}
-                                <span
-                                  className="charm-token__hover-label"
-                                  aria-hidden="true"
+                                  }}
                                 >
-                                  {displayCharm.name}
-                                </span>
-                                <span className="visually-hidden">{slotLabel}</span>
-                              </button>
+                                  {variantIcon ? (
+                                    <img
+                                      src={variantIcon}
+                                      alt=""
+                                      className="charm-token__icon"
+                                      aria-hidden="true"
+                                    />
+                                  ) : null}
+                                  <span
+                                    className="charm-token__hover-label"
+                                    aria-hidden="true"
+                                  >
+                                    {variantCharm.name}
+                                  </span>
+                                  <span className="visually-hidden">
+                                    {getCharmAriaLabel(variantCharm)}
+                                  </span>
+                                </button>
+                              );
+                            };
+
+                            if (options.length === 1) {
+                              return renderVariantButton(displayCharm.id);
+                            }
+
+                            return (
+                              <div className="charm-token-multi">
+                                {options.map((variantId) =>
+                                  renderVariantButton(variantId),
+                                )}
+                              </div>
                             );
                           })()}
                         </div>
