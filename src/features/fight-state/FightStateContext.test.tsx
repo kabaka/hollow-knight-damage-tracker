@@ -378,6 +378,69 @@ describe('derived stats context', () => {
 
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(42);
   });
+
+  it('uses real clock time when recomputing derived stats without frames', async () => {
+    const user = userEvent.setup();
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 1);
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    const Observer = () => {
+      const { actions } = useFightState();
+      const derived = useFightDerivedStats();
+      useEffect(() => {
+        actions.setCustomTargetHp(20);
+      }, [actions]);
+      return (
+        <div>
+          <span data-testid="target-hp">{derived.targetHp}</span>
+          <span data-testid="elapsed">{derived.elapsedMs ?? -1}</span>
+          <span data-testid="remaining">{derived.estimatedTimeRemainingMs ?? -1}</span>
+          <button type="button" onClick={() => actions.startFight()}>
+            Start fight
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              actions.logAttack({
+                id: 'swing',
+                label: 'Nail Swing',
+                damage: 10,
+                category: 'nail',
+                soulCost: null,
+              })
+            }
+          >
+            Log hit
+          </button>
+        </div>
+      );
+    };
+
+    render(
+      <FightStateProvider>
+        <Observer />
+      </FightStateProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('target-hp').textContent).toBe('20');
+    });
+
+    const startButton = screen.getByRole('button', { name: 'Start fight' });
+    now = 1000;
+    await user.click(startButton);
+
+    now = 5000;
+    await user.click(screen.getByRole('button', { name: 'Log hit' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('elapsed').textContent).toBe('4000');
+    });
+
+    expect(screen.getByTestId('remaining').textContent).toBe('4000');
+  });
 });
 
 describe('derived stats caching', () => {

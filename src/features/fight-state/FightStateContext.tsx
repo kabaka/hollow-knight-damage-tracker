@@ -302,15 +302,20 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     return cache.aggregates;
   }, []);
 
-  const notifyDerived = useCallback(() => {
-    const aggregates = ensureAggregateCache();
-    derivedRef.current = calculateDerivedStats(
-      stateRef.current,
-      frameTimestampRef.current,
-      aggregates,
-    );
-    derivedListenersRef.current.forEach((listener) => listener());
-  }, [ensureAggregateCache]);
+  const notifyDerived = useCallback(
+    (timestamp?: number) => {
+      const frameTimestamp = typeof timestamp === 'number' ? timestamp : Date.now();
+      frameTimestampRef.current = frameTimestamp;
+      const aggregates = ensureAggregateCache();
+      derivedRef.current = calculateDerivedStats(
+        stateRef.current,
+        frameTimestamp,
+        aggregates,
+      );
+      derivedListenersRef.current.forEach((listener) => listener());
+    },
+    [ensureAggregateCache],
+  );
 
   const persistDebounceTimeoutRef = useRef<number | null>(null);
   const persistDirtyRef = useRef(false);
@@ -442,7 +447,6 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     let frameId: number;
 
     const tick = () => {
-      frameTimestampRef.current = Date.now();
       notifyDerived();
       frameId = window.requestAnimationFrame(tick);
     };
@@ -456,8 +460,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     if (!shouldAnimate && state.fightEndTimestamp !== null) {
-      frameTimestampRef.current = state.fightEndTimestamp;
-      notifyDerived();
+      notifyDerived(state.fightEndTimestamp);
     }
   }, [shouldAnimate, state.fightEndTimestamp, notifyDerived]);
 
