@@ -2443,16 +2443,15 @@ h6 {
 }
 
 .charm-grid__row {
-  display: flex;
-  justify-content: center;
-  gap: var(--charm-gap);
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, var(--charm-track-size)));
+  column-gap: var(--charm-gap);
+  width: max-content;
+  transform: translateX(calc(var(--charm-indent) * -0.5));
 }
 
-.charm-grid__row--offset::before,
-.charm-grid__row--offset::after {
-  content: '';
-  flex: 0 0 max(0px, calc(var(--charm-indent) - var(--charm-gap)));
-  display: block;
+.charm-grid__row--offset {
+  transform: translateX(calc(var(--charm-indent) * 0.5));
 }
 
 .charm-slot {
