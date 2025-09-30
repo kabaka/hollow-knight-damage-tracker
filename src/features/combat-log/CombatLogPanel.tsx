@@ -61,6 +61,44 @@ const createAttackDetail = (
   return segments.join(' · ');
 };
 
+type IdleCallbackOptions = { timeout?: number };
+type IdleDeadline = { didTimeout: boolean; timeRemaining: () => number };
+type IdleCallback = (deadline: IdleDeadline) => void;
+
+interface IdleCallbackGlobal {
+  requestIdleCallback?: (callback: IdleCallback, options?: IdleCallbackOptions) => number;
+  cancelIdleCallback?: (handle: number) => void;
+}
+
+const scheduleIdleTask = (
+  callback: () => void,
+  options?: IdleCallbackOptions,
+): (() => void) => {
+  if (typeof window === 'undefined') {
+    callback();
+    return () => {};
+  }
+
+  const idleWindow = window as Window & IdleCallbackGlobal;
+
+  if (typeof idleWindow.requestIdleCallback === 'function') {
+    const handle = idleWindow.requestIdleCallback(() => {
+      callback();
+    }, options);
+
+    return () => {
+      if (typeof idleWindow.cancelIdleCallback === 'function') {
+        idleWindow.cancelIdleCallback(handle);
+      }
+    };
+  }
+
+  const timeoutId = window.setTimeout(callback, options?.timeout ?? 200);
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+};
+
 const STORAGE_KEY = 'hollow-knight-damage-tracker:combat-log';
 const STORAGE_VERSION = 1;
 
@@ -127,6 +165,8 @@ const useCombatLogController = (): CombatLogContextValue => {
   const lastFightEndRef = useRef<number | null>(null);
   const lastDamageCountRef = useRef<number>(0);
   const hasHydratedRef = useRef<boolean>(false);
+  const cancelPersistRef = useRef<(() => void) | null>(null);
+  const pendingPersistPayloadRef = useRef<string | null>(null);
 
   const logViewportRef = useRef<HTMLDivElement>(null);
   const entryIdRef = useRef(0);
@@ -378,27 +418,103 @@ const useCombatLogController = (): CombatLogContextValue => {
     targetName,
   ]);
 
+  const flushPersist = useCallback(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') {
+      return;
+    }
+
+    cancelPersistRef.current?.();
+    cancelPersistRef.current = null;
+
+    const pendingPayload = pendingPersistPayloadRef.current;
+    pendingPersistPayloadRef.current = null;
+
+    if (pendingPayload == null) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY, pendingPayload);
+    } catch {
+      // Ignore persistence errors to keep the log responsive.
+    }
+  }, []);
+
   useEffect(() => {
     if (!hasHydratedRef.current || typeof window === 'undefined') {
       return;
     }
 
-    try {
-      const payload: PersistedCombatLogState = {
-        version: STORAGE_VERSION,
-        entries,
-        entryId: entryIdRef.current,
-        currentFight: { ...currentFightRef.current },
-        runningDamage: runningDamageRef.current,
-        targetHp: targetHpRef.current,
-        lastFightEnd: lastFightEndRef.current,
-        processedEventIds: Array.from(processedEventIdsRef.current),
-      };
-      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch {
-      // Ignore persistence errors to keep the log responsive.
-    }
+    const payload: PersistedCombatLogState = {
+      version: STORAGE_VERSION,
+      entries,
+      entryId: entryIdRef.current,
+      currentFight: { ...currentFightRef.current },
+      runningDamage: runningDamageRef.current,
+      targetHp: targetHpRef.current,
+      lastFightEnd: lastFightEndRef.current,
+      processedEventIds: Array.from(processedEventIdsRef.current),
+    };
+
+    pendingPersistPayloadRef.current = JSON.stringify(payload);
+
+    cancelPersistRef.current?.();
+    cancelPersistRef.current = scheduleIdleTask(
+      () => {
+        const pendingPayload = pendingPersistPayloadRef.current;
+        pendingPersistPayloadRef.current = null;
+        cancelPersistRef.current = null;
+
+        if (pendingPayload == null) {
+          return;
+        }
+
+        try {
+          window.sessionStorage.setItem(STORAGE_KEY, pendingPayload);
+        } catch {
+          // Ignore persistence errors to keep the log responsive.
+        }
+      },
+      { timeout: 500 },
+    );
   }, [entries]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        flushPersist();
+      }
+    };
+
+    const handlePageHide = () => {
+      flushPersist();
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+  }, [flushPersist]);
+
+  useEffect(
+    () => () => {
+      flushPersist();
+    },
+    [flushPersist],
+  );
 
   useEffect(() => {
     if (entries.length === 0) {
