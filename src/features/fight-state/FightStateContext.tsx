@@ -312,22 +312,93 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     derivedListenersRef.current.forEach((listener) => listener());
   }, [ensureAggregateCache]);
 
-  const flushPersist = useCallback(() => {
-    cancelPersistRef.current?.();
-    cancelPersistRef.current = null;
+  const persistDebounceTimeoutRef = useRef<number | null>(null);
+  const persistDirtyRef = useRef(false);
+  const lastPersistTimestampRef = useRef(0);
+  const PERSIST_DEBOUNCE_MS = 900;
+  const PERSIST_IDLE_TIMEOUT_MS = 1500;
+
+  const persistNow = useCallback(() => {
     persistStateToStorage(stateRef.current);
+    lastPersistTimestampRef.current = Date.now();
+    persistDirtyRef.current = false;
   }, []);
 
-  const schedulePersist = useCallback(() => {
+  const flushPersist = useCallback(() => {
+    if (typeof window !== 'undefined' && persistDebounceTimeoutRef.current !== null) {
+      window.clearTimeout(persistDebounceTimeoutRef.current);
+      persistDebounceTimeoutRef.current = null;
+    }
+
     cancelPersistRef.current?.();
-    cancelPersistRef.current = scheduleIdleTask(
-      () => {
-        cancelPersistRef.current = null;
-        persistStateToStorage(stateRef.current);
-      },
-      { timeout: 500 },
-    );
-  }, []);
+    cancelPersistRef.current = null;
+
+    if (!persistDirtyRef.current) {
+      return;
+    }
+
+    persistNow();
+  }, [persistNow]);
+
+  const schedulePersist = useCallback(() => {
+    persistDirtyRef.current = true;
+
+    if (typeof window === 'undefined') {
+      persistNow();
+      return;
+    }
+
+    const scheduleIdle = () => {
+      cancelPersistRef.current?.();
+      cancelPersistRef.current = scheduleIdleTask(
+        () => {
+          cancelPersistRef.current = null;
+
+          if (!persistDirtyRef.current) {
+            return;
+          }
+
+          const now = Date.now();
+          const lastPersist = lastPersistTimestampRef.current;
+          const hasPersistedBefore = lastPersist > 0;
+          const elapsed = hasPersistedBefore
+            ? now - lastPersist
+            : Number.POSITIVE_INFINITY;
+          if (hasPersistedBefore && elapsed < PERSIST_DEBOUNCE_MS) {
+            if (persistDebounceTimeoutRef.current === null) {
+              const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
+              persistDebounceTimeoutRef.current = window.setTimeout(() => {
+                persistDebounceTimeoutRef.current = null;
+                schedulePersist();
+              }, delay);
+            }
+            return;
+          }
+
+          persistNow();
+        },
+        { timeout: PERSIST_IDLE_TIMEOUT_MS },
+      );
+    };
+
+    if (cancelPersistRef.current || persistDebounceTimeoutRef.current !== null) {
+      return;
+    }
+
+    const now = Date.now();
+    const lastPersist = lastPersistTimestampRef.current;
+    const hasPersistedBefore = lastPersist > 0;
+    const elapsed = hasPersistedBefore ? now - lastPersist : Number.POSITIVE_INFINITY;
+    if (!hasPersistedBefore || elapsed >= PERSIST_DEBOUNCE_MS) {
+      scheduleIdle();
+    } else {
+      const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
+      persistDebounceTimeoutRef.current = window.setTimeout(() => {
+        persistDebounceTimeoutRef.current = null;
+        scheduleIdle();
+      }, delay);
+    }
+  }, [PERSIST_DEBOUNCE_MS, PERSIST_IDLE_TIMEOUT_MS, persistNow]);
 
   if (!stateStoreRef.current) {
     stateStoreRef.current = {

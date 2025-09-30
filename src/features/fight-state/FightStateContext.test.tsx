@@ -105,21 +105,24 @@ describe('FightStateProvider persistence', () => {
 
     await user.click(screen.getByRole('button'));
 
-    await waitFor(() => {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      expect(stored).not.toBeNull();
-      if (!stored) {
-        throw new Error('Expected persisted fight state');
-      }
+    await waitFor(
+      () => {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        expect(stored).not.toBeNull();
+        if (!stored) {
+          throw new Error('Expected persisted fight state');
+        }
 
-      const parsed = JSON.parse(stored) as {
-        version: number;
-        state: { selectedBossId: string; customTargetHp: number };
-      };
-      expect(parsed.version).toBe(5);
-      expect(parsed.state.selectedBossId).toBe(CUSTOM_BOSS_ID);
-      expect(parsed.state.customTargetHp).toBe(4321);
-    });
+        const parsed = JSON.parse(stored) as {
+          version: number;
+          state: { selectedBossId: string; customTargetHp: number };
+        };
+        expect(parsed.version).toBe(5);
+        expect(parsed.state.selectedBossId).toBe(CUSTOM_BOSS_ID);
+        expect(parsed.state.customTargetHp).toBe(4321);
+      },
+      { timeout: 2000 },
+    );
   });
 });
 

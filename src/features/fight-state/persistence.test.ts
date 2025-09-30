@@ -265,40 +265,36 @@ describe('fight-state persistence', () => {
 
   it('batches persistence writes when updates occur rapidly', () => {
     const { spy: persistSpy, getLastPersistedState } = createPersistSpy();
-    vi.useFakeTimers();
+    expect(persistStateToStorage).toBe(persistenceModule.persistStateToStorage);
 
-    try {
-      const { result, unmount } = renderHook(() => useFightState(), {
-        wrapper: FightStateProvider,
-      });
+    const { result, unmount } = renderHook(() => useFightState(), {
+      wrapper: FightStateProvider,
+    });
 
-      act(() => {
-        result.current.actions.setCustomTargetHp(1111);
-        result.current.actions.setCustomTargetHp(2222);
-        result.current.actions.setCustomTargetHp(3333);
-      });
+    act(() => {
+      result.current.actions.setCustomTargetHp(1111);
+      result.current.actions.setCustomTargetHp(2222);
+      result.current.actions.setCustomTargetHp(3333);
+    });
 
-      expect(persistSpy).not.toHaveBeenCalled();
+    expect(persistSpy).not.toHaveBeenCalled();
 
-      act(() => {
-        vi.runAllTimers();
-      });
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
 
-      expect(persistSpy).toHaveBeenCalledTimes(1);
-      expect(getLastPersistedState()?.customTargetHp).toBe(3333);
+    expect(persistSpy).toHaveBeenCalledTimes(1);
 
-      persistSpy.mockClear();
+    expect(getLastPersistedState()?.customTargetHp).toBe(3333);
 
-      act(() => {
-        unmount();
-      });
+    persistSpy.mockClear();
 
-      expect(persistSpy).toHaveBeenCalledTimes(1);
-      expect(getLastPersistedState()?.customTargetHp).toBe(3333);
-    } finally {
-      vi.useRealTimers();
-      persistSpy.mockRestore();
-    }
+    act(() => {
+      unmount();
+    });
+
+    expect(persistSpy).not.toHaveBeenCalled();
+    persistSpy.mockRestore();
   });
 
   it('flushes pending persistence immediately when fights end', () => {
