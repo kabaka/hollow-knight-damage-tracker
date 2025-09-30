@@ -2068,7 +2068,7 @@ h6 {
 .charm-workbench__grid {
   --charm-size: clamp(3.15rem, 6.8vw, 5rem);
   --charm-gap: clamp(0.18rem, 0.5vw, 0.45rem);
-  --charm-track-base: max(0px, calc((100% - (9 * var(--charm-gap))) / 10));
+  --charm-track-base: max(0px, calc((100% - (9.5 * var(--charm-gap))) / 10.5));
   --charm-track-min: calc(var(--charm-size) * 0.62);
   --charm-track-size: max(
     var(--charm-track-min),
@@ -2435,9 +2435,11 @@ h6 {
 }
 
 .charm-grid {
+  --charm-indent: calc((var(--charm-track-size) + var(--charm-gap)) / 2);
+
   display: grid;
   gap: calc(var(--charm-gap) * 0.9);
-  --charm-indent: calc((var(--charm-track-size) + var(--charm-gap)) / 2);
+  width: 100%;
 }
 
 .charm-grid__row {
@@ -2539,10 +2541,6 @@ h6 {
   z-index: -1;
 }
 
-.charm-token--backdrop .charm-token__icon {
-  opacity: 0.65;
-}
-
 .charm-token__icon {
   position: relative;
   z-index: 1;
@@ -2550,6 +2548,10 @@ h6 {
   height: calc(var(--charm-track-size) * 0.96);
   object-fit: contain;
   pointer-events: none;
+}
+
+.charm-token--backdrop .charm-token__icon {
+  opacity: 0.65;
 }
 
 .charm-token__hover-label {
@@ -2716,7 +2718,7 @@ h6 {
   }
 
   .charm-grid__row--offset {
-    margin-left: calc((var(--charm-track-size) + var(--charm-gap)) / 1.6);
+    margin-left: var(--charm-indent);
   }
 
   .button-grid {
