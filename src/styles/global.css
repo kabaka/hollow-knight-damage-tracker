@@ -2444,10 +2444,12 @@ h6 {
 
 .charm-grid__row {
   display: flex;
+  justify-content: center;
   gap: var(--charm-gap);
 }
 
-.charm-grid__row--offset::before {
+.charm-grid__row--offset::before,
+.charm-grid__row--offset::after {
   content: '';
   flex: 0 0 max(0px, calc(var(--charm-indent) - var(--charm-gap)));
   display: block;
@@ -2461,6 +2463,8 @@ h6 {
 
 .charm-token-stack {
   position: relative;
+  display: grid;
+  place-items: center;
   width: var(--charm-track-size);
   height: var(--charm-track-size);
 }
@@ -2512,8 +2516,9 @@ h6 {
 
 .charm-token--stacked:not(.charm-token--backdrop) {
   inset: auto;
-  top: calc(var(--charm-track-size) * 0.08);
-  left: calc(var(--charm-track-size) * 0.08);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: calc(var(--charm-track-size) * 0.98);
   height: calc(var(--charm-track-size) * 0.98);
   z-index: 2;
@@ -2530,8 +2535,10 @@ h6 {
 
 .charm-token--backdrop {
   inset: auto;
-  top: calc(var(--charm-track-size) * -0.1);
-  left: calc(var(--charm-track-size) * -0.1);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%)
+    translate(calc(var(--charm-track-size) * -0.1), calc(var(--charm-track-size) * -0.1));
   width: calc(var(--charm-track-size) * 0.9);
   height: calc(var(--charm-track-size) * 0.9);
   filter: grayscale(0.95) brightness(0.42) saturate(0.55);
