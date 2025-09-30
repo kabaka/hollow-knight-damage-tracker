@@ -2065,11 +2065,10 @@ h6 {
 }
 
 .charm-workbench__grid {
-  --charm-size: clamp(2.8rem, 6vw, 4.6rem);
-  --charm-gap-max: clamp(0.5rem, 0.8vw, 0.8rem);
-  --charm-gap: min(var(--charm-gap-max), calc(100% / 18));
+  --charm-size: clamp(3.15rem, 6.8vw, 5rem);
+  --charm-gap: clamp(0.18rem, 0.5vw, 0.45rem);
   --charm-track-base: max(0px, calc((100% - (9 * var(--charm-gap))) / 10));
-  --charm-track-min: calc(var(--charm-size) * 0.45);
+  --charm-track-min: calc(var(--charm-size) * 0.62);
   --charm-track-size: max(
     var(--charm-track-min),
     min(var(--charm-size), var(--charm-track-base))
@@ -2098,7 +2097,6 @@ h6 {
 @media (width >= 1280px) {
   .charm-workbench__grid {
     --charm-size: 4.9rem;
-    --charm-gap-max: 0.85rem;
   }
 }
 
@@ -2437,17 +2435,25 @@ h6 {
 
 .charm-grid {
   display: grid;
-  gap: calc(var(--charm-gap) * 1.1);
+  gap: calc(var(--charm-gap) * 0.9);
+  --charm-indent: calc((var(--charm-track-size) + var(--charm-gap)) / 2);
 }
 
 .charm-grid__row {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, var(--charm-track-size)));
   gap: var(--charm-gap);
+  width: max-content;
 }
 
 .charm-grid__row--offset {
-  margin-left: calc((var(--charm-track-size) + var(--charm-gap)) / 2);
+  justify-self: end;
+  margin-left: var(--charm-indent);
+}
+
+.charm-grid__row:not(.charm-grid__row--offset) {
+  justify-self: start;
+  margin-right: var(--charm-indent);
 }
 
 .charm-slot {
@@ -2456,13 +2462,10 @@ h6 {
   min-height: var(--charm-track-size);
 }
 
-.charm-token-multi {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: calc(var(--charm-track-size) * 0.12);
+.charm-token-stack {
+  position: relative;
   width: var(--charm-track-size);
+  height: var(--charm-track-size);
 }
 
 .charm-token {
@@ -2479,11 +2482,6 @@ h6 {
     transform 150ms ease,
     filter 180ms ease,
     opacity 180ms ease;
-}
-
-.charm-token--variant-layer {
-  width: calc(var(--charm-track-size) * 0.85);
-  height: calc(var(--charm-track-size) * 0.85);
 }
 
 .charm-token:focus-visible {
@@ -2510,18 +2508,47 @@ h6 {
   opacity: 0.45;
 }
 
+.charm-token--stacked {
+  position: absolute;
+  inset: 0;
+}
+
+.charm-token--stacked:not(.charm-token--backdrop) {
+  z-index: 2;
+}
+
+.charm-token--backdrop {
+  filter: grayscale(0.95) brightness(0.42) saturate(0.55);
+  opacity: 0.38;
+  transform: translate(
+    calc(var(--charm-track-size) * -0.16),
+    calc(var(--charm-track-size) * -0.14)
+  );
+  z-index: 1;
+}
+
+.charm-token--backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 55%);
+  filter: blur(12px);
+  opacity: 0.5;
+  z-index: -1;
+}
+
+.charm-token--backdrop .charm-token__icon {
+  opacity: 0.65;
+}
+
 .charm-token__icon {
   position: relative;
   z-index: 1;
-  width: calc(var(--charm-track-size) * 0.92);
-  height: calc(var(--charm-track-size) * 0.92);
+  width: calc(var(--charm-track-size) * 0.96);
+  height: calc(var(--charm-track-size) * 0.96);
   object-fit: contain;
   pointer-events: none;
-}
-
-.charm-token--variant-layer .charm-token__icon {
-  width: 100%;
-  height: 100%;
 }
 
 .charm-token__hover-label {
