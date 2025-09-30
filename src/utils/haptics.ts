@@ -10,7 +10,7 @@ export type HapticFeedbackType =
   | 'success';
 
 const VIBRATION_PATTERNS: Record<HapticFeedbackType, VibratePattern> = {
-  attack: [0, 35, 25, 35],
+  attack: 30,
   'fight-complete': [0, 40, 30, 60, 30, 80],
   'sequence-advance': [0, 25, 20, 25, 20, 25],
   'sequence-stage-complete': [0, 35, 25, 35, 25, 35, 25, 70],
@@ -37,7 +37,13 @@ export const triggerHapticFeedback = (type: HapticFeedbackType) => {
     return false;
   }
 
-  return navigator.vibrate(pattern);
+  const navigatorWithVibrate = navigator as Navigator & {
+    vibrate: (pattern: VibratePattern) => boolean;
+  };
+
+  navigatorWithVibrate.vibrate(0);
+
+  return navigatorWithVibrate.vibrate(pattern);
 };
 
 export const useHapticFeedback = () => {
