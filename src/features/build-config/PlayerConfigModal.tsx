@@ -444,7 +444,13 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                               return null;
                             }
 
-                            const renderVariantButton = (charmId: string) => {
+                            const renderVariantButton = (
+                              charmId: string,
+                              {
+                                isStacked,
+                                isBackdrop,
+                              }: { isStacked?: boolean; isBackdrop?: boolean } = {},
+                            ) => {
                               const variantCharm = charmDetails.get(charmId);
                               if (!variantCharm) {
                                 return null;
@@ -456,7 +462,8 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                               const canEquipVariant = canEquipCharm(variantCharm.id);
                               const variantClasses = [
                                 'charm-token',
-                                'charm-token--variant-layer',
+                                isStacked ? 'charm-token--stacked' : '',
+                                isBackdrop ? 'charm-token--backdrop' : '',
                                 isVariantActive
                                   ? 'charm-token--active'
                                   : 'charm-token--idle',
@@ -467,6 +474,11 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                                 .filter(Boolean)
                                 .join(' ');
                               const handleVariantClick = () => {
+                                if (isBackdrop) {
+                                  cycleCharmSlot(options, variantCharm.id);
+                                  return;
+                                }
+
                                 if (isVariantActive) {
                                   cycleCharmSlot(options);
                                 } else {
@@ -516,11 +528,21 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
                               return renderVariantButton(displayCharm.id);
                             }
 
+                            const stackedVariants = options.filter(
+                              (variantId) => variantId !== displayCharm.id,
+                            );
+
                             return (
-                              <div className="charm-token-multi">
-                                {options.map((variantId) =>
-                                  renderVariantButton(variantId),
+                              <div className="charm-token-stack">
+                                {stackedVariants.map((variantId) =>
+                                  renderVariantButton(variantId, {
+                                    isStacked: true,
+                                    isBackdrop: true,
+                                  }),
                                 )}
+                                {renderVariantButton(displayCharm.id, {
+                                  isStacked: true,
+                                })}
                               </div>
                             );
                           })()}
