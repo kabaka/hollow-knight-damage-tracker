@@ -1541,8 +1541,7 @@ h6 {
 .combat-log {
   position: relative;
   flex: 1 1 auto;
-  min-height: clamp(200px, 42vh, 520px);
-  max-height: 100%;
+  block-size: clamp(200px, 42vh, 520px);
   overflow-y: auto;
 }
 
