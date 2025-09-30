@@ -27,6 +27,107 @@ describe('CombatLogPanel', () => {
     window.localStorage.clear();
   });
 
+  it('schedules persistence with an idle callback before writing to storage', async () => {
+    type IdleDeadline = { didTimeout: boolean; timeRemaining: () => number };
+    type IdleCallback = (deadline: IdleDeadline) => void;
+    type IdleCallbackOptions = { timeout?: number };
+    type IdleCallbackFn = (
+      callback: IdleCallback,
+      options?: IdleCallbackOptions,
+    ) => number;
+    type IdleCancelFn = (handle: number) => void;
+
+    type IdleCallbackGlobal = Window & {
+      requestIdleCallback?: IdleCallbackFn;
+      cancelIdleCallback?: IdleCancelFn;
+    };
+
+    const idleWindow = window as IdleCallbackGlobal;
+    const originalRequestIdleCallback = idleWindow.requestIdleCallback;
+    const originalCancelIdleCallback = idleWindow.cancelIdleCallback;
+
+    let scheduledCallback: IdleCallback | null = null;
+
+    const requestIdleCallbackMock = vi
+      .fn<IdleCallbackFn>()
+      .mockImplementation((callback) => {
+        scheduledCallback = callback;
+        return 1;
+      });
+
+    const cancelIdleCallbackMock = vi.fn<IdleCancelFn>().mockImplementation(() => {
+      scheduledCallback = null;
+    });
+
+    idleWindow.requestIdleCallback = requestIdleCallbackMock;
+    idleWindow.cancelIdleCallback = cancelIdleCallbackMock;
+
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    let actions: FightActions | null = null;
+
+    try {
+      renderWithFightProvider(
+        <CombatLogProvider>
+          <ActionsBridge
+            onReady={(value) => {
+              actions = value;
+            }}
+          />
+          <CombatLogPanel />
+        </CombatLogProvider>,
+      );
+
+      await waitFor(() => {
+        expect(actions).not.toBeNull();
+      });
+
+      act(() => {
+        actions?.logAttack({
+          id: 'nail-strike',
+          label: 'Nail Strike',
+          category: 'nail',
+          damage: 50,
+          timestamp: Date.now(),
+        });
+      });
+
+      await waitFor(() => {
+        expect(requestIdleCallbackMock).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(scheduledCallback).not.toBeNull();
+      });
+
+      expect(setItemSpy).not.toHaveBeenCalled();
+
+      const callback = scheduledCallback;
+      if (typeof callback !== 'function') {
+        throw new Error('Expected requestIdleCallback to schedule a task');
+      }
+
+      act(() => {
+        callback({ didTimeout: false, timeRemaining: () => 10 });
+      });
+
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      setItemSpy.mockRestore();
+      if (typeof originalRequestIdleCallback === 'function') {
+        idleWindow.requestIdleCallback = originalRequestIdleCallback;
+      } else {
+        delete idleWindow.requestIdleCallback;
+      }
+
+      if (typeof originalCancelIdleCallback === 'function') {
+        idleWindow.cancelIdleCallback = originalCancelIdleCallback;
+      } else {
+        delete idleWindow.cancelIdleCallback;
+      }
+    }
+  });
+
   it('processes new damage entries only once despite animation frame updates', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
