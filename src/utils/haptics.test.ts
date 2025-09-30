@@ -2,6 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { __TESTING__, isHapticsSupported, triggerHapticFeedback } from './haptics';
 
+const EXPECTED_VIBRATION_PATTERNS = {
+  attack: [0, 35, 25, 35],
+  'fight-complete': [0, 40, 30, 60, 30, 80],
+  'sequence-advance': [0, 25, 20, 25, 20, 25],
+  'sequence-stage-complete': [0, 35, 25, 35, 25, 35, 25, 70],
+  'sequence-complete': [0, 45, 30, 45, 30, 70, 40, 120],
+  warning: [0, 30, 15, 30, 15, 30, 15, 60],
+  success: [0, 20, 25, 40, 30, 60],
+} as const satisfies (typeof __TESTING__)['VIBRATION_PATTERNS'];
+
 const originalNavigator = globalThis.navigator;
 
 describe('haptics utilities', () => {
@@ -26,6 +36,32 @@ describe('haptics utilities', () => {
     expect(isHapticsSupported()).toBe(true);
   });
 
+  it('exposes distinct multi-pulse vibration patterns for each feedback type', () => {
+    expect(__TESTING__.VIBRATION_PATTERNS).toEqual(EXPECTED_VIBRATION_PATTERNS);
+
+    const patternEntries = Object.entries(__TESTING__.VIBRATION_PATTERNS);
+    patternEntries.forEach(([, pattern]) => {
+      expect(Array.isArray(pattern)).toBe(true);
+      if (!Array.isArray(pattern)) {
+        throw new Error('Expected every haptic pattern to be an array');
+      }
+
+      expect(pattern.length).toBeGreaterThanOrEqual(4);
+      expect(pattern.filter((_, index) => index % 2 === 1).length).toBeGreaterThanOrEqual(
+        2,
+      );
+    });
+
+    const serializedPatterns = patternEntries.map(([, pattern]) => {
+      if (!Array.isArray(pattern)) {
+        throw new Error('Expected every haptic pattern to be an array');
+      }
+
+      return pattern.join(',');
+    });
+    expect(new Set(serializedPatterns).size).toBe(serializedPatterns.length);
+  });
+
   it('triggers the attack vibration pattern', () => {
     const navigatorWithVibrate = globalThis.navigator as Navigator & {
       vibrate: ReturnType<typeof vi.fn>;
@@ -34,7 +70,7 @@ describe('haptics utilities', () => {
     triggerHapticFeedback('attack');
 
     expect(navigatorWithVibrate.vibrate).toHaveBeenCalledWith(
-      __TESTING__.VIBRATION_PATTERNS.attack,
+      EXPECTED_VIBRATION_PATTERNS.attack,
     );
   });
 
@@ -46,7 +82,7 @@ describe('haptics utilities', () => {
     triggerHapticFeedback('sequence-complete');
 
     expect(navigatorWithVibrate.vibrate).toHaveBeenCalledWith(
-      __TESTING__.VIBRATION_PATTERNS['sequence-complete'],
+      EXPECTED_VIBRATION_PATTERNS['sequence-complete'],
     );
   });
 
