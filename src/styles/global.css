@@ -2515,6 +2515,11 @@ h6 {
 }
 
 .charm-token--stacked:not(.charm-token--backdrop) {
+  inset: auto;
+  top: calc(var(--charm-track-size) * 0.38);
+  left: calc(var(--charm-track-size) * 0.34);
+  width: calc(var(--charm-track-size) * 0.82);
+  height: calc(var(--charm-track-size) * 0.82);
   z-index: 2;
 }
 
@@ -2528,12 +2533,13 @@ h6 {
 }
 
 .charm-token--backdrop {
+  inset: auto;
+  top: calc(var(--charm-track-size) * -0.24);
+  left: calc(var(--charm-track-size) * -0.22);
+  width: calc(var(--charm-track-size) * 0.82);
+  height: calc(var(--charm-track-size) * 0.82);
   filter: grayscale(0.95) brightness(0.42) saturate(0.55);
   opacity: 0.38;
-  transform: translate(
-    calc(var(--charm-track-size) * -0.16),
-    calc(var(--charm-track-size) * -0.14)
-  );
   z-index: 1;
 }
 
