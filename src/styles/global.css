@@ -2075,6 +2075,7 @@ h6 {
   );
   --charm-indent: calc((var(--charm-track-size) + var(--charm-gap)) / 2);
 
+  display: contents;
   overflow-x: auto;
   padding-bottom: 0.5rem;
 }
@@ -2446,7 +2447,6 @@ h6 {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, var(--charm-track-size)));
   column-gap: var(--charm-gap);
-  width: max-content;
   transform: translateX(calc(var(--charm-indent) * -0.5));
 }
 
@@ -2457,6 +2457,7 @@ h6 {
 .charm-slot {
   display: grid;
   place-items: center;
+  width: calc(var(--charm-size) * 0.9);
   min-height: var(--charm-track-size);
 }
 
@@ -2472,12 +2473,26 @@ h6 {
   position: relative;
   display: grid;
   place-items: center;
+
+  --charm-token-offset-x: 0;
+  --charm-token-offset-y: 0;
+  --charm-token-hover-shift-x: 0;
+  --charm-token-hover-shift-y: 0;
+  --charm-token-hover-lift: -2px;
+  --charm-token-scale: 1;
+  --charm-token-scale-hover: 1.03;
+
   width: var(--charm-track-size);
   height: var(--charm-track-size);
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
+  transform: translate(
+      calc(var(--charm-token-offset-x) + var(--charm-token-hover-shift-x)),
+      calc(var(--charm-token-offset-y) + var(--charm-token-hover-shift-y))
+    )
+    scale(var(--charm-token-scale));
   transition:
     transform 150ms ease,
     filter 180ms ease,
@@ -2490,7 +2505,8 @@ h6 {
 }
 
 .charm-token:not(:disabled):hover {
-  transform: translateY(-2px) scale(1.03);
+  --charm-token-hover-shift-y: var(--charm-token-hover-lift);
+  --charm-token-scale: var(--charm-token-scale-hover);
 }
 
 .charm-token--idle {
@@ -2517,7 +2533,12 @@ h6 {
   inset: auto;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+
+  --charm-token-offset-x: -50%;
+  --charm-token-offset-y: -50%;
+  --charm-token-hover-lift: -1px;
+  --charm-token-scale-hover: 1.02;
+
   width: calc(var(--charm-track-size) * 0.98);
   height: calc(var(--charm-track-size) * 0.98);
   z-index: 2;
@@ -2536,8 +2557,12 @@ h6 {
   inset: auto;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%)
-    translate(calc(var(--charm-track-size) * -0.1), calc(var(--charm-track-size) * -0.1));
+
+  --charm-token-offset-x: calc(-50% - (var(--charm-track-size) * 0.1));
+  --charm-token-offset-y: calc(-50% - (var(--charm-track-size) * 0.1));
+  --charm-token-hover-lift: 0;
+  --charm-token-scale-hover: 1.012;
+
   width: calc(var(--charm-track-size) * 0.9);
   height: calc(var(--charm-track-size) * 0.9);
   filter: grayscale(0.95) brightness(0.42) saturate(0.55);
