@@ -62,7 +62,7 @@ export type DerivedStats = {
   frameTimestamp: number;
 };
 
-type FightActions = {
+export type FightActions = {
   selectBoss: (bossId: string) => void;
   setCustomTargetHp: (hp: number) => void;
   setNailUpgrade: (nailUpgradeId: string) => void;
