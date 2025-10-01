@@ -67,6 +67,7 @@ export type FightActions = {
   setCustomTargetHp: (hp: number) => void;
   setNailUpgrade: (nailUpgradeId: string) => void;
   setActiveCharms: (charmIds: string[]) => void;
+  updateActiveCharms: (updater: (charmIds: string[]) => string[]) => void;
   setCharmNotchLimit: (notchLimit: number) => void;
   setSpellLevel: (spellId: string, level: SpellLevel) => void;
   logAttack: (input: AttackInput) => void;
@@ -570,6 +571,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       setNailUpgrade: (nailUpgradeId) =>
         dispatch({ type: 'setNailUpgrade', nailUpgradeId }),
       setActiveCharms: (charmIds) => dispatch({ type: 'setActiveCharms', charmIds }),
+      updateActiveCharms: (updater) => dispatch({ type: 'updateActiveCharms', updater }),
       setCharmNotchLimit: (notchLimit) =>
         dispatch({ type: 'setCharmNotchLimit', notchLimit }),
       setSpellLevel: (spellId, level) =>
