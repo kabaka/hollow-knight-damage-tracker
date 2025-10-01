@@ -339,7 +339,9 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
       sequenceContext.activeSequenceId,
       sequenceContext.cappedSequenceIndex,
     );
-    const hasEnded = state.sequenceManualEndFlags[key] ?? false;
+    const hasEnded =
+      (state.sequenceManualEndFlags[key] ?? false) ||
+      state.sequenceFightEndTimestamps[key] != null;
     const { lastCompletionKey, wasCompleted } = sequenceFeedbackRef.current;
 
     if (hasEnded && (!wasCompleted || lastCompletionKey !== key)) {
@@ -361,6 +363,7 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
     sequenceContext.cappedSequenceIndex,
     sequenceContext.hasNextSequenceStage,
     sequenceContext.isSequenceActive,
+    state.sequenceFightEndTimestamps,
     state.sequenceManualEndFlags,
     triggerHaptics,
   ]);

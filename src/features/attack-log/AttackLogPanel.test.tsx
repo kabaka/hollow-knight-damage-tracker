@@ -1,12 +1,27 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
+import { vi } from 'vitest';
 
 import { AttackLogActions, AttackLogPanel, AttackLogProvider } from './AttackLogPanel';
 import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, bossSequenceMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
 import { useFightState } from '../fight-state/FightStateContext';
+
+const triggerMock = vi.fn();
+
+vi.mock('../../utils/haptics', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../utils/haptics')>('../../utils/haptics');
+  return {
+    ...actual,
+    useHapticFeedback: () => ({
+      isSupported: true,
+      trigger: triggerMock,
+    }),
+  };
+});
 
 const baseNailDamage = nailUpgrades[0]?.damage ?? 5;
 const defaultBossTarget = bossMap.get(DEFAULT_BOSS_ID);
@@ -30,13 +45,23 @@ const remainingAfterOneHit = Math.max(0, defaultBossHp - baseNailDamage);
 const initialHitsToFinish = Math.ceil(defaultBossHp / baseNailDamage);
 const hitsToFinishAfterOneHit = Math.ceil(remainingAfterOneHit / baseNailDamage);
 
-const SequenceHarness = () => {
+const SequenceHarness = ({
+  onActions,
+}: {
+  onActions?: (actions: ReturnType<typeof useFightState>['actions']) => void;
+}) => {
   const { actions, state } = useFightState();
   const sequenceId = masterSequence.id;
 
   useEffect(() => {
     actions.startSequence(sequenceId);
   }, [actions, sequenceId]);
+
+  useEffect(() => {
+    if (onActions) {
+      onActions(actions);
+    }
+  }, [actions, onActions]);
 
   return (
     <div>
@@ -53,6 +78,7 @@ const SequenceHarness = () => {
 describe('AttackLogPanel', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    triggerMock.mockReset();
   });
 
   afterEach(() => {
@@ -362,5 +388,93 @@ describe('AttackLogPanel', () => {
 
     expect(damageDisplay).toHaveTextContent('36');
     expect(vengefulSpiritButton).toHaveTextContent(/flukenest volley/i);
+  });
+
+  it('emits sequence completion haptics for automatic finishes and manual resets', async () => {
+    let capturedActions: ReturnType<typeof useFightState>['actions'] | null = null;
+
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <SequenceHarness
+          onActions={(actions) => {
+            capturedActions = actions;
+          }}
+        />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-sequence').textContent).toBe(masterSequence.id);
+    });
+
+    await waitFor(() => {
+      expect(capturedActions).not.toBeNull();
+    });
+
+    const actions = capturedActions!;
+    const finishStage = () =>
+      actions.logAttack({
+        id: 'test-attack',
+        label: 'Test Attack',
+        damage: 10_000,
+        category: 'test',
+        soulCost: null,
+      });
+
+    const expectHaptic = async (type: string) => {
+      await waitFor(() => {
+        expect(triggerMock.mock.calls.some(([value]) => value === type)).toBe(true);
+      });
+    };
+
+    triggerMock.mockClear();
+    await act(async () => {
+      finishStage();
+      await Promise.resolve();
+    });
+
+    await expectHaptic('sequence-stage-complete');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+    });
+
+    await act(async () => {
+      actions.resetSequence();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+    });
+
+    triggerMock.mockClear();
+    await act(async () => {
+      finishStage();
+      await Promise.resolve();
+    });
+
+    await expectHaptic('sequence-stage-complete');
+
+    const finalStageIndex = masterSequence.entries.length - 1;
+    await act(async () => {
+      actions.setSequenceStage(finalStageIndex);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sequence-index').textContent).toBe(
+        String(finalStageIndex),
+      );
+    });
+
+    triggerMock.mockClear();
+    await act(async () => {
+      finishStage();
+      await Promise.resolve();
+    });
+
+    await expectHaptic('sequence-complete');
   });
 });
