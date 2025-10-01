@@ -193,11 +193,11 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   const handleToggleFight = useCallback(() => {
     if (canEndFight) {
       actions.endFight();
-      triggerHaptics('fight-complete');
+      triggerHaptics(isSequenceActive ? 'fight-complete' : 'sequence-complete');
     } else if (canStartFight) {
       actions.startFight();
     }
-  }, [actions, canEndFight, canStartFight, triggerHaptics]);
+  }, [actions, canEndFight, canStartFight, isSequenceActive, triggerHaptics]);
 
   const handleLogAttack = useCallback(
     (attack: {

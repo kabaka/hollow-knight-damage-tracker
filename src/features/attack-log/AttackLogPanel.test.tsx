@@ -209,6 +209,30 @@ describe('AttackLogPanel', () => {
     expect(endFightButton).not.toBeDisabled();
   });
 
+  it('plays the sequence completion haptic when ending standalone fights', async () => {
+    const user = userEvent.setup();
+
+    renderWithFightProvider(
+      <AttackLogProvider>
+        <AttackLogActions />
+        <AttackLogPanel />
+      </AttackLogProvider>,
+    );
+
+    const fightButton = screen.getByRole('button', { name: /fight/i });
+
+    await user.click(fightButton);
+    const endFightButton = await screen.findByRole('button', { name: /end fight/i });
+
+    triggerMock.mockClear();
+
+    await user.click(endFightButton);
+
+    await waitFor(() => {
+      expect(triggerMock).toHaveBeenCalledWith('sequence-complete');
+    });
+  });
+
   it('starts fights via the Enter key without logging damage', async () => {
     const user = userEvent.setup();
 
