@@ -7,6 +7,7 @@ import { AttackLogActions, AttackLogPanel, AttackLogProvider } from './AttackLog
 import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, bossSequenceMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
+import type { FightActions } from '../fight-state/FightStateContext';
 import { useFightState } from '../fight-state/FightStateContext';
 
 const triggerMock = vi.fn();
@@ -48,7 +49,7 @@ const hitsToFinishAfterOneHit = Math.ceil(remainingAfterOneHit / baseNailDamage)
 const SequenceHarness = ({
   onActions,
 }: {
-  onActions?: (actions: ReturnType<typeof useFightState>['actions']) => void;
+  onActions?: (actions: FightActions) => void;
 }) => {
   const { actions, state } = useFightState();
   const sequenceId = masterSequence.id;
@@ -391,7 +392,7 @@ describe('AttackLogPanel', () => {
   });
 
   it('emits sequence completion haptics for automatic finishes and manual resets', async () => {
-    let capturedActions: ReturnType<typeof useFightState>['actions'] | null = null;
+    let capturedActions: FightActions | null = null;
 
     renderWithFightProvider(
       <AttackLogProvider>
@@ -412,7 +413,7 @@ describe('AttackLogPanel', () => {
       expect(capturedActions).not.toBeNull();
     });
 
-    const actions = capturedActions!;
+    const actions = capturedActions as FightActions;
     const finishStage = () =>
       actions.logAttack({
         id: 'test-attack',
