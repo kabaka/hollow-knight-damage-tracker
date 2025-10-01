@@ -166,20 +166,26 @@ export const useBuildConfiguration = () => {
     [actions],
   );
 
+  const updateActiveCharms = useCallback(
+    (updater: (charmIds: string[]) => string[]) => {
+      actions.updateActiveCharms(updater);
+    },
+    [actions],
+  );
+
   const toggleCharm = useCallback(
     (charmId: string) => {
-      const isActive = activeCharmIds.includes(charmId);
-      if (isActive) {
-        setActiveCharms(activeCharmIds.filter((id) => id !== charmId));
-        return;
-      }
+      updateActiveCharms((current) => {
+        if (current.includes(charmId)) {
+          return current.filter((id) => id !== charmId);
+        }
 
-      const withoutConflict = resolveCharmConflict(activeCharmIds, charmId);
+        const withoutConflict = resolveCharmConflict(current, charmId);
 
-      const nextIds = [...withoutConflict, charmId];
-      setActiveCharms(nextIds);
+        return [...withoutConflict, charmId];
+      });
     },
-    [activeCharmIds, setActiveCharms],
+    [updateActiveCharms],
   );
 
   const cycleCharmSlot = useCallback(
@@ -188,42 +194,39 @@ export const useBuildConfiguration = () => {
         return;
       }
 
-      if (targetId) {
-        const isActive = activeCharmIds.includes(targetId);
-        if (isActive) {
-          setActiveCharms(activeCharmIds.filter((id) => id !== targetId));
-          return;
+      updateActiveCharms((current) => {
+        if (targetId) {
+          if (current.includes(targetId)) {
+            return current.filter((id) => id !== targetId);
+          }
+
+          const withoutSlot = current.filter((id) => !charmIds.includes(id));
+          const withoutConflict = resolveCharmConflict(withoutSlot, targetId);
+          return [...withoutConflict, targetId];
         }
 
-        const withoutSlot = activeCharmIds.filter((id) => !charmIds.includes(id));
-        const withoutConflict = resolveCharmConflict(withoutSlot, targetId);
-        setActiveCharms([...withoutConflict, targetId]);
-        return;
-      }
+        const activeIndex = charmIds.findIndex((id) => current.includes(id));
 
-      const activeIndex = charmIds.findIndex((id) => activeCharmIds.includes(id));
+        if (activeIndex === -1) {
+          const target = charmIds[0];
+          const withoutConflict = resolveCharmConflict(current, target);
+          return [...withoutConflict, target];
+        }
 
-      if (activeIndex === -1) {
-        const target = charmIds[0];
-        const withoutConflict = resolveCharmConflict(activeCharmIds, target);
-        setActiveCharms([...withoutConflict, target]);
-        return;
-      }
+        const currentId = charmIds[activeIndex];
+        const nextIndex = activeIndex + 1;
 
-      const currentId = charmIds[activeIndex];
-      const nextIndex = activeIndex + 1;
+        if (nextIndex < charmIds.length) {
+          const nextId = charmIds[nextIndex];
+          const withoutSlot = current.filter((id) => !charmIds.includes(id));
+          const withoutConflict = resolveCharmConflict(withoutSlot, nextId);
+          return [...withoutConflict, nextId];
+        }
 
-      if (nextIndex < charmIds.length) {
-        const nextId = charmIds[nextIndex];
-        const withoutSlot = activeCharmIds.filter((id) => !charmIds.includes(id));
-        const withoutConflict = resolveCharmConflict(withoutSlot, nextId);
-        setActiveCharms([...withoutConflict, nextId]);
-        return;
-      }
-
-      setActiveCharms(activeCharmIds.filter((id) => id !== currentId));
+        return current.filter((id) => id !== currentId);
+      });
     },
-    [activeCharmIds, setActiveCharms],
+    [updateActiveCharms],
   );
 
   const applyCharmPreset = useCallback(

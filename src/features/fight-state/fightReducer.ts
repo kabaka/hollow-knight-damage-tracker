@@ -162,6 +162,10 @@ export type FightAction =
   | { type: 'setCustomTargetHp'; hp: number }
   | { type: 'setNailUpgrade'; nailUpgradeId: string }
   | { type: 'setActiveCharms'; charmIds: string[] }
+  | {
+      type: 'updateActiveCharms';
+      updater: (charmIds: string[]) => string[];
+    }
   | { type: 'setCharmNotchLimit'; notchLimit: number }
   | { type: 'setSpellLevel'; spellId: string; level: SpellLevel }
   | {
@@ -633,6 +637,17 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
         build: {
           ...state.build,
           activeCharmIds: clampCharmSelection(action.charmIds, state.build.notchLimit),
+        },
+      };
+    case 'updateActiveCharms':
+      return {
+        ...state,
+        build: {
+          ...state.build,
+          activeCharmIds: clampCharmSelection(
+            action.updater(state.build.activeCharmIds),
+            state.build.notchLimit,
+          ),
         },
       };
     case 'setCharmNotchLimit': {
