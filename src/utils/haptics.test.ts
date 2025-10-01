@@ -7,7 +7,7 @@ const EXPECTED_VIBRATION_PATTERNS = {
   'fight-complete': [0, 40, 30, 60, 30, 80],
   'sequence-advance': [0, 25, 20, 25, 20, 25],
   'sequence-stage-complete': [0, 35, 25, 35, 25, 35, 25, 70],
-  'sequence-complete': [0, 45, 30, 45, 30, 70, 40, 120],
+  'sequence-complete': [0, 70, 45, 70, 45, 105, 60, 180],
   warning: [0, 30, 15, 30, 15, 30, 15, 60],
   success: [0, 20, 25, 40, 30, 60],
 } as const satisfies (typeof __TESTING__)['VIBRATION_PATTERNS'];
