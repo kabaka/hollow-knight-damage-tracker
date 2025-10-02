@@ -232,6 +232,29 @@ describe('fight-state persistence', () => {
     expect(restored.damageLogAggregates.attacksLogged).toBe(0);
   });
 
+  it('falls back to a safe boss id when the persisted selection is unknown', () => {
+    const baseFallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
+    const fallback: FightState = {
+      ...baseFallback,
+      selectedBossId: CUSTOM_BOSS_ID,
+      customTargetHp: 777,
+    };
+
+    const persisted = {
+      version: 5,
+      state: {
+        selectedBossId: 'unknown-target',
+        customTargetHp: 321,
+      },
+    } satisfies Record<string, unknown>;
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+
+    const restored = restorePersistedState(fallback);
+    expect(restored.selectedBossId).toBe(CUSTOM_BOSS_ID);
+    expect(restored.customTargetHp).toBe(321);
+  });
+
   it('ignores malformed or incompatible persisted payloads', () => {
     const fallback = ensureSequenceState(ensureSpellLevels(createInitialState()));
 
