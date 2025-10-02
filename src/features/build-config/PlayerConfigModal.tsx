@@ -84,6 +84,8 @@ type CharmFlight = {
   size: { width: number; height: number };
 };
 
+export const CHARM_FLIGHT_TIMEOUT_MS = 600;
+
 const CharmFlightSprite: FC<{
   readonly animation: CharmFlight;
   readonly onComplete: (key: string) => void;
@@ -96,17 +98,36 @@ const CharmFlightSprite: FC<{
       return;
     }
 
-    const handleTransitionEnd = () => {
+    let didComplete = false;
+
+    const complete = () => {
+      if (didComplete) {
+        return;
+      }
+      didComplete = true;
       onComplete(animation.key);
     };
 
+    const handleTransitionEnd = (event: TransitionEvent) => {
+      if (event.target !== element || event.propertyName !== 'transform') {
+        return;
+      }
+      complete();
+    };
+
+    const fallbackTimeout = window.setTimeout(complete, CHARM_FLIGHT_TIMEOUT_MS);
     element.addEventListener('transitionend', handleTransitionEnd);
     const frame = requestAnimationFrame(() => {
+      if (animation.from.x === animation.to.x && animation.from.y === animation.to.y) {
+        complete();
+        return;
+      }
       element.style.transform = `translate(${animation.to.x}px, ${animation.to.y}px)`;
     });
 
     return () => {
       element.removeEventListener('transitionend', handleTransitionEnd);
+      window.clearTimeout(fallbackTimeout);
       cancelAnimationFrame(frame);
     };
   }, [animation, onComplete]);
@@ -274,7 +295,13 @@ const PlayerConfigModalContent: FC<Pick<PlayerConfigModalProps, 'onClose'>> = ({
       }
 
       if (updates.length > 0) {
-        setCharmFlights((current) => [...current, ...updates]);
+        setCharmFlights((current) => {
+          const replacedCharmIds = new Set(updates.map((flight) => flight.charmId));
+          const preservedFlights = current.filter(
+            (flight) => !replacedCharmIds.has(flight.charmId),
+          );
+          return [...preservedFlights, ...updates];
+        });
       }
     });
 
