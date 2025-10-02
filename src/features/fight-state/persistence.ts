@@ -1,6 +1,7 @@
 import {
   AttackCategory,
   AttackEvent,
+  CUSTOM_BOSS_ID,
   DamageLogAggregates,
   FightState,
   MAX_NOTCH_LIMIT,
@@ -12,6 +13,7 @@ import {
 } from './fightReducer';
 import { NAIL_ART_IDS } from '../attack-log/attackData';
 import type { NailArtId } from '../attack-log/attackData';
+import { bossMap } from '../../data';
 
 const isNailArtId = (id: string): id is NailArtId => NAIL_ART_IDS.has(id as NailArtId);
 
@@ -252,14 +254,36 @@ const sanitizeBooleanRecord = (
   return sanitized;
 };
 
+const resolveSelectedBossId = (value: unknown, fallbackBossId: string): string => {
+  const persistedBossId = typeof value === 'string' ? value : null;
+
+  if (persistedBossId === CUSTOM_BOSS_ID) {
+    return CUSTOM_BOSS_ID;
+  }
+
+  if (persistedBossId && bossMap.has(persistedBossId)) {
+    return persistedBossId;
+  }
+
+  if (fallbackBossId === CUSTOM_BOSS_ID) {
+    return CUSTOM_BOSS_ID;
+  }
+
+  if (bossMap.has(fallbackBossId)) {
+    return fallbackBossId;
+  }
+
+  return CUSTOM_BOSS_ID;
+};
+
 export const mergePersistedState = (
   persisted: Record<string, unknown>,
   fallback: FightState,
 ): FightState => {
-  const selectedBossId =
-    typeof persisted.selectedBossId === 'string'
-      ? persisted.selectedBossId
-      : fallback.selectedBossId;
+  const selectedBossId = resolveSelectedBossId(
+    persisted.selectedBossId,
+    fallback.selectedBossId,
+  );
   const customTargetHp = sanitizePositiveInteger(
     persisted.customTargetHp,
     fallback.customTargetHp,
