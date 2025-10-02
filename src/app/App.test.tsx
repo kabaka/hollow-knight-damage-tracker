@@ -1,5 +1,7 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+import { CHARM_FLIGHT_TIMEOUT_MS } from '../features/build-config/PlayerConfigModal';
 
 import { App } from './App';
 
@@ -143,6 +145,43 @@ describe('App', () => {
     );
 
     expect(modalBody.scrollTop).toBe(200);
+  });
+
+  it('cleans up charm flights when cycling multi-state charms', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
+    const modal = await screen.findByRole('dialog', { name: /player loadout/i });
+
+    const waitForNoFlights = async () => {
+      await waitFor(
+        () => {
+          expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+        },
+        { timeout: CHARM_FLIGHT_TIMEOUT_MS + 200 },
+      );
+    };
+
+    const getEquippedItem = (pattern: RegExp) =>
+      within(modal).queryByRole('listitem', { name: pattern });
+
+    await user.click(within(modal).getAllByRole('button', { name: /fragile heart/i })[0]);
+    await waitForNoFlights();
+    expect(getEquippedItem(/fragile heart/i)).not.toBeNull();
+
+    await user.click(
+      within(modal).getAllByRole('button', { name: /unbreakable heart/i })[0],
+    );
+    await waitForNoFlights();
+    expect(getEquippedItem(/unbreakable heart/i)).not.toBeNull();
+    expect(getEquippedItem(/fragile heart/i)).toBeNull();
+
+    await user.click(
+      within(modal).getAllByRole('button', { name: /unbreakable heart/i })[0],
+    );
+    await waitForNoFlights();
+    expect(within(modal).queryAllByRole('listitem')).toHaveLength(0);
   });
 
   it('surfaces sequence conditions in the setup tray when selecting a pantheon', async () => {
