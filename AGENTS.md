@@ -30,6 +30,8 @@
 
 - Place source code under `src/` with feature-based subdirectories.
 - Store reusable UI elements in `src/components/` and domain logic in `src/features/`.
+- Reserve `src/app/` (and its `components/` subfolder) for application wiring: compose providers, layouts, and other glue that
+  stitches features together. When a piece becomes a reusable widget, graduate it into `src/components/`.
 - Keep integration/end-to-end tests inside `tests/` at the project root.
 - Configuration files belong in the repository root (e.g., `vite.config.ts`, `.eslintrc.cjs`).
 
