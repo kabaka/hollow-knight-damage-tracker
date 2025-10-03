@@ -2689,6 +2689,10 @@ h6 {
 }
 
 @media (width <= 720px) {
+  .app-button__shortcut {
+    display: none;
+  }
+
   .encounter-hud {
     position: static;
     top: auto;
