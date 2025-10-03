@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
 
-import type { useBuildConfiguration } from '../../features/build-config/useBuildConfiguration';
-import { CUSTOM_BOSS_ID } from '../../features/fight-state/FightStateContext';
+import type { useBuildConfiguration } from '../build-config/useBuildConfiguration';
+import { CUSTOM_BOSS_ID } from '../fight-state/FightStateContext';
 
 export type TargetSelectorProps = {
   readonly bosses: ReturnType<typeof useBuildConfiguration>['bosses'];

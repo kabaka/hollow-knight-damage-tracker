@@ -19,7 +19,7 @@ import {
 import { HelpModal } from '../features/help/HelpModal';
 import { useVisualViewportCssVars } from './useVisualViewportCssVars';
 import { SurfaceSection } from '../components/SurfaceSection';
-import { EncounterSetupPanel } from './components/EncounterSetupPanel';
+import { EncounterSetupPanel } from '../features/encounter-setup';
 import { HeaderBar } from './components/HeaderBar';
 import { MobilePinnedHud } from './components/MobilePinnedHud';
 
