@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import type { useBuildConfiguration } from '../../features/build-config/useBuildConfiguration';
+import type { useBuildConfiguration } from '../build-config/useBuildConfiguration';
 import { TargetSelector } from './TargetSelector';
 import { SequenceSelector } from './SequenceSelector';
 
