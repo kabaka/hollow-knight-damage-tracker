@@ -60,6 +60,7 @@ Hollow Knight Damage Tracker is a responsive companion app for players, co-comme
 - Responsive UI tuned for Hollow Knight’s aesthetic and readability during frantic fights.
 - Modular data models in `src/data/` feed typed combat calculations via `FightStateProvider`.
 - Core panels (`BuildConfigPanel`, `AttackLogPanel`, `CombatLogPanel`) share that state to surface presets, controls, and stats.
+- App composition (providers, layouts, and feature glue) lives in `src/app/`, while reusable widgets belong in `src/components/`.
 - Automated GitHub Actions pipelines handle linting, testing, and GitHub Pages deploys.
 
 ## Tech Stack
