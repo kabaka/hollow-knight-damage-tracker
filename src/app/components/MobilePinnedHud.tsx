@@ -1,8 +1,8 @@
 import type { FC } from 'react';
 
 import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
+import { BossHealthBar } from '../../components';
 import { formatNumber } from '../../utils/format';
-import { BossHealthBar } from './BossHealthBar';
 
 export type MobilePinnedHudProps = {
   readonly derived: ReturnType<typeof useFightDerivedStats>;

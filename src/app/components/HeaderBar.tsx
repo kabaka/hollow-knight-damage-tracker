@@ -1,9 +1,7 @@
 import type { FC } from 'react';
 
-import { AppButton } from '../../components/AppButton';
-import { SurfaceSection } from '../../components/SurfaceSection';
+import { AppButton, EncounterBrand, SurfaceSection } from '../../components';
 import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
-import { EncounterBrand } from './EncounterBrand';
 import { TargetScoreboard } from './TargetScoreboard';
 
 export type HeaderBarProps = {
