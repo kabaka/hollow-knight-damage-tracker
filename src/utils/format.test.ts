@@ -5,7 +5,7 @@ import {
   formatNumber,
   formatRelativeTime,
   formatStopwatch,
-} from '../format';
+} from './format';
 
 describe('format helpers', () => {
   describe('formatNumber', () => {

@@ -97,6 +97,11 @@ pnpm install
 | `pnpm test:watch`                   | Watch unit tests while iterating on features.                      |
 | `pnpm test:e2e`                     | Run Playwright end-to-end tests.                                   |
 
+### Testing conventions
+
+- Co-locate unit test files (`*.test.ts[x]`) next to the modules they cover. This keeps helpers like `src/utils/format.ts` and
+  `src/utils/format.test.ts` together, while Playwright suites remain under `tests/`.
+
 A `pre-commit` hook powered by [`simple-git-hooks`](https://github.com/toplenboren/simple-git-hooks) automatically runs formatting, linting, and unit tests before every commit.
 
 ## Roadmap
