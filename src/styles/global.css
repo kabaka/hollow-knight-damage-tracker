@@ -2693,6 +2693,11 @@ h6 {
     display: none;
   }
 
+  .app-button--has-shortcut {
+    justify-content: center;
+    min-width: auto;
+  }
+
   .encounter-hud {
     position: static;
     top: auto;
