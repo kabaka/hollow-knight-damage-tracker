@@ -1,8 +1,8 @@
 import { useMemo, type FC } from 'react';
 
+import { BossHealthBar } from '../../components';
 import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
 import { formatDecimal, formatNumber, formatStopwatch } from '../../utils/format';
-import { BossHealthBar } from './BossHealthBar';
 import { StageTimeline } from './StageTimeline';
 
 export type TargetScoreboardProps = {

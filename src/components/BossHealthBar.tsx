@@ -1,6 +1,6 @@
 import { type ComponentPropsWithoutRef, type FC } from 'react';
 
-type BossHealthBarProps = Omit<ComponentPropsWithoutRef<'div'>, 'children'> & {
+export type BossHealthBarProps = Omit<ComponentPropsWithoutRef<'div'>, 'children'> & {
   readonly current: number;
   readonly total: number;
   readonly label?: string;
