@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FC } from 'react';
+import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 
 import {
   AttackLogActions,
@@ -29,6 +29,8 @@ const AppContent: FC = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isSetupOpen, setSetupOpen] = useState(false);
   const [isHelpOpen, setHelpOpen] = useState(false);
+  const handleCloseLoadout = useCallback(() => setModalOpen(false), [setModalOpen]);
+  const handleCloseHelp = useCallback(() => setHelpOpen(false), [setHelpOpen]);
 
   const {
     bosses,
@@ -210,8 +212,8 @@ const AppContent: FC = () => {
         </CombatLogProvider>
       </main>
 
-      <PlayerConfigModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
-      <HelpModal isOpen={isHelpOpen} onClose={() => setHelpOpen(false)} />
+      <PlayerConfigModal isOpen={isModalOpen} onClose={handleCloseLoadout} />
+      <HelpModal isOpen={isHelpOpen} onClose={handleCloseHelp} />
     </div>
   );
 };
