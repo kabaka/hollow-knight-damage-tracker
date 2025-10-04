@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState, type FC } from 'react';
+import { useEffect, useId, useMemo, useState, type FC } from 'react';
 
 import type { useBuildConfiguration } from '../build-config/useBuildConfiguration';
 import { CUSTOM_BOSS_ID } from '../fight-state/FightStateContext';
 
 export type TargetSelectorProps = {
+  readonly title: string;
+  readonly description: string;
   readonly bosses: ReturnType<typeof useBuildConfiguration>['bosses'];
   readonly bossSelectValue: string;
   readonly onBossChange: (value: string) => void;
@@ -44,6 +46,8 @@ const fuzzyIncludes = (source: string, query: string) => {
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 export const TargetSelector: FC<TargetSelectorProps> = ({
+  title,
+  description,
   bosses,
   bossSelectValue,
   onBossChange,
@@ -58,6 +62,8 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
   const [isOptionsOpen, setOptionsOpen] = useState(false);
   const [customHpDraft, setCustomHpDraft] = useState(() => customTargetHp.toString());
   const [searchQuery, setSearchQuery] = useState('');
+  const headingId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     if (selectedBossId === CUSTOM_BOSS_ID) {
@@ -97,9 +103,18 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
   };
 
   return (
-    <section className="target-selector" aria-labelledby="target-selector-heading">
+    <section
+      className="target-selector"
+      aria-labelledby={headingId}
+      aria-describedby={descriptionId}
+    >
       <div className="target-selector__header">
-        <h3 id="target-selector-heading">Boss target</h3>
+        <div className="target-selector__heading">
+          <h3 id={headingId}>{title}</h3>
+          <p id={descriptionId} className="target-selector__description">
+            {description}
+          </p>
+        </div>
         <button
           type="button"
           className="target-selector__options-toggle"

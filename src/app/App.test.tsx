@@ -212,7 +212,12 @@ describe('App', () => {
     render(<App />);
 
     await user.click(screen.getByRole('button', { name: /setup/i }));
-    await user.selectOptions(screen.getByLabelText(/mode/i), 'pantheon-of-the-sage');
+    await user.click(screen.getByRole('tab', { name: /sequence run/i }));
+    const sequencePanel = screen.getByRole('tabpanel', { name: /sequence run/i });
+    await user.selectOptions(
+      within(sequencePanel).getByRole('combobox', { name: /sequence/i }),
+      'pantheon-of-the-sage',
+    );
 
     const conditionsGroup = await screen.findByRole('group', {
       name: /sequence conditions/i,

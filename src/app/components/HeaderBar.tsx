@@ -1,6 +1,12 @@
 import type { FC } from 'react';
 
-import { AppButton, EncounterBrand, SurfaceSection } from '../../components';
+import {
+  AppButton,
+  EncounterBrand,
+  EncounterSummary,
+  SurfaceSection,
+  type EncounterSummaryProps,
+} from '../../components';
 import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
 import { TargetScoreboard } from './TargetScoreboard';
 
@@ -19,6 +25,7 @@ export type HeaderBarProps = {
   readonly onRewindStage: () => void;
   readonly hasNextStage: boolean;
   readonly hasPreviousStage: boolean;
+  readonly encounterSummary: EncounterSummaryProps;
 };
 
 export const HeaderBar: FC<HeaderBarProps> = ({
@@ -36,6 +43,7 @@ export const HeaderBar: FC<HeaderBarProps> = ({
   onRewindStage,
   hasNextStage,
   hasPreviousStage,
+  encounterSummary,
 }) => (
   <SurfaceSection
     as="header"
@@ -45,11 +53,14 @@ export const HeaderBar: FC<HeaderBarProps> = ({
     titleId="app-header-title"
     titleAs="div"
     title={
-      <EncounterBrand
-        encounterName={encounterName}
-        versionLabel={versionLabel}
-        arenaLabel={arenaLabel}
-      />
+      <div className="hud-branding">
+        <EncounterBrand
+          encounterName={encounterName}
+          versionLabel={versionLabel}
+          arenaLabel={arenaLabel}
+        />
+        <EncounterSummary {...encounterSummary} />
+      </div>
     }
     actions={
       <div className="hud-actions">
