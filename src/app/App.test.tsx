@@ -147,6 +147,29 @@ describe('App', () => {
     expect(modalBody.scrollTop).toBe(200);
   });
 
+  it('does not scroll the loadout modal to the top when selecting a charm', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
+    const modal = await screen.findByRole('dialog', { name: /player loadout/i });
+    const modalBody = modal.querySelector('.modal__body') as HTMLElement | null;
+    if (!modalBody) {
+      throw new Error('Expected the modal body to be present');
+    }
+
+    modalBody.scrollTop = 200;
+
+    const [compassButton] = within(modal).getAllByRole('button', {
+      name: /wayward compass/i,
+    });
+    await user.click(compassButton);
+
+    await waitFor(() => {
+      expect(modalBody.scrollTop).toBe(200);
+    });
+  });
+
   it('cleans up charm flights when cycling multi-state charms', async () => {
     const user = userEvent.setup();
     render(<App />);
