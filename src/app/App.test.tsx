@@ -33,7 +33,7 @@ describe('App', () => {
       within(banner).getByRole('progressbar', { name: /boss hp/i }),
     ).toBeInTheDocument();
     expect(within(banner).getByText(/forgotten crossroads/i)).toBeInTheDocument();
-    const mobileHud = screen.getByRole('group', {
+    const mobileHud = screen.getByRole('button', {
       name: /boss status/i,
       hidden: true,
     });
@@ -83,7 +83,7 @@ describe('App', () => {
       ).toBeInTheDocument();
     });
     expect(within(banner).queryByText(/forgotten crossroads/i)).not.toBeInTheDocument();
-    const mobileHud = screen.getByRole('group', {
+    const mobileHud = screen.getByRole('button', {
       name: /boss status/i,
       hidden: true,
     });
