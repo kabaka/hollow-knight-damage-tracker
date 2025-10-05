@@ -173,13 +173,25 @@ const SequenceOption: FC<SequenceOptionProps> = ({
         value={value}
         checked={isSelected}
         onChange={handleChange}
+        aria-labelledby={description ? `${id}-title ${id}-description` : `${id}-title`}
       />
-      <label className="sequence-selector__option-header" htmlFor={id}>
-        <span className="sequence-selector__option-title">{title}</span>
+      <div
+        className="sequence-selector__option-header"
+        role="presentation"
+        onClick={handleChange}
+      >
+        <span id={`${id}-title`} className="sequence-selector__option-title">
+          {title}
+        </span>
         {description ? (
-          <span className="sequence-selector__option-description">{description}</span>
+          <span
+            id={`${id}-description`}
+            className="sequence-selector__option-description"
+          >
+            {description}
+          </span>
         ) : null}
-      </label>
+      </div>
       {hasConditions ? (
         <div className="sequence-selector__option-conditions" role="group">
           <span className="sequence-selector__option-conditions-title">
