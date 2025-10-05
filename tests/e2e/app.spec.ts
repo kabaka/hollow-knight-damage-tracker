@@ -234,6 +234,28 @@ test.describe('Landing page', () => {
     await expect(helpDialog).not.toBeVisible();
   });
 
+  test('exposes manifest metadata and an active service worker', async ({ page }) => {
+    const manifestLink = page.locator('link[rel="manifest"]');
+    expect(await manifestLink.count()).toBeGreaterThan(0);
+    await expect(manifestLink.first()).toHaveAttribute('href', /manifest\.webmanifest$/);
+
+    const status = await page.evaluate(async () => {
+      if (!('serviceWorker' in navigator)) {
+        return { supported: false };
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      return {
+        supported: true,
+        hasActive: Boolean(registration.active),
+        scope: registration.scope,
+      };
+    });
+
+    expect(status).toEqual(expect.objectContaining({ supported: true, hasActive: true }));
+    expect(status.scope).toContain('://');
+  });
+
   test('restores build configuration and logs after a reload', async ({ page }) => {
     await page.getByRole('button', { name: 'Setup' }).click();
     await page.getByRole('radio', { name: 'Custom target' }).click();
@@ -525,15 +547,16 @@ test.describe('UI controls and shortcuts', () => {
     await modal.getByRole('button', { name: /^Shaman Stone,/ }).click();
     await expect(modal.locator('.overcharm-banner')).toBeHidden();
 
-    const fragileStrength = modal.getByRole('button', { name: /^Fragile Strength,/ });
-    const unbreakableStrength = modal.getByRole('button', {
-      name: /^Unbreakable Strength,/,
-    });
+    await modal.locator('#notch-limit').fill('6');
 
-    await fragileStrength.click();
-    await unbreakableStrength.evaluate((element: HTMLButtonElement) => element.click());
-    await expect(unbreakableStrength).toHaveAttribute('aria-pressed', 'true');
-    await expect(fragileStrength).toHaveAttribute('aria-pressed', 'false');
+    await modal.getByRole('button', { name: /^Fragile Strength,/ }).click();
+    await modal.getByRole('button', { name: /^Unbreakable Strength,/ }).click();
+    await expect(
+      modal.getByRole('button', { name: /^Unbreakable Strength,/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      modal.getByRole('button', { name: /^Fragile Strength,/ }),
+    ).toHaveAttribute('aria-pressed', 'false');
 
     await modal.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(modal).toBeHidden();
