@@ -22,6 +22,7 @@ import { SurfaceSection } from '../components/SurfaceSection';
 import { EncounterSetupPanel } from '../features/encounter-setup';
 import { HeaderBar } from './components/HeaderBar';
 import { MobilePinnedHud } from './components/MobilePinnedHud';
+import { formatSequenceHeaderLabel } from './formatSequenceHeaderLabel';
 
 const AppContent: FC = () => {
   useVisualViewportCssVars();
@@ -133,13 +134,18 @@ const AppContent: FC = () => {
 
   const encounterName = selectedTarget?.bossName ?? 'Custom target';
   const versionLabel = selectedVersion?.title ?? null;
-  const arenaLabel = selectedTarget?.location ?? null;
-  const stageProgress = activeSequence
-    ? {
-        current: cappedSequenceIndex + 1,
-        total: sequenceEntries.length,
-      }
-    : null;
+  const locationLabel = selectedTarget?.location ?? null;
+  const stageProgress =
+    activeSequence && sequenceEntries.length > 0
+      ? {
+          current: cappedSequenceIndex + 1,
+          total: sequenceEntries.length,
+        }
+      : null;
+  const arenaLabel =
+    activeSequence && stageProgress
+      ? formatSequenceHeaderLabel(activeSequence.name, stageProgress)
+      : locationLabel;
   const stageLabel = currentSequenceEntry ? currentSequenceEntry.target.bossName : null;
   return (
     <div className="app-shell">

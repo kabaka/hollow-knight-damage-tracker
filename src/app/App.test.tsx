@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CHARM_FLIGHT_TIMEOUT_MS } from '../features/build-config/PlayerConfigModal';
 
 import { App } from './App';
+import { formatSequenceHeaderLabel } from './formatSequenceHeaderLabel';
 
 describe('App', () => {
   beforeEach(() => {
@@ -27,9 +28,11 @@ describe('App', () => {
     ).toBeVisible();
     const changeEncounter = screen.getByRole('button', { name: /setup/i });
     expect(changeEncounter).toHaveAttribute('aria-expanded', 'false');
+    const banner = screen.getByRole('banner');
     expect(
-      within(screen.getByRole('banner')).getByRole('progressbar', { name: /boss hp/i }),
+      within(banner).getByRole('progressbar', { name: /boss hp/i }),
     ).toBeInTheDocument();
+    expect(within(banner).getByText(/forgotten crossroads/i)).toBeInTheDocument();
   });
 
   it('allows selecting a custom boss target and updating HP from the HUD', async () => {
@@ -51,6 +54,30 @@ describe('App', () => {
     expect(
       within(screen.getByRole('banner')).getByText(/500\s*\/\s*500/),
     ).toBeInTheDocument();
+  });
+
+  it('displays the sequence context in the header when running a sequence', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: /setup/i }));
+    await user.click(screen.getByRole('tab', { name: /sequence run/i }));
+
+    const sequenceSelect = await screen.findByLabelText(/sequence/i, {
+      selector: 'select',
+    });
+    await user.selectOptions(
+      sequenceSelect,
+      within(sequenceSelect).getByRole('option', { name: /pantheon of the master/i }),
+    );
+
+    const banner = screen.getByRole('banner');
+    await waitFor(() => {
+      expect(
+        within(banner).getByText(/pantheon of the master \(1\/\d+\)/i),
+      ).toBeInTheDocument();
+    });
+    expect(within(banner).queryByText(/forgotten crossroads/i)).not.toBeInTheDocument();
   });
 
   it('filters the boss list with fuzzy search', async () => {
@@ -227,5 +254,22 @@ describe('App', () => {
 
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
+  });
+});
+
+describe('formatSequenceHeaderLabel', () => {
+  it('formats the sequence name with progress counts', () => {
+    expect(
+      formatSequenceHeaderLabel('Pantheon of the Master', { current: 1, total: 5 }),
+    ).toBe('Pantheon of the Master (1/5)');
+  });
+
+  it('clamps invalid progress values into the displayed range', () => {
+    expect(formatSequenceHeaderLabel('Trial', { current: 0, total: 0 })).toBe(
+      'Trial (1/1)',
+    );
+    expect(formatSequenceHeaderLabel('Trial', { current: 8, total: 3 })).toBe(
+      'Trial (3/3)',
+    );
   });
 });
