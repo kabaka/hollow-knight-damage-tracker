@@ -44,6 +44,7 @@ export type {
 } from './fightReducer';
 export { CUSTOM_BOSS_ID } from './fightReducer';
 import { persistStateToStorage, restorePersistedState } from './persistence';
+import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 
 export type DerivedStats = {
   targetHp: number;
@@ -498,6 +499,22 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
+    };
+  }, [flushPersist]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleFlush: EventListener = () => {
+      flushPersist();
+    };
+
+    window.addEventListener(PERSIST_FLUSH_EVENT, handleFlush);
+
+    return () => {
+      window.removeEventListener(PERSIST_FLUSH_EVENT, handleFlush);
     };
   }, [flushPersist]);
 

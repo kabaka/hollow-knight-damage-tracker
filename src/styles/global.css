@@ -2979,3 +2979,27 @@ h6 {
     opacity: 1;
   }
 }
+
+.sw-update-banner {
+  position: fixed;
+  inset-inline-start: 50%;
+  inset-block-end: clamp(0.75rem, 2vw, 1.5rem);
+  transform: translateX(-50%);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid var(--color-border-soft);
+  box-shadow: var(--frame-shadow-floating);
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.02em;
+  max-width: min(92vw, 480px);
+  text-align: center;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+.sw-update-banner--dev {
+  background: var(--color-surface-muted);
+  opacity: 0.88;
+}

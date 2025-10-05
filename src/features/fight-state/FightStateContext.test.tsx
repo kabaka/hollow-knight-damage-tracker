@@ -14,7 +14,9 @@ import {
 import type { FightState } from './FightStateContext';
 import * as FightStateContextModule from './FightStateContext';
 import { STORAGE_KEY } from './persistence';
+import * as persistenceModule from './persistence';
 import { bossSequenceMap } from '../../data';
+import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 
 describe('FightStateProvider persistence', () => {
   beforeEach(() => {
@@ -123,6 +125,39 @@ describe('FightStateProvider persistence', () => {
       },
       { timeout: 2000 },
     );
+  });
+
+  it('flushes persistence immediately when a flush event is dispatched', () => {
+    vi.useFakeTimers();
+
+    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+
+    const Consumer = () => {
+      const { actions } = useFightState();
+
+      useEffect(() => {
+        actions.setCustomTargetHp(9876);
+      }, [actions]);
+
+      return null;
+    };
+
+    render(
+      <FightStateProvider>
+        <Consumer />
+      </FightStateProvider>,
+    );
+
+    expect(persistSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new Event(PERSIST_FLUSH_EVENT));
+    });
+
+    expect(persistSpy).toHaveBeenCalled();
+
+    persistSpy.mockRestore();
+    vi.useRealTimers();
   });
 });
 

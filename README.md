@@ -54,7 +54,7 @@ Hollow Knight Damage Tracker is a responsive companion app for players, co-comme
 - **Responsive layout:** Works on dual-monitor setups, tablets, and phones without juggling windows.
 - **Commentator-friendly:** Help modal covers setup, shortcuts, and logging tips—perfect for tournament co-pilots.
 - **Battle-tested CI:** Linting, unit tests, e2e runs, and deployments ship with every push so the tracker stays reliable.
-- **Installable PWA:** Auto-updating service worker and manifest keep the tracker available offline on GitHub Pages.
+- **Installable PWA:** Auto-updating service worker and manifest keep the tracker available offline on GitHub Pages, waiting for fights to finish before refreshing with new assets.
 
 ## Project Snapshot
 
