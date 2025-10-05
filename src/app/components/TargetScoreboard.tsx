@@ -75,7 +75,7 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
 
   return (
     <section className="hud-scoreboard" aria-label="Encounter scoreboard">
-      <div className="hud-scoreboard__status">
+      <div className="hud-scoreboard__summary">
         <BossHealthBar
           className="hud-health summary-chip summary-chip--accent"
           role="group"
@@ -95,14 +95,24 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
           hasPrevious={hasPreviousStage}
         />
       </div>
-      <dl className="hud-metrics">
+      <dl className="hud-metrics hud-scoreboard__metrics">
         {metrics.map((metric) => (
-          <div key={metric.id} className="hud-metrics__item" data-metric-id={metric.id}>
-            <dt className="hud-metrics__label">{metric.label}</dt>
-            <dd className="hud-metrics__value">
-              <span className="hud-metrics__value-primary">{metric.value}</span>
+          <div
+            key={metric.id}
+            className="hud-metrics__item hud-scoreboard__metric summary-chip"
+            data-metric-id={metric.id}
+          >
+            <dt className="hud-metrics__label hud-scoreboard__metric-label">
+              {metric.label}
+            </dt>
+            <dd className="hud-metrics__value hud-scoreboard__metric-value">
+              <span className="hud-metrics__value-primary hud-scoreboard__metric-value-primary">
+                {metric.value}
+              </span>
               {metric.sublabel ? (
-                <span className="hud-metrics__sublabel">{metric.sublabel}</span>
+                <span className="hud-metrics__sublabel hud-scoreboard__metric-sublabel">
+                  {metric.sublabel}
+                </span>
               ) : null}
             </dd>
           </div>
