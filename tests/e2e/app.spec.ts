@@ -226,7 +226,8 @@ test.describe('Landing page', () => {
 
   test('exposes manifest metadata and an active service worker', async ({ page }) => {
     const manifestLink = page.locator('link[rel="manifest"]');
-    await expect(manifestLink).toHaveAttribute('href', /manifest\.webmanifest$/);
+    expect(await manifestLink.count()).toBeGreaterThan(0);
+    await expect(manifestLink.first()).toHaveAttribute('href', /manifest\.webmanifest$/);
 
     const status = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) {
@@ -532,6 +533,8 @@ test.describe('UI controls and shortcuts', () => {
     await modal.getByRole('button', { name: /^Quick Slash,/ }).click();
     await modal.getByRole('button', { name: /^Shaman Stone,/ }).click();
     await expect(modal.locator('.overcharm-banner')).toBeHidden();
+
+    await modal.locator('#notch-limit').fill('6');
 
     await modal.getByRole('button', { name: /^Fragile Strength,/ }).click();
     await modal.getByRole('button', { name: /^Unbreakable Strength,/ }).click();
