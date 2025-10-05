@@ -87,7 +87,7 @@ type CharmFlight = {
 
 export const CHARM_FLIGHT_TIMEOUT_MS = 600;
 
-const CharmFlightSprite: FC<{
+export const CharmFlightSprite: FC<{
   readonly animation: CharmFlight;
   readonly onComplete: (key: string) => void;
 }> = ({ animation, onComplete }) => {
@@ -100,6 +100,8 @@ const CharmFlightSprite: FC<{
     }
 
     let didComplete = false;
+    let measureFrame: number | null = null;
+    let animationFrame: number | null = null;
 
     const complete = () => {
       if (didComplete) {
@@ -118,18 +120,32 @@ const CharmFlightSprite: FC<{
 
     const fallbackTimeout = window.setTimeout(complete, CHARM_FLIGHT_TIMEOUT_MS);
     element.addEventListener('transitionend', handleTransitionEnd);
-    const frame = requestAnimationFrame(() => {
-      if (animation.from.x === animation.to.x && animation.from.y === animation.to.y) {
-        complete();
-        return;
-      }
-      element.style.transform = `translate(${animation.to.x}px, ${animation.to.y}px)`;
-    });
+
+    if (animation.from.x === animation.to.x && animation.from.y === animation.to.y) {
+      complete();
+    } else {
+      const scheduleAnimation = () => {
+        element.style.transform = `translate(${animation.to.x}px, ${animation.to.y}px)`;
+      };
+
+      measureFrame = requestAnimationFrame(() => {
+        // Force the browser to flush the initial position so the transition
+        // reliably runs on slower devices before applying the destination
+        // transform on the next frame.
+        element.getBoundingClientRect();
+        animationFrame = requestAnimationFrame(scheduleAnimation);
+      });
+    }
 
     return () => {
       element.removeEventListener('transitionend', handleTransitionEnd);
       window.clearTimeout(fallbackTimeout);
-      cancelAnimationFrame(frame);
+      if (measureFrame !== null) {
+        cancelAnimationFrame(measureFrame);
+      }
+      if (animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+      }
     };
   }, [animation, onComplete]);
 
