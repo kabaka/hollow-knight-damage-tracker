@@ -10,6 +10,7 @@ const openModal = () =>
 const baseAnimation = {
   key: 'flight',
   charmId: 'shaman-stone',
+  direction: 'equip' as const,
   icon: '/charms/shaman-stone.png',
   from: { x: 5, y: 10 },
   to: { x: 20, y: 40 },
@@ -17,7 +18,12 @@ const baseAnimation = {
 } as const;
 
 describe('PlayerConfigModal charms', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('retains rapid charm selections without dropping earlier choices', () => {
+    vi.useFakeTimers();
     openModal();
 
     const compassButton = screen.getByRole('button', {
@@ -30,6 +36,10 @@ describe('PlayerConfigModal charms', () => {
     act(() => {
       fireEvent.click(compassButton);
       fireEvent.click(swarmButton);
+    });
+
+    act(() => {
+      vi.runAllTimers();
     });
 
     const equippedList = screen.getByRole('list');
@@ -115,7 +125,9 @@ describe('CharmFlightSprite', () => {
       />,
     );
 
-    expect(onComplete).toHaveBeenCalledWith('static-flight');
+    expect(onComplete).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'static-flight' }),
+    );
     expect(requestSpy).not.toHaveBeenCalled();
     expect(cancelSpy).not.toHaveBeenCalled();
   });

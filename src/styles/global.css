@@ -2314,6 +2314,12 @@ h6 {
     inset 0 -1px 0 rgb(0 0 0 / 55%);
 }
 
+.equipped-panel__item--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .equipped-panel__icon {
   width: 2.2rem;
   height: 2.2rem;
@@ -2648,6 +2654,20 @@ h6 {
 .charm-token--active {
   filter: grayscale(0.9) brightness(0.7);
   opacity: 0.78;
+}
+
+.charm-token--active::after {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgb(134 206 255 / 38%),
+    0 12px 20px rgb(70 132 210 / 32%),
+    0 0 26px rgb(130 207 255 / 45%);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .charm-token--locked {
