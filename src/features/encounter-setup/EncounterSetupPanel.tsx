@@ -11,12 +11,12 @@ type EncounterMode = typeof SINGLE_TARGET_MODE | typeof SEQUENCE_MODE;
 
 const MODE_COPY: Record<EncounterMode, { title: string; description: string }> = {
   [SINGLE_TARGET_MODE]: {
-    title: 'Single target practice',
+    title: 'Single target encounter',
     description:
       'Choose any boss or configure a custom HP goal to focus on one encounter at a time.',
   },
   [SEQUENCE_MODE]: {
-    title: 'Sequence practice',
+    title: 'Sequence run',
     description:
       'Run through multi-fight Godhome sequences with automatic stage tracking and conditions.',
   },
@@ -115,7 +115,7 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
     >
       <div className="encounter-setup__mode-toggle">
         <span id={modeTablistId} className="encounter-setup__mode-label">
-          Practice mode
+          Encounter mode
         </span>
         <div
           className="encounter-setup__mode-segments"
