@@ -673,18 +673,21 @@ h6 {
 }
 
 .hud-scoreboard {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: clamp(0.6rem, 1.8vw, 1.25rem);
   align-items: center;
-  justify-content: space-between;
-  gap: clamp(0.6rem, 1.6vw, 1rem);
-  flex-wrap: wrap;
 }
 
-.hud-scoreboard__status {
-  display: inline-flex;
+.hud-scoreboard__summary {
+  display: grid;
+  grid-auto-flow: column;
+  gap: clamp(0.45rem, 1.4vw, 1rem);
   align-items: center;
-  gap: clamp(0.45rem, 1.2vw, 0.9rem);
-  flex-wrap: wrap;
+}
+
+.hud-scoreboard__summary > * {
+  min-width: 0;
 }
 
 .hud-health {
@@ -730,22 +733,33 @@ h6 {
   letter-spacing: 0.05em;
 }
 
-.hud-metrics {
-  display: flex;
-  align-items: flex-start;
-  gap: clamp(0.5rem, 1.7vw, 1.1rem);
+.hud-metrics,
+.hud-scoreboard__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: clamp(0.45rem, 1.5vw, 0.95rem);
   margin: 0;
   padding: 0;
   list-style: none;
-  flex-wrap: wrap;
 }
 
-.hud-metrics__item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.12rem;
-  min-width: 88px;
+.hud-metrics__item,
+.hud-scoreboard__metric {
+  position: relative;
+  display: grid;
+  gap: 0.18rem;
+  justify-items: end;
+  min-width: 0;
+  padding: clamp(0.3rem, 0.8vw, 0.55rem) clamp(0.35rem, 1.2vw, 0.75rem);
+  text-align: right;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+}
+
+.hud-scoreboard__metric::before,
+.hud-scoreboard__metric::after {
+  display: none;
 }
 
 .mobile-hud-sentinel {
@@ -818,7 +832,8 @@ h6 {
   white-space: nowrap;
 }
 
-.hud-metrics__label {
+.hud-metrics__label,
+.hud-scoreboard__metric-label {
   font-size: var(--font-size-caption);
   letter-spacing: 0.08em;
   text-transform: none;
@@ -826,7 +841,8 @@ h6 {
   text-align: right;
 }
 
-.hud-metrics__value {
+.hud-metrics__value,
+.hud-scoreboard__metric-value {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -835,7 +851,8 @@ h6 {
   text-align: right;
 }
 
-.hud-metrics__value-primary {
+.hud-metrics__value-primary,
+.hud-scoreboard__metric-value-primary {
   font-family: var(--font-numeric);
   font-size: var(--font-size-title);
   letter-spacing: 0.03em;
@@ -843,12 +860,86 @@ h6 {
   font-feature-settings: 'tnum' 1;
 }
 
-.hud-metrics__sublabel {
+.hud-metrics__sublabel,
+.hud-scoreboard__metric-sublabel {
   font-size: clamp(0.64rem, 1vw, 0.76rem);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgb(240 243 255 / 52%);
   line-height: 1;
+}
+
+@media (width <= 720px) {
+  .hud-scoreboard {
+    grid-template-columns: 1fr;
+    gap: clamp(0.75rem, 2vw, 1.25rem);
+    align-items: stretch;
+  }
+
+  .hud-scoreboard__summary {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: clamp(0.6rem, 2vw, 1rem);
+  }
+
+  .hud-metrics,
+  .hud-scoreboard__metrics {
+    grid-template-columns: 1fr;
+    gap: clamp(0.55rem, 2vw, 0.9rem);
+  }
+
+  .hud-metrics__item,
+  .hud-scoreboard__metric {
+    place-items: start;
+    text-align: left;
+    padding: clamp(0.55rem, 2.6vw, 0.85rem) clamp(0.6rem, 3vw, 1rem);
+    clip-path: var(--shape-tablet);
+    background-color: var(--color-surface);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgb(214 217 231 / 18%), transparent 65%),
+      radial-gradient(circle at 80% 80%, rgb(22 46 88 / 36%), transparent 70%),
+      var(--texture-vein);
+    box-shadow:
+      var(--frame-shadow-raised),
+      var(--frame-outline),
+      var(--frame-highlight),
+      var(--frame-etch);
+  }
+
+  .hud-scoreboard__metric::before,
+  .hud-scoreboard__metric::after {
+    display: block;
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: var(--shape-tablet);
+    pointer-events: none;
+  }
+
+  .hud-scoreboard__metric::before {
+    background-image: var(--texture-noise);
+    background-size: 4px 4px;
+    mix-blend-mode: soft-light;
+    opacity: 0.25;
+  }
+
+  .hud-scoreboard__metric::after {
+    border: 1px solid var(--color-border-faint);
+    box-shadow: inset 0 0 12px rgb(0 0 0 / 55%);
+  }
+
+  .hud-metrics__label,
+  .hud-scoreboard__metric-label {
+    text-align: left;
+    color: rgb(240 243 255 / 72%);
+  }
+
+  .hud-metrics__value,
+  .hud-scoreboard__metric-value {
+    align-items: flex-start;
+    min-width: 0;
+    text-align: left;
+  }
 }
 
 .encounter-setup {
