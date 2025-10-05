@@ -6,6 +6,18 @@ import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 
 const RELOAD_DELAY_MS = 250;
 
+const getServiceWorkerContainer = (): ServiceWorkerContainer | undefined => {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    return undefined;
+  }
+
+  const navigatorWithServiceWorker = navigator as Navigator & {
+    serviceWorker?: ServiceWorkerContainer;
+  };
+
+  return navigatorWithServiceWorker.serviceWorker;
+};
+
 export const useServiceWorkerUpdates = () => {
   const isFightInProgress = useFightStateSelector(
     (state) => state.fightStartTimestamp !== null && state.fightEndTimestamp === null,
@@ -15,6 +27,7 @@ export const useServiceWorkerUpdates = () => {
   const [controllerChanged, setControllerChanged] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const reloadScheduledRef = useRef(false);
+  const hasControlledClientRef = useRef(Boolean(getServiceWorkerContainer()?.controller));
 
   useEffect(() => {
     const unsubscribe = subscribeToServiceWorkerEvents((event) => {
@@ -29,21 +42,44 @@ export const useServiceWorkerUpdates = () => {
   }, []);
 
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    const serviceWorkerContainer = getServiceWorkerContainer();
+
+    if (!serviceWorkerContainer) {
       return;
     }
 
     const handleControllerChange = () => {
+      const controller = serviceWorkerContainer.controller;
+
+      if (!hasControlledClientRef.current) {
+        hasControlledClientRef.current = Boolean(controller);
+        if (import.meta.env.DEV) {
+          console.info(
+            '[sw] controller gained control for the first time; skipping reload',
+          );
+        }
+        return;
+      }
+
+      if (!controller) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            '[sw] controller change without active controller; skipping reload',
+          );
+        }
+        return;
+      }
+
       setControllerChanged(true);
       if (import.meta.env.DEV) {
         console.info('[sw] controller changed; will reload when safe');
       }
     };
 
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+    serviceWorkerContainer.addEventListener('controllerchange', handleControllerChange);
 
     return () => {
-      navigator.serviceWorker.removeEventListener(
+      serviceWorkerContainer.removeEventListener(
         'controllerchange',
         handleControllerChange,
       );

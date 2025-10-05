@@ -56,7 +56,7 @@ const basePlugins = {
 
 export default [
   {
-    ignores: ['dist/**', 'playwright-report/**', 'test-results/**'],
+    ignores: ['dist/**', 'dev-dist/**', 'playwright-report/**', 'test-results/**'],
   },
   js.configs.recommended,
   {
