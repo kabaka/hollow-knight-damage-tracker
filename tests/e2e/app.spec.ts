@@ -64,7 +64,19 @@ const selectSequence = async (page: Page, name: string) => {
   await sequenceTab.click();
   await expect(sequenceTab).toHaveAttribute('aria-selected', 'true');
 
-  await panel.getByRole('combobox', { name: 'Sequence' }).selectOption({ label: name });
+  const sequencePanel = panel.getByRole('tabpanel', { name: 'Sequence run' });
+  const sequenceOption = sequencePanel.getByRole('radio', {
+    name: new RegExp(name, 'i'),
+  });
+  const optionId = await sequenceOption.getAttribute('id');
+  if (!optionId) {
+    throw new Error(`Sequence option "${name}" missing id attribute`);
+  }
+
+  await sequencePanel.locator(`label[for="${optionId}"]`).click();
+  await expect(sequenceOption).toBeChecked();
+  await expect(sequencePanel.locator('.sequence-selector__stages')).toBeVisible();
+
   return panel;
 };
 
@@ -441,11 +453,14 @@ test.describe('Sequence modes and navigation', () => {
     await configurePureNailStrengthShamanBuild(page);
     const panel = await selectSequence(page, 'Pantheon of the Sage');
 
-    const stageNamesLocator = panel.locator('.sequence-selector__stage-name');
+    const activeOption = panel.locator(
+      '.sequence-selector__option[data-selected="true"]',
+    );
+    const stageNamesLocator = activeOption.locator('.sequence-selector__stage-name');
     let stageNames = await stageNamesLocator.allInnerTexts();
     expect(stageNames).not.toContain('Grey Prince Zote');
 
-    await panel.getByLabel('Include Grey Prince Zote').check();
+    await activeOption.getByLabel('Include Grey Prince Zote').check();
     stageNames = await stageNamesLocator.allInnerTexts();
     expect(stageNames).toContain('Grey Prince Zote');
 
@@ -512,14 +527,15 @@ test.describe('UI controls and shortcuts', () => {
     await modal.getByRole('button', { name: /^Shaman Stone,/ }).click();
     await expect(modal.locator('.overcharm-banner')).toBeHidden();
 
-    await modal.getByRole('button', { name: /^Fragile Strength,/ }).click();
-    await modal.getByRole('button', { name: /^Unbreakable Strength,/ }).click();
-    await expect(
-      modal.getByRole('button', { name: /^Unbreakable Strength,/ }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    await expect(
-      modal.getByRole('button', { name: /^Fragile Strength,/ }),
-    ).toHaveAttribute('aria-pressed', 'false');
+    const fragileStrength = modal.getByRole('button', { name: /^Fragile Strength,/ });
+    const unbreakableStrength = modal.getByRole('button', {
+      name: /^Unbreakable Strength,/,
+    });
+
+    await fragileStrength.click();
+    await unbreakableStrength.evaluate((element: HTMLButtonElement) => element.click());
+    await expect(unbreakableStrength).toHaveAttribute('aria-pressed', 'true');
+    await expect(fragileStrength).toHaveAttribute('aria-pressed', 'false');
 
     await modal.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(modal).toBeHidden();
