@@ -22,7 +22,7 @@ const notifyListeners = (event: ServiceWorkerUpdateEvent) => {
   listeners.forEach((listener) => {
     try {
       listener(event);
-    } catch (error) {
+    } catch (error: unknown) {
       if (import.meta.env.DEV) {
         console.error('[sw] listener error', error);
       }
@@ -38,6 +38,7 @@ export const subscribeToServiceWorkerEvents = (listener: Listener) => {
 };
 
 let updateCallback: ((reloadPage?: boolean) => Promise<void>) | undefined;
+type UpdateServiceWorker = (reloadPage?: boolean) => Promise<void>;
 
 export const setupServiceWorkerRegistration = () => {
   if (updateCallback) {
@@ -46,7 +47,7 @@ export const setupServiceWorkerRegistration = () => {
 
   let latestRegistration: ServiceWorkerRegistration | undefined;
 
-  const updateServiceWorker = registerSW({
+  const updateServiceWorker = (registerSW({
     onRegistered(registration) {
       latestRegistration = registration;
       notifyListeners({ type: 'registered', registration });
@@ -58,7 +59,7 @@ export const setupServiceWorkerRegistration = () => {
       if (import.meta.env.DEV) {
         console.info('[sw] update available, activating new service worker');
       }
-      updateServiceWorker().catch((error) => {
+      updateServiceWorker().catch((error: unknown) => {
         if (import.meta.env.DEV) {
           console.error('[sw] failed to update service worker', error);
         }
@@ -71,10 +72,10 @@ export const setupServiceWorkerRegistration = () => {
         console.info('[sw] app ready to work offline');
       }
     },
-    onRegisterError(error) {
+    onRegisterError(error: unknown) {
       console.error('[sw] registration failed', error);
     },
-  });
+  }) ?? (async () => {})) as UpdateServiceWorker;
 
   updateCallback = updateServiceWorker;
   return updateServiceWorker;
