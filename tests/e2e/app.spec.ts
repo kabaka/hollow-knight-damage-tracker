@@ -68,14 +68,12 @@ const selectSequence = async (page: Page, name: string) => {
   const sequenceOption = sequencePanel.getByRole('radio', {
     name: new RegExp(name, 'i'),
   });
-  const optionId = await sequenceOption.getAttribute('id');
-  if (!optionId) {
-    throw new Error(`Sequence option "${name}" missing id attribute`);
-  }
+  const sequenceCard = sequenceOption.locator('xpath=..');
 
-  await sequencePanel.locator(`label[for="${optionId}"]`).click();
+  await sequenceCard.scrollIntoViewIfNeeded();
+  await sequenceCard.locator('.sequence-selector__option-header').click();
   await expect(sequenceOption).toBeChecked();
-  await expect(sequencePanel.locator('.sequence-selector__stages')).toBeVisible();
+  await expect(sequenceCard.locator('.sequence-selector__stages')).toBeVisible();
 
   return panel;
 };
