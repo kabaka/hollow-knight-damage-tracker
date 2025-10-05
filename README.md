@@ -54,6 +54,7 @@ Hollow Knight Damage Tracker is a responsive companion app for players, co-comme
 - **Responsive layout:** Works on dual-monitor setups, tablets, and phones without juggling windows.
 - **Commentator-friendly:** Help modal covers setup, shortcuts, and logging tips—perfect for tournament co-pilots.
 - **Battle-tested CI:** Linting, unit tests, e2e runs, and deployments ship with every push so the tracker stays reliable.
+- **Installable PWA:** Auto-updating service worker and manifest keep the tracker available offline on GitHub Pages.
 
 ## Project Snapshot
 
@@ -102,6 +103,12 @@ pnpm install
 
 - Co-locate unit test files (`*.test.ts[x]`) next to the modules they cover. This keeps helpers like `src/utils/format.ts` and
   `src/utils/format.test.ts` together, while Playwright suites remain under `tests/`.
+
+### Progressive Web App
+
+- The build outputs a `manifest.webmanifest`, precache manifest, and compiled service worker so GitHub Pages serves an installable experience.
+- Service worker registration stays active during `pnpm dev`, making it easy to test offline behaviour—refresh after updates to pick up the latest worker.
+- The auto-update strategy keeps the deployed tracker current without manual cache busting.
 
 A `pre-commit` hook powered by [`simple-git-hooks`](https://github.com/toplenboren/simple-git-hooks) automatically runs formatting, linting, and unit tests before every commit.
 
