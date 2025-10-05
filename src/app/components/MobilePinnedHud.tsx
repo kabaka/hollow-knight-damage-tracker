@@ -107,8 +107,9 @@ export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
         <div
           id={statsPanelId}
           className="mobile-hud__metrics"
+          role="region"
+          aria-label="Encounter scoreboard"
           hidden={!isExpanded}
-          aria-hidden={!isExpanded}
         >
           <MobileStatsBar
             derived={derived}
