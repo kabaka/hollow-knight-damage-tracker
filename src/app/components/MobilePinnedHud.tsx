@@ -7,16 +7,22 @@ import { formatNumber } from '../../utils/format';
 export type MobilePinnedHudProps = {
   readonly derived: ReturnType<typeof useFightDerivedStats>;
   readonly encounterName: string;
+  readonly arenaLabel: string | null;
 };
 
-export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({ derived, encounterName }) => {
+export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
+  derived,
+  encounterName,
+  arenaLabel,
+}) => {
   const { targetHp, remainingHp } = derived;
   return (
     <div className="mobile-hud-sentinel">
       <div className="mobile-hud" role="group" aria-label="Boss status">
-        <span className="mobile-hud__title" aria-live="polite">
-          {encounterName}
-        </span>
+        <div className="mobile-hud__title-row" aria-live="polite">
+          <span className="mobile-hud__title">{encounterName}</span>
+          {arenaLabel ? <span className="mobile-hud__context">{arenaLabel}</span> : null}
+        </div>
         <BossHealthBar
           className="mobile-hud__health"
           role="group"

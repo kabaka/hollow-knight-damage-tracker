@@ -764,7 +764,15 @@ h6 {
     inset 0 0 0 1px rgb(214 217 231 / 38%);
 }
 
+.mobile-hud__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
 .mobile-hud__title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: var(--font-size-body);
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -772,6 +780,20 @@ h6 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.mobile-hud__context {
+  flex: 0 0 auto;
+  max-width: 55%;
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: rgb(240 243 255 / 62%);
+  letter-spacing: 0.03em;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
 }
 
 .mobile-hud__health {
@@ -2852,6 +2874,10 @@ h6 {
 
   .mobile-hud__title {
     font-size: 0.9rem;
+  }
+
+  .mobile-hud__context {
+    font-size: 0.76rem;
   }
 
   .mobile-hud__value {

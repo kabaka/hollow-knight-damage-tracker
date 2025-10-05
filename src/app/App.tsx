@@ -165,7 +165,11 @@ const AppContent: FC = () => {
         hasNextStage={hasNextSequenceStage}
         hasPreviousStage={hasPreviousSequenceStage}
       />
-      <MobilePinnedHud derived={derived} encounterName={encounterName} />
+      <MobilePinnedHud
+        derived={derived}
+        encounterName={encounterName}
+        arenaLabel={arenaLabel}
+      />
 
       <EncounterSetupPanel
         isOpen={isSetupOpen}
