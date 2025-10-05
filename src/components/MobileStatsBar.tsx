@@ -1,10 +1,10 @@
 import type { FC } from 'react';
 
-import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
-import { formatDecimal, formatNumber, formatStopwatch } from '../../utils/format';
+import type { DerivedStats } from '../features/fight-state/FightStateContext';
+import { formatDecimal, formatNumber, formatStopwatch } from '../utils/format';
 
 export type MobileStatsBarProps = {
-  readonly derived: ReturnType<typeof useFightDerivedStats>;
+  readonly derived: DerivedStats;
   readonly stageLabel: string | null;
   readonly stageProgress: { current: number; total: number } | null;
 };

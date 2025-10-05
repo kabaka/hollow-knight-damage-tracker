@@ -1,9 +1,8 @@
 import { useEffect, useId, useState, type FC } from 'react';
 
-import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
-import { BossHealthBar } from '../../components';
+import type { DerivedStats } from '../../features/fight-state/FightStateContext';
+import { BossHealthBar, MobileStatsBar } from '../../components';
 import { formatNumber } from '../../utils/format';
-import { MobileStatsBar } from './MobileStatsBar';
 
 const STORAGE_KEY = 'hkdt.mobileHudExpanded';
 
@@ -37,7 +36,7 @@ const storeExpansionState = (isExpanded: boolean): void => {
 };
 
 export type MobilePinnedHudProps = {
-  readonly derived: ReturnType<typeof useFightDerivedStats>;
+  readonly derived: DerivedStats;
   readonly encounterName: string;
   readonly arenaLabel: string | null;
   readonly stageLabel: string | null;
