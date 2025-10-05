@@ -191,7 +191,6 @@ const AppContent: FC = () => {
         sequenceEntries={sequenceEntries}
         cappedSequenceIndex={cappedSequenceIndex}
         onStageSelect={handleSequenceStageChange}
-        activeSequence={activeSequence}
         sequenceConditionValues={sequenceConditionValues}
         onConditionToggle={handleSequenceConditionToggle}
       />

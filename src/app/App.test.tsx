@@ -256,15 +256,18 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /setup/i }));
     await user.click(screen.getByRole('tab', { name: /sequence run/i }));
     const sequencePanel = screen.getByRole('tabpanel', { name: /sequence run/i });
-    await user.selectOptions(
-      within(sequencePanel).getByRole('combobox', { name: /sequence/i }),
-      'pantheon-of-the-sage',
+    await user.click(
+      within(sequencePanel).getByLabelText(/pantheon of the sage/i, { exact: false }),
     );
 
-    const conditionsGroup = await screen.findByRole('group', {
-      name: /sequence conditions/i,
+    const selectedOption = within(sequencePanel)
+      .getByText(/pantheon of the sage/i)
+      .closest('.sequence-selector__option');
+    expect(selectedOption).not.toBeNull();
+
+    const checkbox = within(selectedOption as HTMLElement).getByRole('checkbox', {
+      name: /include grey prince zote/i,
     });
-    const checkbox = within(conditionsGroup).getByLabelText(/include grey prince zote/i);
     expect(checkbox).not.toBeChecked();
 
     await user.click(checkbox);
