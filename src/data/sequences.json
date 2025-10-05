@@ -406,7 +406,7 @@
   {
     "id": "black-egg-temple",
     "name": "Black Egg Temple Rush",
-    "category": "Godhome Rushes",
+    "category": "Boss Rushes",
     "conditions": [
       {
         "id": "include-the-radiance",

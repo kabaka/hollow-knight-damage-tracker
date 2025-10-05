@@ -1,15 +1,23 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
-import { CharmFlightSprite, PlayerConfigModal } from './PlayerConfigModal';
+import {
+  CHARM_FLIGHT_TIMEOUT_MS,
+  CharmFlightSprite,
+  PlayerConfigModal,
+} from './PlayerConfigModal';
 
-const openModal = () =>
-  renderWithFightProvider(<PlayerConfigModal isOpen onClose={() => {}} />);
+const openModal = () => {
+  window.localStorage.clear();
+  return renderWithFightProvider(<PlayerConfigModal isOpen onClose={() => {}} />);
+};
 
 const baseAnimation = {
   key: 'flight',
   charmId: 'shaman-stone',
+  direction: 'equip' as const,
   icon: '/charms/shaman-stone.png',
   from: { x: 5, y: 10 },
   to: { x: 20, y: 40 },
@@ -17,7 +25,12 @@ const baseAnimation = {
 } as const;
 
 describe('PlayerConfigModal charms', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('retains rapid charm selections without dropping earlier choices', () => {
+    vi.useFakeTimers();
     openModal();
 
     const compassButton = screen.getByRole('button', {
@@ -32,12 +45,93 @@ describe('PlayerConfigModal charms', () => {
       fireEvent.click(swarmButton);
     });
 
+    act(() => {
+      vi.runAllTimers();
+    });
+
     const equippedList = screen.getByRole('list');
     const equippedItems = within(equippedList).getAllByRole('listitem');
 
     expect(equippedItems).toHaveLength(2);
     expect(equippedItems[0]).toHaveTextContent(/wayward compass/i);
     expect(equippedItems[1]).toHaveTextContent(/gathering swarm/i);
+  });
+
+  it('recovers hidden equipped slots when flights are interrupted mid-transition', () => {
+    vi.useFakeTimers();
+    openModal();
+
+    const modal = screen.getByRole('dialog', { name: /player loadout/i });
+    const [fragileButton] = within(modal).getAllByRole('button', {
+      name: /fragile heart/i,
+    });
+    const [unbreakableButton] = within(modal).getAllByRole('button', {
+      name: /unbreakable heart/i,
+    });
+
+    act(() => {
+      fireEvent.click(fragileButton);
+      fireEvent.click(unbreakableButton);
+      fireEvent.click(fragileButton);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(CHARM_FLIGHT_TIMEOUT_MS + 60);
+    });
+
+    expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+    expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+
+    const equippedList = within(modal).getByRole('list');
+    const equippedItems = within(equippedList).getAllByRole('listitem');
+
+    expect(equippedItems).toHaveLength(1);
+    expect(equippedItems[0]).toHaveTextContent(/fragile heart/i);
+  });
+
+  it('reveals equipped charms after real flight durations', async () => {
+    const user = userEvent.setup();
+    openModal();
+
+    const modal = screen.getByRole('dialog', { name: /player loadout/i });
+    const [fragileButton] = within(modal).getAllByRole('button', {
+      name: /fragile heart/i,
+    });
+
+    const clickVariant = async (pattern: RegExp) => {
+      const buttons = within(modal).getAllByRole('button', { name: pattern });
+      const active = buttons.find(
+        (button) => button.getAttribute('aria-pressed') === 'true',
+      );
+      const target = active ?? buttons[0];
+      await user.click(target);
+    };
+
+    await user.click(fragileButton);
+    await waitFor(() => {
+      expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+      expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+    });
+
+    await clickVariant(/unbreakable heart/i);
+    await waitFor(() => {
+      expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+      expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+    });
+    const equippedList = within(modal).getByRole('list');
+    const equippedItems = within(equippedList).getAllByRole('listitem');
+    expect(equippedItems).toHaveLength(1);
+    expect(equippedItems[0]).toHaveTextContent(/unbreakable heart/i);
+    expect(within(modal).queryByRole('listitem', { name: /fragile heart/i })).toBeNull();
+
+    await clickVariant(/unbreakable heart/i);
+    await waitFor(() => {
+      expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+      expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+    });
+    await waitFor(() => {
+      expect(within(modal).queryAllByRole('listitem')).toHaveLength(0);
+    });
   });
 });
 
@@ -115,7 +209,9 @@ describe('CharmFlightSprite', () => {
       />,
     );
 
-    expect(onComplete).toHaveBeenCalledWith('static-flight');
+    expect(onComplete).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'static-flight' }),
+    );
     expect(requestSpy).not.toHaveBeenCalled();
     expect(cancelSpy).not.toHaveBeenCalled();
   });

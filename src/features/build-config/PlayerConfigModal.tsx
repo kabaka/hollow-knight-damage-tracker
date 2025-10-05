@@ -79,17 +79,21 @@ const getCharmAriaLabel = (charm: Charm) => {
 type CharmFlight = {
   key: string;
   charmId: string;
+  direction: 'equip' | 'unequip';
   icon: string;
   from: { x: number; y: number };
   to: { x: number; y: number };
   size: { width: number; height: number };
 };
 
+type PanelCharmState = 'entering' | 'visible' | 'exiting';
+type EquippedCharmEntry = { charm: Charm; state: PanelCharmState };
+
 export const CHARM_FLIGHT_TIMEOUT_MS = 600;
 
 export const CharmFlightSprite: FC<{
   readonly animation: CharmFlight;
-  readonly onComplete: (key: string) => void;
+  readonly onComplete: (flight: CharmFlight) => void;
 }> = ({ animation, onComplete }) => {
   const elementRef = useRef<HTMLImageElement | null>(null);
 
@@ -108,7 +112,7 @@ export const CharmFlightSprite: FC<{
         return;
       }
       didComplete = true;
-      onComplete(animation.key);
+      onComplete(animation);
     };
 
     const handleTransitionEnd = (event: TransitionEvent) => {
@@ -191,21 +195,96 @@ const PlayerConfigModalContent: FC = () => {
   const overcharmRef = useRef(isOvercharmed);
   const { trigger: triggerHaptics } = useHapticFeedback();
   const [charmFlights, setCharmFlights] = useState<CharmFlight[]>([]);
+  const [panelCharmStates, setPanelCharmStates] = useState<Map<string, PanelCharmState>>(
+    () => {
+      const initial = new Map<string, PanelCharmState>();
+      for (const charmId of activeCharmIds) {
+        initial.set(charmId, 'visible');
+      }
+      return initial;
+    },
+  );
+  const panelStateFallbacks = useRef(new Map<string, number>());
+
+  const clearPanelStateFallback = useCallback((charmId: string) => {
+    const timers = panelStateFallbacks.current;
+    const fallbackId = timers.get(charmId);
+    if (fallbackId !== undefined) {
+      window.clearTimeout(fallbackId);
+      timers.delete(charmId);
+    }
+  }, []);
+
+  const finalizePanelState = useCallback(
+    (charmId: string, finalState: PanelCharmState | null) => {
+      setPanelCharmStates((current) => {
+        const next = new Map(current);
+        let didChange = false;
+
+        if (finalState === 'visible') {
+          const currentState = next.get(charmId);
+          if (currentState !== 'visible') {
+            next.set(charmId, 'visible');
+            didChange = true;
+          }
+        } else if (next.has(charmId)) {
+          next.delete(charmId);
+          didChange = true;
+        }
+
+        return didChange ? next : current;
+      });
+    },
+    [],
+  );
+
+  const schedulePanelStateFallback = useCallback(
+    (charmId: string, direction: CharmFlight['direction']) => {
+      clearPanelStateFallback(charmId);
+
+      const timeoutId = window.setTimeout(() => {
+        panelStateFallbacks.current.delete(charmId);
+        finalizePanelState(charmId, direction === 'equip' ? 'visible' : null);
+      }, CHARM_FLIGHT_TIMEOUT_MS + 50);
+
+      panelStateFallbacks.current.set(charmId, timeoutId);
+    },
+    [clearPanelStateFallback, finalizePanelState],
+  );
 
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
-  const equippedCharms = useMemo(() => {
-    const ordered = activeCharmIds
-      .map((id) => charmDetails.get(id))
-      .filter((charm): charm is Charm => Boolean(charm));
-
-    const voidHeartIndex = ordered.findIndex((charm) => charm.id === 'void-heart');
-    if (voidHeartIndex > 0) {
-      const [voidHeart] = ordered.splice(voidHeartIndex, 1);
-      ordered.unshift(voidHeart);
+  const equippedCharmEntries = useMemo(() => {
+    const activeEntries: EquippedCharmEntry[] = [];
+    for (const charmId of activeCharmIds) {
+      const charm = charmDetails.get(charmId);
+      if (!charm) {
+        continue;
+      }
+      const state = panelCharmStates.get(charmId) ?? 'visible';
+      activeEntries.push({ charm, state });
     }
 
-    return ordered;
-  }, [activeCharmIds, charmDetails]);
+    const voidHeartIndex = activeEntries.findIndex(
+      (entry) => entry.charm.id === 'void-heart',
+    );
+    if (voidHeartIndex > 0) {
+      const [voidHeart] = activeEntries.splice(voidHeartIndex, 1);
+      activeEntries.unshift(voidHeart);
+    }
+
+    const exitingEntries: EquippedCharmEntry[] = [];
+    for (const [charmId, state] of panelCharmStates.entries()) {
+      if (state !== 'exiting' || activeCharmIds.includes(charmId)) {
+        continue;
+      }
+      const charm = charmDetails.get(charmId);
+      if (charm) {
+        exitingEntries.push({ charm, state });
+      }
+    }
+
+    return [...activeEntries, ...exitingEntries];
+  }, [activeCharmIds, charmDetails, panelCharmStates]);
   const notchIndicators = useMemo(
     () =>
       Array.from({ length: MAX_NOTCH_LIMIT }, (_, index) => {
@@ -236,20 +315,66 @@ const PlayerConfigModalContent: FC = () => {
   useEffect(() => {
     const previous = previousCharmIdsRef.current;
     const newlyEquipped = activeCharmIds.filter((id) => !previous.includes(id));
+    const newlyUnequipped = previous.filter((id) => !activeCharmIds.includes(id));
     previousCharmIdsRef.current = activeCharmIds;
 
-    if (newlyEquipped.length === 0) {
+    setPanelCharmStates((current) => {
+      const next = new Map(current);
+      let didChange = false;
+
+      for (const charmId of activeCharmIds) {
+        const isNew = newlyEquipped.includes(charmId);
+        const state = next.get(charmId);
+        if (!state || state === 'exiting') {
+          next.set(charmId, isNew ? 'entering' : 'visible');
+          didChange = true;
+        }
+      }
+
+      for (const charmId of newlyUnequipped) {
+        if (next.get(charmId) !== 'exiting') {
+          next.set(charmId, 'exiting');
+          didChange = true;
+        }
+      }
+
+      return didChange ? next : current;
+    });
+
+    if (newlyEquipped.length === 0 && newlyUnequipped.length === 0) {
       return;
     }
 
     const container = workbenchRef.current;
     if (!container) {
+      setPanelCharmStates((current) => {
+        const next = new Map(current);
+        let didChange = false;
+
+        for (const charmId of newlyEquipped) {
+          if (next.get(charmId) === 'entering') {
+            next.set(charmId, 'visible');
+            didChange = true;
+          }
+        }
+
+        for (const charmId of newlyUnequipped) {
+          if (next.has(charmId)) {
+            next.delete(charmId);
+            didChange = true;
+          }
+        }
+
+        return didChange ? next : current;
+      });
       return;
     }
 
     const frame = requestAnimationFrame(() => {
       const containerRect = container.getBoundingClientRect();
       const updates: CharmFlight[] = [];
+      const instantVisible: string[] = [];
+      const instantRemoval: string[] = [];
 
       for (const charmId of newlyEquipped) {
         const source = charmSlotRefs.current.get(charmId);
@@ -257,6 +382,7 @@ const PlayerConfigModalContent: FC = () => {
         const icon = charmIconMap.get(charmId);
 
         if (!source || !target || !icon) {
+          instantVisible.push(charmId);
           continue;
         }
 
@@ -268,6 +394,7 @@ const PlayerConfigModalContent: FC = () => {
         updates.push({
           key: `${charmId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           charmId,
+          direction: 'equip',
           icon,
           from: {
             x: sourceRect.left - containerRect.left + (sourceRect.width - width) / 2,
@@ -281,6 +408,67 @@ const PlayerConfigModalContent: FC = () => {
         });
       }
 
+      for (const charmId of newlyUnequipped) {
+        const source = equippedCharmRefs.current.get(charmId);
+        const target = charmSlotRefs.current.get(charmId);
+        const icon = charmIconMap.get(charmId);
+
+        if (!source || !target || !icon) {
+          instantRemoval.push(charmId);
+          continue;
+        }
+
+        const sourceRect = source.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const width = sourceRect.width || targetRect.width;
+        const height = sourceRect.height || targetRect.height;
+
+        updates.push({
+          key: `${charmId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          charmId,
+          direction: 'unequip',
+          icon,
+          from: {
+            x: sourceRect.left - containerRect.left,
+            y: sourceRect.top - containerRect.top,
+          },
+          to: {
+            x: targetRect.left - containerRect.left + (targetRect.width - width) / 2,
+            y: targetRect.top - containerRect.top + (targetRect.height - height) / 2,
+          },
+          size: { width, height },
+        });
+      }
+
+      if (instantVisible.length > 0 || instantRemoval.length > 0) {
+        setPanelCharmStates((current) => {
+          const next = new Map(current);
+          let didChange = false;
+
+          for (const charmId of instantVisible) {
+            if (next.get(charmId) === 'entering') {
+              next.set(charmId, 'visible');
+              didChange = true;
+            }
+          }
+
+          for (const charmId of instantRemoval) {
+            if (next.has(charmId)) {
+              next.delete(charmId);
+              didChange = true;
+            }
+          }
+
+          return didChange ? next : current;
+        });
+        for (const charmId of instantVisible) {
+          clearPanelStateFallback(charmId);
+        }
+        for (const charmId of instantRemoval) {
+          clearPanelStateFallback(charmId);
+        }
+      }
+
       if (updates.length > 0) {
         setCharmFlights((current) => {
           const replacedCharmIds = new Set(updates.map((flight) => flight.charmId));
@@ -289,16 +477,59 @@ const PlayerConfigModalContent: FC = () => {
           );
           return [...preservedFlights, ...updates];
         });
+        for (const flight of updates) {
+          schedulePanelStateFallback(flight.charmId, flight.direction);
+        }
       }
     });
 
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [activeCharmIds, charmIconMap]);
+  }, [activeCharmIds, charmIconMap, clearPanelStateFallback, schedulePanelStateFallback]);
 
-  const handleCharmFlightComplete = useCallback((key: string) => {
-    setCharmFlights((current) => current.filter((flight) => flight.key !== key));
+  const handleCharmFlightComplete = useCallback(
+    (flight: CharmFlight) => {
+      setCharmFlights((current) => current.filter((item) => item.key !== flight.key));
+      clearPanelStateFallback(flight.charmId);
+      finalizePanelState(flight.charmId, flight.direction === 'equip' ? 'visible' : null);
+    },
+    [clearPanelStateFallback, finalizePanelState],
+  );
+
+  useEffect(() => {
+    if (charmFlights.length > 0) {
+      return;
+    }
+
+    setPanelCharmStates((current) => {
+      let didChange = false;
+      const next = new Map(current);
+
+      for (const [charmId, state] of current.entries()) {
+        if (state === 'entering') {
+          next.set(charmId, 'visible');
+          clearPanelStateFallback(charmId);
+          didChange = true;
+        } else if (state === 'exiting' && !activeCharmIds.includes(charmId)) {
+          next.delete(charmId);
+          clearPanelStateFallback(charmId);
+          didChange = true;
+        }
+      }
+
+      return didChange ? next : current;
+    });
+  }, [activeCharmIds, charmFlights.length, clearPanelStateFallback]);
+
+  useEffect(() => {
+    const timers = panelStateFallbacks.current;
+    return () => {
+      for (const timeoutId of timers.values()) {
+        window.clearTimeout(timeoutId);
+      }
+      timers.clear();
+    };
   }, []);
 
   return (
@@ -325,14 +556,18 @@ const PlayerConfigModalContent: FC = () => {
             <div className="equipped-panel">
               <h4 className="equipped-panel__title">Equipped</h4>
               <div className="equipped-panel__grid" role="list" aria-live="polite">
-                {equippedCharms.length > 0 ? (
-                  equippedCharms.map((charm) => {
+                {equippedCharmEntries.length > 0 ? (
+                  equippedCharmEntries.map(({ charm, state }) => {
                     const icon = charmIconMap.get(charm.id);
+                    const isHidden = state !== 'visible';
                     return (
                       <div
                         key={charm.id}
                         role="listitem"
-                        className="equipped-panel__item"
+                        className={`equipped-panel__item${
+                          isHidden ? ' equipped-panel__item--hidden' : ''
+                        }`}
+                        aria-hidden={isHidden}
                         title={getCharmTooltip(charm)}
                         ref={(element) => {
                           if (element) {

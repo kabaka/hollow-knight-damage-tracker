@@ -223,8 +223,9 @@ describe('App', () => {
       await waitFor(
         () => {
           expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+          expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
         },
-        { timeout: CHARM_FLIGHT_TIMEOUT_MS + 200 },
+        { timeout: CHARM_FLIGHT_TIMEOUT_MS + 400 },
       );
     };
 
@@ -256,15 +257,28 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /setup/i }));
     await user.click(screen.getByRole('tab', { name: /sequence run/i }));
     const sequencePanel = screen.getByRole('tabpanel', { name: /sequence run/i });
-    await user.selectOptions(
-      within(sequencePanel).getByRole('combobox', { name: /sequence/i }),
-      'pantheon-of-the-sage',
+
+    const sequenceChoices = within(sequencePanel).getByRole('radiogroup', {
+      name: /sequence run/i,
+    });
+    expect(
+      within(sequenceChoices).getByRole('radio', { name: /select a sequence/i }),
+    ).toBeChecked();
+
+    await user.click(
+      within(sequenceChoices).getByRole('radio', {
+        name: /pantheon of the sage/i,
+      }),
     );
 
-    const conditionsGroup = await screen.findByRole('group', {
-      name: /sequence conditions/i,
+    const selectedOption = within(sequencePanel)
+      .getByRole('radio', { name: /pantheon of the sage/i })
+      .closest('.sequence-selector__option');
+    expect(selectedOption).not.toBeNull();
+
+    const checkbox = within(selectedOption as HTMLElement).getByRole('checkbox', {
+      name: /include grey prince zote/i,
     });
-    const checkbox = within(conditionsGroup).getByLabelText(/include grey prince zote/i);
     expect(checkbox).not.toBeChecked();
 
     await user.click(checkbox);

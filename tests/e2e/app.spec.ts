@@ -64,7 +64,17 @@ const selectSequence = async (page: Page, name: string) => {
   await sequenceTab.click();
   await expect(sequenceTab).toHaveAttribute('aria-selected', 'true');
 
-  await panel.getByRole('combobox', { name: 'Sequence' }).selectOption({ label: name });
+  const sequencePanel = panel.getByRole('tabpanel', { name: 'Sequence run' });
+  const sequenceOption = sequencePanel.getByRole('radio', {
+    name: new RegExp(name, 'i'),
+  });
+  const sequenceCard = sequenceOption.locator('xpath=..');
+
+  await sequenceCard.scrollIntoViewIfNeeded();
+  await sequenceCard.locator('.sequence-selector__option-header').click();
+  await expect(sequenceOption).toBeChecked();
+  await expect(sequenceCard.locator('.sequence-selector__stages')).toBeVisible();
+
   return panel;
 };
 
@@ -463,11 +473,14 @@ test.describe('Sequence modes and navigation', () => {
     await configurePureNailStrengthShamanBuild(page);
     const panel = await selectSequence(page, 'Pantheon of the Sage');
 
-    const stageNamesLocator = panel.locator('.sequence-selector__stage-name');
+    const activeOption = panel.locator(
+      '.sequence-selector__option[data-selected="true"]',
+    );
+    const stageNamesLocator = activeOption.locator('.sequence-selector__stage-name');
     let stageNames = await stageNamesLocator.allInnerTexts();
     expect(stageNames).not.toContain('Grey Prince Zote');
 
-    await panel.getByLabel('Include Grey Prince Zote').check();
+    await activeOption.getByLabel('Include Grey Prince Zote').check();
     stageNames = await stageNamesLocator.allInnerTexts();
     expect(stageNames).toContain('Grey Prince Zote');
 
