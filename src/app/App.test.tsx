@@ -33,6 +33,11 @@ describe('App', () => {
       within(banner).getByRole('progressbar', { name: /boss hp/i }),
     ).toBeInTheDocument();
     expect(within(banner).getByText(/forgotten crossroads/i)).toBeInTheDocument();
+    const mobileHud = screen.getByRole('group', {
+      name: /boss status/i,
+      hidden: true,
+    });
+    expect(within(mobileHud).getByText(/forgotten crossroads/i)).toBeInTheDocument();
   });
 
   it('allows selecting a custom boss target and updating HP from the HUD', async () => {
@@ -78,6 +83,16 @@ describe('App', () => {
       ).toBeInTheDocument();
     });
     expect(within(banner).queryByText(/forgotten crossroads/i)).not.toBeInTheDocument();
+    const mobileHud = screen.getByRole('group', {
+      name: /boss status/i,
+      hidden: true,
+    });
+    expect(
+      within(mobileHud).getByText(/pantheon of the master \(1\/\d+\)/i),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileHud).queryByText(/forgotten crossroads/i),
+    ).not.toBeInTheDocument();
   });
 
   it('filters the boss list with fuzzy search', async () => {
