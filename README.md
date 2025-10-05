@@ -106,9 +106,10 @@ pnpm install
 
 ### Progressive Web App
 
-- The build outputs a `manifest.webmanifest`, precache manifest, and compiled service worker so GitHub Pages serves an installable experience.
-- Service worker registration stays active during `pnpm dev`, making it easy to test offline behaviour—refresh after updates to pick up the latest worker.
-- The auto-update strategy keeps the deployed tracker current without manual cache busting.
+- **Install on desktop or mobile:** Open the deployed site in a Chromium-based browser (desktop) or Safari/Chrome (mobile) and use the native “Install”/“Add to Home Screen” prompt. The app advertises its manifest via `<link rel="manifest" href="./manifest.webmanifest">`, so compatible browsers surface the install action automatically.
+- **Offline-first caching:** A Workbox-powered service worker precaches the critical shell and fonts. After the first visit completes, the tracker continues to load without a network connection—ideal for venues with unreliable Wi-Fi.
+- **Seamless updates:** The service worker uses the `autoUpdate` strategy from `vite-plugin-pwa`. When a new deployment ships, the helper in `src/sw-registration.ts` waits for the current fight to finish before calling `registration.update()` and reloading the page, ensuring commentators never lose their place mid-encounter.
+- **Local testing parity:** `pnpm dev` enables the same service worker configuration as production, so you can verify installation prompts, offline behaviour, and update flows locally without a custom build step.
 
 A `pre-commit` hook powered by [`simple-git-hooks`](https://github.com/toplenboren/simple-git-hooks) automatically runs formatting, linting, and unit tests before every commit.
 
@@ -131,6 +132,8 @@ We welcome fellow Knights, lore-keepers, and UI artisans! Feel free to [open an 
 5. Submit a PR with context, screenshots or clips if the UI changed, and reference any related issues.
 
 For repository-specific expectations, consult [`AGENTS.md`](AGENTS.md).
+
+> ℹ️ **PWA assets:** Icons live under `public/icons/` and the manifest/service worker are generated automatically by `vite-plugin-pwa`. Running `pnpm build` or `pnpm preview` will regenerate the precache manifest—no manual cache busting required after updating assets.
 
 ## Disclaimer
 

@@ -224,6 +224,27 @@ test.describe('Landing page', () => {
     await expect(helpDialog).not.toBeVisible();
   });
 
+  test('exposes manifest metadata and an active service worker', async ({ page }) => {
+    const manifestLink = page.locator('link[rel="manifest"]');
+    await expect(manifestLink).toHaveAttribute('href', /manifest\.webmanifest$/);
+
+    const status = await page.evaluate(async () => {
+      if (!('serviceWorker' in navigator)) {
+        return { supported: false };
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      return {
+        supported: true,
+        hasActive: Boolean(registration.active),
+        scope: registration.scope,
+      };
+    });
+
+    expect(status).toEqual(expect.objectContaining({ supported: true, hasActive: true }));
+    expect(status.scope).toContain('://');
+  });
+
   test('restores build configuration and logs after a reload', async ({ page }) => {
     await page.getByRole('button', { name: 'Setup' }).click();
     await page.getByRole('radio', { name: 'Custom target' }).click();
