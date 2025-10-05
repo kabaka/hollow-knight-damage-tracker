@@ -140,6 +140,12 @@ test('generate a mid-combat screenshot', async ({ page }) => {
 
     const header = page.locator('header[role="banner"]');
 
+    const mobileHudToggle = page.getByRole('button', { name: /Boss status/i });
+    if (await mobileHudToggle.isVisible()) {
+      await mobileHudToggle.click();
+      await expect(mobileHudToggle).toHaveAttribute('aria-expanded', 'true');
+    }
+
     await expect(
       page.getByRole('region', { name: 'Encounter scoreboard' }),
     ).toBeVisible();
