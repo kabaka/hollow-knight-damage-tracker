@@ -30,7 +30,7 @@ describe('SequenceSelector', () => {
   const pantheonSequence: SequenceSelectorProps['bossSequences'][number] = {
     id: 'pantheon-1',
     name: 'Pantheon of the Master',
-    category: 'Pantheons',
+    category: 'Godhome Pantheons',
     entries: [
       createEntry('p1-vengefly', 'Vengefly King'),
       createEntry('p1-gruz', 'Gruz Mother'),
@@ -48,7 +48,7 @@ describe('SequenceSelector', () => {
   const trialSequence: SequenceSelectorProps['bossSequences'][number] = {
     id: 'trial-1',
     name: 'Trial of the Warrior',
-    category: 'Trials',
+    category: 'Boss Rushes',
     entries: [createEntry('trial-1', 'Massive Moss Charger')],
     conditions: [
       {
@@ -63,8 +63,8 @@ describe('SequenceSelector', () => {
   const renderSelector = (overrides: Partial<SequenceSelectorProps> = {}) => {
     const defaultProps: SequenceSelectorProps = {
       title: 'Sequence run',
-      description: 'Configure a full Godhome run.',
-      placeholder: 'Select a Godhome sequence',
+      description: 'Configure a full sequence run.',
+      placeholder: 'Select a sequence',
       bossSequences: [pantheonSequence, trialSequence],
       sequenceSelectValue: '',
       onSequenceChange: vi.fn(),
@@ -90,11 +90,13 @@ describe('SequenceSelector', () => {
     renderSelector();
 
     expect(
-      screen.getByRole('heading', { name: 'Pantheons', level: 4 }),
+      screen.getByRole('heading', { name: 'Godhome Pantheons', level: 4 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Trials', level: 4 })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Boss Rushes', level: 4 }),
+    ).toBeInTheDocument();
 
-    expect(screen.getByLabelText(/Select a Godhome sequence/i)).toBeChecked();
+    expect(screen.getByLabelText(/Select a sequence/i)).toBeChecked();
   });
 
   it('exposes sequence conditions while disabling unselected options', async () => {

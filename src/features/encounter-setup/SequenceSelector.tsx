@@ -78,7 +78,7 @@ export const SequenceSelector: FC<SequenceSelectorProps> = ({
           id={`${radioName}-none`}
           name={radioName}
           title={placeholder}
-          description="Preview Pantheons and Trials before committing to a run."
+          description="Preview each sequence before committing to a run."
           value=""
           isSelected={sequenceSelectValue === ''}
           onSelect={onSequenceChange}
