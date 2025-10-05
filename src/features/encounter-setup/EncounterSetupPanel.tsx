@@ -40,7 +40,6 @@ export type EncounterSetupPanelProps = {
   readonly sequenceEntries: ReturnType<typeof useBuildConfiguration>['sequenceEntries'];
   readonly cappedSequenceIndex: number;
   readonly onStageSelect: (index: number) => void;
-  readonly activeSequence: ReturnType<typeof useBuildConfiguration>['activeSequence'];
   readonly sequenceConditionValues: ReturnType<
     typeof useBuildConfiguration
   >['sequenceConditionValues'];
@@ -65,7 +64,6 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
   sequenceEntries,
   cappedSequenceIndex,
   onStageSelect,
-  activeSequence,
   sequenceConditionValues,
   onConditionToggle,
 }) => {
@@ -178,45 +176,11 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
             sequenceEntries={sequenceEntries}
             cappedSequenceIndex={cappedSequenceIndex}
             onStageSelect={onStageSelect}
+            sequenceConditionValues={sequenceConditionValues}
+            onConditionToggle={onConditionToggle}
           />
         </section>
       </div>
-
-      {mode === SEQUENCE_MODE &&
-      activeSequence &&
-      activeSequence.conditions.length > 0 ? (
-        <section
-          className="sequence-conditions"
-          aria-label="Sequence conditions"
-          role="group"
-        >
-          <h4 className="sequence-conditions__title">Sequence conditions</h4>
-          <div className="sequence-conditions__grid">
-            {activeSequence.conditions.map((condition) => {
-              const isEnabled = sequenceConditionValues[condition.id];
-              return (
-                <label key={condition.id} className="sequence-conditions__option">
-                  <input
-                    type="checkbox"
-                    checked={isEnabled}
-                    onChange={(event) =>
-                      onConditionToggle(condition.id, event.target.checked)
-                    }
-                  />
-                  <span>
-                    <span className="sequence-conditions__label">{condition.label}</span>
-                    {condition.description ? (
-                      <span className="sequence-conditions__description">
-                        {condition.description}
-                      </span>
-                    ) : null}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
     </section>
   );
 };
