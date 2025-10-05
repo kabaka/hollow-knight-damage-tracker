@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">Hollow Knight Damage Tracker Icon</title>
+  <desc id="desc">Stylized Hollow Knight mask above a deep blue gradient backdrop.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e2a5c" />
+      <stop offset="100%" stop-color="#080b1a" />
+    </linearGradient>
+    <linearGradient id="horn" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#d8e0ff" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="36" fill="url(#bg)" />
+  <path d="M59 44c9-16 24-24 37-24 13 0 28 8 37 24 4 8-4 16-11 9-7-9-13-13-26-13-13 0-19 4-26 13-7 7-15-1-11-9Z" fill="url(#horn)" />
+  <path d="M53 79c0-20 18-37 43-37s43 17 43 37v18c0 20-11 40-32 48l-11 4-11-4c-21-8-32-28-32-48V79Z" fill="#f7f8ff" />
+  <path d="M64 94c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11Zm64 0c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11Z" fill="#101326" />
+  <path d="M70 138c13 10 39 10 52 0 3-2 7 2 5 6-12 22-50 22-62 0-2-4 2-8 5-6Z" fill="#d0d7ff" opacity="0.65" />
+</svg>

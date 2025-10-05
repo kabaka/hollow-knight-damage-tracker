@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-labelledby="title desc">
+  <title id="title">Hollow Knight Damage Tracker Apple Touch Icon</title>
+  <desc id="desc">Rounded square blue gradient with simplified Hollow Knight mask.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#253673" />
+      <stop offset="100%" stop-color="#070910" />
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="32" fill="url(#bg)" />
+  <path d="M54 47c8-16 22-24 36-24s28 8 36 24c4 7-3 15-10 8-7-8-13-12-26-12s-19 4-26 12c-7 7-14-1-10-8Z" fill="#eef1ff" />
+  <path d="M50 81c0-18 16-33 40-33s40 15 40 33v16c0 18-11 36-30 44l-10 3-10-3c-19-8-30-26-30-44V81Z" fill="#f7f8ff" />
+  <path d="M60 94a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm50 0a10 10 0 1 1 0 20 10 10 0 0 1 0-20Z" fill="#0c1021" />
+</svg>
