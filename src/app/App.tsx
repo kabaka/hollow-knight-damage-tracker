@@ -141,43 +141,6 @@ const AppContent: FC = () => {
       }
     : null;
   const stageLabel = currentSequenceEntry ? currentSequenceEntry.target.bossName : null;
-  const encounterMode: 'single-target' | 'sequence' = activeSequence
-    ? 'sequence'
-    : 'single-target';
-  const targetSummaryName =
-    encounterMode === 'sequence' && currentSequenceEntry
-      ? currentSequenceEntry.target.bossName
-      : encounterName;
-  const stageVersionTitle = currentSequenceEntry?.target.version.title ?? null;
-  const stageLocation = currentSequenceEntry?.target.location ?? null;
-  const customTargetLabel = `${customTargetHp.toLocaleString()} HP`;
-  let targetSummaryDetail: string | null = null;
-  if (encounterMode === 'sequence') {
-    targetSummaryDetail = stageVersionTitle;
-  } else if (selectedVersion?.title) {
-    targetSummaryDetail = selectedVersion.title;
-  } else if (!selectedTarget) {
-    targetSummaryDetail = customTargetLabel;
-  }
-  const targetSummaryLocation = encounterMode === 'sequence' ? stageLocation : arenaLabel;
-  const sequenceSummary =
-    encounterMode === 'sequence'
-      ? {
-          name: activeSequence?.name ?? null,
-          stageLabel,
-          progress: stageProgress,
-        }
-      : null;
-  const encounterSummary = {
-    mode: encounterMode,
-    target: {
-      name: targetSummaryName,
-      detail: targetSummaryDetail,
-      location: targetSummaryLocation,
-    },
-    sequence: sequenceSummary,
-  } as const;
-
   return (
     <div className="app-shell">
       <HeaderBar
@@ -195,7 +158,6 @@ const AppContent: FC = () => {
         onRewindStage={handleRewindSequence}
         hasNextStage={hasNextSequenceStage}
         hasPreviousStage={hasPreviousSequenceStage}
-        encounterSummary={encounterSummary}
       />
       <MobilePinnedHud derived={derived} encounterName={encounterName} />
 
