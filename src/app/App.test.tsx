@@ -271,7 +271,7 @@ describe('App', () => {
     );
 
     const selectedOption = within(sequencePanel)
-      .getByText(/pantheon of the sage/i)
+      .getByRole('radio', { name: /pantheon of the sage/i })
       .closest('.sequence-selector__option');
     expect(selectedOption).not.toBeNull();
 

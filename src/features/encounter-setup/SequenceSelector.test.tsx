@@ -99,6 +99,30 @@ describe('SequenceSelector', () => {
     expect(screen.getByLabelText(/Select a sequence/i)).toBeChecked();
   });
 
+  it('provides a hidden native select fallback for the legacy selector', async () => {
+    const { user, onSequenceChange } = renderSelector();
+
+    const fallbackSelect = screen.getByLabelText(/sequence run/i, {
+      selector: 'select',
+    });
+    expect(fallbackSelect).toHaveClass('sr-only');
+    expect(fallbackSelect).toHaveValue('');
+
+    await user.selectOptions(fallbackSelect, pantheonSequence.id);
+    expect(onSequenceChange).toHaveBeenCalledWith(pantheonSequence.id);
+  });
+
+  it('syncs the native select fallback with the selected sequence', () => {
+    renderSelector({
+      sequenceSelectValue: pantheonSequence.id,
+    });
+
+    const fallbackSelect = screen.getByLabelText(/sequence run/i, {
+      selector: 'select',
+    });
+    expect(fallbackSelect).toHaveValue(pantheonSequence.id);
+  });
+
   it('exposes sequence conditions while disabling unselected options', async () => {
     const { user, onConditionToggle } = renderSelector({
       sequenceSelectValue: pantheonSequence.id,
@@ -119,7 +143,7 @@ describe('SequenceSelector', () => {
     expect(onConditionToggle).toHaveBeenCalledWith('include-grey-prince', false);
 
     const trialOption = screen
-      .getByText('Trial of the Warrior')
+      .getByRole('radio', { name: /trial of the warrior/i })
       .closest('.sequence-selector__option');
     expect(trialOption).not.toBeNull();
 
