@@ -18,7 +18,7 @@ const MODE_COPY: Record<EncounterMode, { title: string; description: string }> =
   [SEQUENCE_MODE]: {
     title: 'Sequence run',
     description:
-      'Run through multi-fight Godhome sequences with automatic stage tracking and conditions.',
+      'Run through multi-fight sequences with automatic stage tracking and conditions.',
   },
 };
 
@@ -169,7 +169,7 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
           <SequenceSelector
             title={MODE_COPY[SEQUENCE_MODE].title}
             description={MODE_COPY[SEQUENCE_MODE].description}
-            placeholder="Select a Godhome sequence"
+            placeholder="Select a sequence"
             bossSequences={bossSequences}
             sequenceSelectValue={sequenceSelectValue}
             onSequenceChange={onSequenceChange}
