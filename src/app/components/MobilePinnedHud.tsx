@@ -3,17 +3,22 @@ import type { FC } from 'react';
 import type { useFightDerivedStats } from '../../features/fight-state/FightStateContext';
 import { BossHealthBar } from '../../components';
 import { formatNumber } from '../../utils/format';
+import { MobileStatsBar } from './MobileStatsBar';
 
 export type MobilePinnedHudProps = {
   readonly derived: ReturnType<typeof useFightDerivedStats>;
   readonly encounterName: string;
   readonly arenaLabel: string | null;
+  readonly stageLabel: string | null;
+  readonly stageProgress: { current: number; total: number } | null;
 };
 
 export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
   derived,
   encounterName,
   arenaLabel,
+  stageLabel,
+  stageProgress,
 }) => {
   const { targetHp, remainingHp } = derived;
   return (
@@ -33,6 +38,11 @@ export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
           trackClassName="mobile-hud__track"
           valueLabel={`${formatNumber(remainingHp)} / ${formatNumber(targetHp)}`}
           valueClassName="mobile-hud__value"
+        />
+        <MobileStatsBar
+          derived={derived}
+          stageLabel={stageLabel}
+          stageProgress={stageProgress}
         />
       </div>
     </div>
