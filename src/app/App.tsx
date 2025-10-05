@@ -23,6 +23,7 @@ import { EncounterSetupPanel } from '../features/encounter-setup';
 import { HeaderBar } from './components/HeaderBar';
 import { MobilePinnedHud } from './components/MobilePinnedHud';
 import { formatSequenceHeaderLabel } from './formatSequenceHeaderLabel';
+import { ServiceWorkerUpdateNotice } from './components/ServiceWorkerUpdateNotice';
 
 const AppContent: FC = () => {
   useVisualViewportCssVars();
@@ -149,6 +150,7 @@ const AppContent: FC = () => {
   const stageLabel = currentSequenceEntry ? currentSequenceEntry.target.bossName : null;
   return (
     <div className="app-shell">
+      <ServiceWorkerUpdateNotice />
       <HeaderBar
         derived={derived}
         encounterName={encounterName}

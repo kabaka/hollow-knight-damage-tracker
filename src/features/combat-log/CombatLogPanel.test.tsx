@@ -10,6 +10,7 @@ import {
 } from './CombatLogPanel';
 import { useFightActions } from '../fight-state/FightStateContext';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
+import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 
 type FightActions = ReturnType<typeof useFightActions>;
 
@@ -25,6 +26,49 @@ describe('CombatLogPanel', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
     window.localStorage.clear();
+  });
+
+  it('flushes persistence immediately when a flush event is dispatched', async () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    let actions: FightActions | null = null;
+
+    renderWithFightProvider(
+      <CombatLogProvider>
+        <ActionsBridge
+          onReady={(value) => {
+            actions = value;
+          }}
+        />
+        <CombatLogPanel />
+      </CombatLogProvider>,
+    );
+
+    await waitFor(() => {
+      expect(actions).not.toBeNull();
+    });
+
+    act(() => {
+      actions?.logAttack({
+        id: 'flush-test-hit',
+        label: 'Flush Test Hit',
+        category: 'nail',
+        damage: 12,
+        timestamp: Date.now(),
+      });
+    });
+
+    expect(setItemSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new Event(PERSIST_FLUSH_EVENT));
+    });
+
+    await waitFor(() => {
+      expect(setItemSpy).toHaveBeenCalled();
+    });
+
+    setItemSpy.mockRestore();
   });
 
   it('schedules persistence with an idle callback before writing to storage', async () => {

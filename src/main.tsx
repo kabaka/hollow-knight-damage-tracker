@@ -4,6 +4,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './app';
+import { setupServiceWorkerRegistration } from './sw-registration';
+
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  setupServiceWorkerRegistration();
+}
 
 const rootElement = document.getElementById('root');
 

@@ -12,6 +12,7 @@ import {
 import { AppButton } from '../../components/AppButton';
 import { bossMap } from '../../data';
 import { formatNumber, formatRelativeTime } from '../../utils/format';
+import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 import {
   useFightDerivedStats,
   useFightState,
@@ -573,6 +574,22 @@ const useCombatLogController = (): CombatLogContextValue => {
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
+    };
+  }, [flushPersist]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleFlush: EventListener = () => {
+      flushPersist();
+    };
+
+    window.addEventListener(PERSIST_FLUSH_EVENT, handleFlush);
+
+    return () => {
+      window.removeEventListener(PERSIST_FLUSH_EVENT, handleFlush);
     };
   }, [flushPersist]);
 
