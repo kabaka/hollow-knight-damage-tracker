@@ -204,6 +204,53 @@ const PlayerConfigModalContent: FC = () => {
       return initial;
     },
   );
+  const panelStateFallbacks = useRef(new Map<string, number>());
+
+  const clearPanelStateFallback = useCallback((charmId: string) => {
+    const timers = panelStateFallbacks.current;
+    const fallbackId = timers.get(charmId);
+    if (fallbackId !== undefined) {
+      window.clearTimeout(fallbackId);
+      timers.delete(charmId);
+    }
+  }, []);
+
+  const finalizePanelState = useCallback(
+    (charmId: string, finalState: PanelCharmState | null) => {
+      setPanelCharmStates((current) => {
+        const next = new Map(current);
+        let didChange = false;
+
+        if (finalState === 'visible') {
+          const currentState = next.get(charmId);
+          if (currentState !== 'visible') {
+            next.set(charmId, 'visible');
+            didChange = true;
+          }
+        } else if (next.has(charmId)) {
+          next.delete(charmId);
+          didChange = true;
+        }
+
+        return didChange ? next : current;
+      });
+    },
+    [],
+  );
+
+  const schedulePanelStateFallback = useCallback(
+    (charmId: string, direction: CharmFlight['direction']) => {
+      clearPanelStateFallback(charmId);
+
+      const timeoutId = window.setTimeout(() => {
+        panelStateFallbacks.current.delete(charmId);
+        finalizePanelState(charmId, direction === 'equip' ? 'visible' : null);
+      }, CHARM_FLIGHT_TIMEOUT_MS + 50);
+
+      panelStateFallbacks.current.set(charmId, timeoutId);
+    },
+    [clearPanelStateFallback, finalizePanelState],
+  );
 
   const notchUsage = `${activeCharmCost}/${notchLimit}`;
   const equippedCharmEntries = useMemo(() => {
@@ -414,6 +461,12 @@ const PlayerConfigModalContent: FC = () => {
 
           return didChange ? next : current;
         });
+        for (const charmId of instantVisible) {
+          clearPanelStateFallback(charmId);
+        }
+        for (const charmId of instantRemoval) {
+          clearPanelStateFallback(charmId);
+        }
       }
 
       if (updates.length > 0) {
@@ -424,32 +477,59 @@ const PlayerConfigModalContent: FC = () => {
           );
           return [...preservedFlights, ...updates];
         });
+        for (const flight of updates) {
+          schedulePanelStateFallback(flight.charmId, flight.direction);
+        }
       }
     });
 
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [activeCharmIds, charmIconMap]);
+  }, [activeCharmIds, charmIconMap, clearPanelStateFallback, schedulePanelStateFallback]);
 
-  const handleCharmFlightComplete = useCallback((flight: CharmFlight) => {
-    setCharmFlights((current) => current.filter((item) => item.key !== flight.key));
+  const handleCharmFlightComplete = useCallback(
+    (flight: CharmFlight) => {
+      setCharmFlights((current) => current.filter((item) => item.key !== flight.key));
+      clearPanelStateFallback(flight.charmId);
+      finalizePanelState(flight.charmId, flight.direction === 'equip' ? 'visible' : null);
+    },
+    [clearPanelStateFallback, finalizePanelState],
+  );
+
+  useEffect(() => {
+    if (charmFlights.length > 0) {
+      return;
+    }
+
     setPanelCharmStates((current) => {
-      const next = new Map(current);
       let didChange = false;
+      const next = new Map(current);
 
-      if (flight.direction === 'equip') {
-        if (next.get(flight.charmId) === 'entering') {
-          next.set(flight.charmId, 'visible');
+      for (const [charmId, state] of current.entries()) {
+        if (state === 'entering') {
+          next.set(charmId, 'visible');
+          clearPanelStateFallback(charmId);
+          didChange = true;
+        } else if (state === 'exiting' && !activeCharmIds.includes(charmId)) {
+          next.delete(charmId);
+          clearPanelStateFallback(charmId);
           didChange = true;
         }
-      } else if (next.has(flight.charmId)) {
-        next.delete(flight.charmId);
-        didChange = true;
       }
 
       return didChange ? next : current;
     });
+  }, [activeCharmIds, charmFlights.length, clearPanelStateFallback]);
+
+  useEffect(() => {
+    const timers = panelStateFallbacks.current;
+    return () => {
+      for (const timeoutId of timers.values()) {
+        window.clearTimeout(timeoutId);
+      }
+      timers.clear();
+    };
   }, []);
 
   return (
