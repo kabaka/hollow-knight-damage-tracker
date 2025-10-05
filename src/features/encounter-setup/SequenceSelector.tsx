@@ -35,6 +35,8 @@ export const SequenceSelector: FC<SequenceSelectorProps> = ({
   const descriptionId = useId();
   const radioName = useId();
 
+  const fallbackSelectId = `${radioName}-native`;
+
   const groupedSequences = useMemo(() => {
     type BossSequence = SequenceSelectorProps['bossSequences'][number];
     const groups: Array<{ category: string; sequences: BossSequence[] }> = [];
@@ -67,6 +69,26 @@ export const SequenceSelector: FC<SequenceSelectorProps> = ({
             {description}
           </p>
         </div>
+      </div>
+      <div className="sequence-selector__native">
+        <label className="sr-only" htmlFor={fallbackSelectId}>
+          {title}
+        </label>
+        <select
+          id={fallbackSelectId}
+          className="sr-only sequence-selector__native-select"
+          value={sequenceSelectValue}
+          onChange={(event) => {
+            onSequenceChange(event.currentTarget.value);
+          }}
+        >
+          <option value="">{placeholder}</option>
+          {bossSequences.map((sequence) => (
+            <option key={sequence.id} value={sequence.id}>
+              {sequence.name}
+            </option>
+          ))}
+        </select>
       </div>
       <div
         className="sequence-selector__options"
