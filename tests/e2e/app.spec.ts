@@ -60,7 +60,11 @@ const selectBossWithVersion = async (
 
 const selectSequence = async (page: Page, name: string) => {
   const panel = await openEncounterSetup(page);
-  await panel.getByRole('combobox', { name: 'Mode' }).selectOption({ label: name });
+  const sequenceTab = panel.getByRole('tab', { name: 'Sequence run' });
+  await sequenceTab.click();
+  await expect(sequenceTab).toHaveAttribute('aria-selected', 'true');
+
+  await panel.getByRole('combobox', { name: 'Sequence' }).selectOption({ label: name });
   return panel;
 };
 
