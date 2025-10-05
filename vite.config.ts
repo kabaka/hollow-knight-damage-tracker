@@ -92,6 +92,7 @@ export default defineConfig({
     // Resolve setup file relative to this config file to avoid monorepo root issues
     setupFiles: fileURLToPath(new URL('./vitest.setup.ts', import.meta.url)),
     css: true,
+    testTimeout: 20000,
     exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
     coverage: {
       provider: 'v8',

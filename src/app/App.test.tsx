@@ -223,6 +223,7 @@ describe('App', () => {
       await waitFor(
         () => {
           expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
+          expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
         },
         { timeout: CHARM_FLIGHT_TIMEOUT_MS + 200 },
       );
