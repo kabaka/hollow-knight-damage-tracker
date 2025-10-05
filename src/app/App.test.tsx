@@ -256,8 +256,18 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /setup/i }));
     await user.click(screen.getByRole('tab', { name: /sequence run/i }));
     const sequencePanel = screen.getByRole('tabpanel', { name: /sequence run/i });
+
+    const sequenceChoices = within(sequencePanel).getByRole('radiogroup', {
+      name: /sequence run/i,
+    });
+    expect(
+      within(sequenceChoices).getByRole('radio', { name: /select a sequence/i }),
+    ).toBeChecked();
+
     await user.click(
-      within(sequencePanel).getByLabelText(/pantheon of the sage/i, { exact: false }),
+      within(sequenceChoices).getByRole('radio', {
+        name: /pantheon of the sage/i,
+      }),
     );
 
     const selectedOption = within(sequencePanel)
