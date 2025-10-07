@@ -88,7 +88,7 @@ export const CharmSynergyList: FC<CharmSynergyListProps> = ({
         return (
           <div key={category} className="synergy-section">
             <h5 className="synergy-section__title">{label}</h5>
-            <ul className="synergy-list" role="list">
+            <ul className="synergy-list">
               {sortedItems.map(({ synergy, isActive }) => {
                 const statusClasses = ['synergy-list__item'];
                 if (isActive) {

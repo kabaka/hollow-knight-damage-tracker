@@ -66,7 +66,9 @@ const toNumberEntries = (value: unknown) =>
 
 export const charms = rawDamage.charms as Charm[];
 export const charmMap = new Map(charms.map((charm) => [charm.id, charm]));
-const rawCharmSynergies = (rawDamage.charmSynergies ?? []) as CharmSynergy[];
+const rawCharmSynergies = Array.isArray(rawDamage.charmSynergies)
+  ? (rawDamage.charmSynergies as CharmSynergy[])
+  : [];
 export const charmSynergies = rawCharmSynergies;
 export const charmSynergyMap = new Map(
   charmSynergies.map((synergy) => [synergy.id, synergy]),
