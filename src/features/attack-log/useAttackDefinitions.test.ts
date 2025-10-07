@@ -81,6 +81,69 @@ describe('useAttackDefinitions helpers', () => {
     expect(vengefulSpirit?.description).toMatch(/flukenest volley/i);
   });
 
+  it("applies Defender's Crest fluke synergy when both charms are equipped", () => {
+    const state = createFightState({
+      build: {
+        nailUpgradeId: 'old-nail',
+        activeCharmIds: ['flukenest', 'defenders-crest'],
+        spellLevels: DEFAULT_SPELL_LEVELS,
+      },
+    });
+
+    const groups = buildAttackGroups(state.build);
+    const spellsGroup = groups.find((group) => group.id === 'spellcasting');
+    const vengefulSpirit = spellsGroup?.attacks.find(
+      (attack) => attack.id === 'vengeful-spirit-vengefulSpirit',
+    );
+
+    expect(vengefulSpirit).toBeDefined();
+    expect(vengefulSpirit?.damage).toBe(22);
+    expect(vengefulSpirit?.description).toMatch(/volatile fluke/i);
+  });
+
+  it('boosts Sharp Shadow dash damage when Dashmaster is equipped', () => {
+    const state = createFightState({
+      build: {
+        nailUpgradeId: 'old-nail',
+        activeCharmIds: ['sharp-shadow', 'dashmaster'],
+        spellLevels: DEFAULT_SPELL_LEVELS,
+      },
+    });
+
+    const groups = buildAttackGroups(state.build);
+    const charmGroup = groups.find((group) => group.id === 'charm-effects');
+    const sharpShadow = charmGroup?.attacks.find(
+      (attack) => attack.id === 'sharp-shadow',
+    );
+
+    expect(sharpShadow).toBeDefined();
+
+    const oldNailDamage =
+      nailUpgrades.find((upgrade) => upgrade.id === 'old-nail')?.damage ?? 0;
+
+    expect(sharpShadow?.damage).toBe(Math.round(oldNailDamage * 1.5));
+    expect(sharpShadow?.description).toMatch(/dashmaster/i);
+  });
+
+  it("strengthens Spore Shroom's cloud when paired with Defender's Crest and Deep Focus", () => {
+    const state = createFightState({
+      build: {
+        nailUpgradeId: 'old-nail',
+        activeCharmIds: ['spore-shroom', 'defenders-crest', 'deep-focus'],
+        spellLevels: DEFAULT_SPELL_LEVELS,
+      },
+    });
+
+    const groups = buildAttackGroups(state.build);
+    const charmGroup = groups.find((group) => group.id === 'charm-effects');
+    const sporeCloud = charmGroup?.attacks.find((attack) => attack.id === 'spore-shroom');
+
+    expect(sporeCloud).toBeDefined();
+    expect(sporeCloud?.damage).toBe(40);
+    expect(sporeCloud?.description).toMatch(/lingering cloud/i);
+    expect(sporeCloud?.description).toMatch(/35%/);
+  });
+
   it('groups nail arts separately from standard nail attacks', () => {
     const state = createFightState();
 

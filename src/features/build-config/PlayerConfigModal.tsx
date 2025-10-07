@@ -7,6 +7,7 @@ import { MAX_NOTCH_LIMIT, MIN_NOTCH_LIMIT } from '../fight-state/fightReducer';
 import { charmGridLayout, useBuildConfiguration } from './useBuildConfiguration';
 import { useHapticFeedback } from '../../utils/haptics';
 import { Modal } from '../../components/Modal';
+import { CharmSynergyList } from '../../components/CharmSynergyList';
 
 const CHARM_PRESETS = [
   {
@@ -183,6 +184,7 @@ const PlayerConfigModalContent: FC = () => {
     spells,
     setSpellLevel,
     charmDetails,
+    charmSynergyStatuses,
     isOvercharmed,
     build,
   } = useBuildConfiguration();
@@ -555,7 +557,12 @@ const PlayerConfigModalContent: FC = () => {
           <div className="charm-workbench__overview">
             <div className="equipped-panel">
               <h4 className="equipped-panel__title">Equipped</h4>
-              <div className="equipped-panel__grid" role="list" aria-live="polite">
+              <div
+                className="equipped-panel__grid"
+                role="list"
+                aria-live="polite"
+                aria-label="Equipped charms"
+              >
                 {equippedCharmEntries.length > 0 ? (
                   equippedCharmEntries.map(({ charm, state }) => {
                     const icon = charmIconMap.get(charm.id);
@@ -639,6 +646,11 @@ const PlayerConfigModalContent: FC = () => {
                 are overcharmed.
               </p>
             </div>
+            <CharmSynergyList
+              statuses={charmSynergyStatuses}
+              charmDetails={charmDetails}
+              iconMap={charmIconMap}
+            />
           </div>
           {isOvercharmed ? (
             <div className="overcharm-banner" role="status" aria-live="assertive">

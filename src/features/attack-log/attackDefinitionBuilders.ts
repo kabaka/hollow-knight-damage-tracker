@@ -1,4 +1,11 @@
-import { charmMap, nailUpgrades, shamanStoneMultipliers, spells } from '../../data';
+import {
+  charmMap,
+  charmSynergyKeyMap,
+  getCharmSynergyKey,
+  nailUpgrades,
+  shamanStoneMultipliers,
+  spells,
+} from '../../data';
 import { NAIL_ARTS } from './attackData';
 import {
   hasStrengthCharm,
@@ -99,6 +106,22 @@ const getCharmEffectRecord = (charmId: string, effectType: string) => {
   return effect && isRecord(effect.value) ? effect.value : null;
 };
 
+const getCharmSynergy = (charmIds: readonly string[]) =>
+  charmSynergyKeyMap.get(getCharmSynergyKey(charmIds));
+
+const getCharmSynergyEffect = (charmIds: readonly string[], effectType: string) =>
+  getCharmSynergy(charmIds)?.effects.find((effect) => effect.type === effectType) ?? null;
+
+const getCharmSynergyEffectRecord = (charmIds: readonly string[], effectType: string) => {
+  const effect = getCharmSynergyEffect(charmIds, effectType);
+  return effect && isRecord(effect.value) ? effect.value : null;
+};
+
+const getCharmSynergyEffectNumber = (charmIds: readonly string[], effectType: string) => {
+  const effect = getCharmSynergyEffect(charmIds, effectType);
+  return effect ? toNumber(effect.value) : null;
+};
+
 const getVariantDamage = (variant: (typeof spells)[number]['base']) => {
   if (typeof variant.damage === 'number') {
     return variant.damage;
@@ -127,6 +150,10 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
   const hasShamanStone = build.activeCharmIds.includes('shaman-stone');
   const hasSpellTwister = build.activeCharmIds.includes('spell-twister');
   const hasFlukenest = build.activeCharmIds.includes('flukenest');
+  const hasDashmaster = build.activeCharmIds.includes('dashmaster');
+  const hasDefendersCrest = build.activeCharmIds.includes('defenders-crest');
+  const hasDeepFocus = build.activeCharmIds.includes('deep-focus');
+  const hasGrubsong = build.activeCharmIds.includes('grubsong');
 
   const baseNailDamage = nailUpgrade.damage;
   const strengthMultiplier = hasStrength ? 1.5 : 1;
@@ -185,10 +212,18 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
     const notes: string[] = [];
 
     if (hasFlukenest && spell.id === 'vengeful-spirit') {
-      const replacements = getCharmEffectRecord(
-        'flukenest',
-        'spell_replacement',
-      ) as Record<string, unknown> | null;
+      const crestReplacement = hasDefendersCrest
+        ? (getCharmSynergyEffectRecord(
+            ['flukenest', 'defenders-crest'],
+            'spell_replacement',
+          ) as Record<string, unknown> | null)
+        : null;
+      const replacements =
+        crestReplacement ??
+        (getCharmEffectRecord('flukenest', 'spell_replacement') as Record<
+          string,
+          unknown
+        > | null);
       if (replacements && isRecord(replacements[variant.key])) {
         const replacement = replacements[variant.key] as Record<string, unknown>;
         const totalDamage = toNumber(replacement.totalDamage);
@@ -204,7 +239,13 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
             detailParts.push(`${damagePerProjectile} dmg each`);
           }
           const details = detailParts.length > 0 ? ` (${detailParts.join(' • ')})` : '';
-          notes.push(`Flukenest volley${details}.`);
+          if (hasDefendersCrest && crestReplacement) {
+            notes.push(
+              `Defender's Crest synergy: volatile fluke${details} with lingering dung cloud.`,
+            );
+          } else {
+            notes.push(`Flukenest volley${details}.`);
+          }
         }
       }
     }
@@ -291,12 +332,20 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'grubberflys-elegy': {
+        const descriptionParts = [
+          'Full-health nail beam. Log each projectile that connects.',
+        ];
+        if (hasFury) {
+          descriptionParts.push(
+            'At 1 HP, Fury of the Fallen disables Elegy beams—use the Fury nail variants below.',
+          );
+        }
         addCharmAttack({
           id: 'grubberflys-elegy-beam',
           label: "Grubberfly's Elegy Beam",
           damage: Math.round(nailDamageExact * GRUBBERFLY_BEAM_MULTIPLIER),
           category: 'charm',
-          description: 'Full-health nail beam. Log each projectile that connects.',
+          description: descriptionParts.join(' '),
         });
         break;
       }
@@ -311,11 +360,20 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'sharp-shadow': {
+        const synergyMultiplier = hasDashmaster
+          ? (getCharmSynergyEffectNumber(
+              ['dashmaster', 'sharp-shadow'],
+              'shadow_dash_damage_nail_multiplier',
+            ) ?? 1.5)
+          : 1;
+        const shadowDescription = hasDashmaster
+          ? 'Shadow dash contact damage boosted to 1.5× nail damage thanks to Dashmaster.'
+          : 'Shadow dash contact damage equal to current nail damage.';
         addNailScaledCharmAttack(
           'sharp-shadow',
           'Sharp Shadow Dash',
-          nailDamageExact,
-          'Shadow dash contact damage equal to current nail damage.',
+          nailDamageExact * synergyMultiplier,
+          shadowDescription,
           { includeFuryVariant: true },
         );
         break;
@@ -359,10 +417,18 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'spore-shroom': {
-        const sporeData = getCharmEffectRecord('spore-shroom', 'focus_damage_cloud') as {
-          totalDamage?: unknown;
-          durationSeconds?: unknown;
-        } | null;
+        const crestEnhancedData = hasDefendersCrest
+          ? (getCharmSynergyEffectRecord(
+              ['spore-shroom', 'defenders-crest'],
+              'focus_damage_cloud',
+            ) as { totalDamage?: unknown; durationSeconds?: unknown } | null)
+          : null;
+        const sporeData =
+          crestEnhancedData ??
+          (getCharmEffectRecord('spore-shroom', 'focus_damage_cloud') as {
+            totalDamage?: unknown;
+            durationSeconds?: unknown;
+          } | null);
         if (sporeData) {
           const totalDamage = toNumber(sporeData.totalDamage);
           const duration = toNumber(sporeData.durationSeconds);
@@ -370,6 +436,19 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
             const parts = ['Full spore cloud damage.'];
             if (duration !== null) {
               parts.push(`${duration.toFixed(1)}s duration.`);
+            }
+            if (hasDefendersCrest && crestEnhancedData) {
+              parts.push("Defender's Crest synergy adds a heavier lingering cloud.");
+            }
+            const radiusMultiplier = hasDeepFocus
+              ? getCharmSynergyEffectNumber(
+                  ['spore-shroom', 'deep-focus'],
+                  'focus_damage_cloud_radius_multiplier',
+                )
+              : null;
+            if (radiusMultiplier && radiusMultiplier > 1) {
+              const radiusIncrease = Math.round((radiusMultiplier - 1) * 100);
+              parts.push(`${radiusIncrease}% larger radius with Deep Focus.`);
             }
             parts.push('Log partial ticks proportionally if needed.');
             addCharmAttack({
@@ -392,13 +471,22 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
           const damage = toNumber(wombData.damage);
           const soulCost = toNumber(wombData.soulCost) ?? undefined;
           if (damage !== null) {
+            const descriptionParts = ['Each hatchling kamikaze deals this damage.'];
+            if (
+              hasDefendersCrest &&
+              getCharmSynergy(['glowing-womb', 'defenders-crest'])
+            ) {
+              descriptionParts.push(
+                "Defender's Crest synergy causes hatchlings to explode into a lingering cloud.",
+              );
+            }
             addCharmAttack({
               id: 'glowing-womb',
               label: 'Hatchling Impact',
               damage,
               category: 'charm',
               soulCost,
-              description: 'Each hatchling kamikaze deals this damage.',
+              description: descriptionParts.join(' '),
             });
           }
         }
@@ -416,6 +504,9 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
             const info = ['Per weaverling strike.'];
             if (count !== null) {
               info.push(`${count} weaverlings active.`);
+            }
+            if (hasGrubsong && getCharmSynergy(['weaversong', 'grubsong'])) {
+              info.push('Generates SOUL on hit when paired with Grubsong.');
             }
             addCharmAttack({
               id: 'weaversong',

@@ -10,6 +10,7 @@ import type {
   BossTarget,
   BossVersion,
   Charm,
+  CharmSynergy,
   NailUpgrade,
   Spell,
   SpellVariant,
@@ -24,6 +25,7 @@ export type {
   BossTarget,
   BossVersion,
   Charm,
+  CharmSynergy,
   NailUpgrade,
   Spell,
   SpellVariant,
@@ -64,6 +66,16 @@ const toNumberEntries = (value: unknown) =>
 
 export const charms = rawDamage.charms as Charm[];
 export const charmMap = new Map(charms.map((charm) => [charm.id, charm]));
+const rawCharmSynergies = (rawDamage.charmSynergies ?? []) as CharmSynergy[];
+export const charmSynergies = rawCharmSynergies;
+export const charmSynergyMap = new Map(
+  charmSynergies.map((synergy) => [synergy.id, synergy]),
+);
+export const getCharmSynergyKey = (charmIds: readonly string[]) =>
+  [...charmIds].slice().sort().join('|');
+export const charmSynergyKeyMap = new Map(
+  charmSynergies.map((synergy) => [getCharmSynergyKey(synergy.charmIds), synergy]),
+);
 export const nailUpgrades = rawDamage.nailUpgrades as NailUpgrade[];
 type RawSpellVariant = Omit<SpellVariant, 'key'>;
 
