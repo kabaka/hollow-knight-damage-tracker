@@ -49,7 +49,7 @@ describe('PlayerConfigModal charms', () => {
       vi.runAllTimers();
     });
 
-    const equippedList = screen.getByRole('list');
+    const equippedList = screen.getByRole('list', { name: /equipped charms/i });
     const equippedItems = within(equippedList).getAllByRole('listitem');
 
     expect(equippedItems).toHaveLength(2);
@@ -82,7 +82,7 @@ describe('PlayerConfigModal charms', () => {
     expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
     expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
 
-    const equippedList = within(modal).getByRole('list');
+    const equippedList = within(modal).getByRole('list', { name: /equipped charms/i });
     const equippedItems = within(equippedList).getAllByRole('listitem');
 
     expect(equippedItems).toHaveLength(1);
@@ -118,7 +118,7 @@ describe('PlayerConfigModal charms', () => {
       expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
       expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
     });
-    const equippedList = within(modal).getByRole('list');
+    const equippedList = within(modal).getByRole('list', { name: /equipped charms/i });
     const equippedItems = within(equippedList).getAllByRole('listitem');
     expect(equippedItems).toHaveLength(1);
     expect(equippedItems[0]).toHaveTextContent(/unbreakable heart/i);
@@ -130,7 +130,7 @@ describe('PlayerConfigModal charms', () => {
       expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
     });
     await waitFor(() => {
-      expect(within(modal).queryAllByRole('listitem')).toHaveLength(0);
+      expect(within(equippedList).queryAllByRole('listitem')).toHaveLength(0);
     });
   });
 });

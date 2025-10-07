@@ -229,8 +229,11 @@ describe('App', () => {
       );
     };
 
+    const getEquippedList = () =>
+      within(modal).getByRole('list', { name: /equipped charms/i });
+
     const getEquippedItem = (pattern: RegExp) =>
-      within(modal).queryByRole('listitem', { name: pattern });
+      within(getEquippedList()).queryByRole('listitem', { name: pattern });
 
     await user.click(within(modal).getAllByRole('button', { name: /fragile heart/i })[0]);
     await waitForNoFlights();
@@ -247,7 +250,7 @@ describe('App', () => {
       within(modal).getAllByRole('button', { name: /unbreakable heart/i })[0],
     );
     await waitForNoFlights();
-    expect(within(modal).queryAllByRole('listitem')).toHaveLength(0);
+    expect(within(getEquippedList()).queryAllByRole('listitem')).toHaveLength(0);
   });
 
   it('surfaces sequence conditions in the setup tray when selecting a pantheon', async () => {

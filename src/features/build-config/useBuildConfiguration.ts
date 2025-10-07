@@ -13,6 +13,7 @@ import {
   bosses,
   bossSequences,
   charmMap,
+  charmSynergies,
   nailUpgrades,
   spells,
   supportedCharmIds,
@@ -346,6 +347,14 @@ export const useBuildConfiguration = () => {
     return details;
   }, []);
 
+  const charmSynergyStatuses = useMemo(() => {
+    const activeSet = new Set(activeCharmIds);
+    return charmSynergies.map((synergy) => ({
+      synergy,
+      isActive: synergy.charmIds.every((id) => activeSet.has(id)),
+    }));
+  }, [activeCharmIds]);
+
   return {
     actions,
     selectedBossId,
@@ -388,6 +397,7 @@ export const useBuildConfiguration = () => {
     nailUpgrades,
     spells,
     charmDetails,
+    charmSynergyStatuses,
     isOvercharmed,
   };
 };

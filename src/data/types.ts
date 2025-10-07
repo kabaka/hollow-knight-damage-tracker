@@ -14,6 +14,15 @@ export interface Charm {
   effects: CharmEffect[];
 }
 
+export interface CharmSynergy {
+  id: string;
+  name: string;
+  category: string;
+  charmIds: string[];
+  description: string;
+  effects: CharmEffect[];
+}
+
 export interface NailUpgradeCost {
   geo: number;
   pale_ore: number;

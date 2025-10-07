@@ -736,6 +736,204 @@
       ]
     }
   ],
+  "charmSynergies": [
+    {
+      "id": "dashmaster-sprintmaster",
+      "name": "Fleetfooted Dash",
+      "category": "movement",
+      "charmIds": ["dashmaster", "sprintmaster"],
+      "description": "Your overall running speed is increased.",
+      "effects": [
+        {
+          "type": "movement_speed_bonus",
+          "effect": "Running speed is increased while both charms are equipped.",
+          "value": null,
+          "notes": "Stacks with Sprintmaster's inherent movement boost."
+        }
+      ]
+    },
+    {
+      "id": "sprintmaster-weaversong",
+      "name": "Weaver Sprint",
+      "category": "movement",
+      "charmIds": ["sprintmaster", "weaversong"],
+      "description": "Your little weaverling companions will move 50% faster.",
+      "effects": [
+        {
+          "type": "minion_speed_multiplier",
+          "effect": "Weaverlings scurry 50% faster.",
+          "value": 1.5,
+          "notes": "Improves both travel speed and attack reach for weaverlings."
+        }
+      ]
+    },
+    {
+      "id": "shape-of-unn-sprintmaster",
+      "name": "Quickened Shedding",
+      "category": "movement",
+      "charmIds": ["shape-of-unn", "sprintmaster"],
+      "description": "You'll move twice as fast when using the Shape of Unn to heal.",
+      "effects": [
+        {
+          "type": "shape_of_unn_focus_speed_multiplier",
+          "effect": "Shape of Unn crawl speed while focusing is doubled.",
+          "value": 2,
+          "notes": "Makes repositioning while healing significantly quicker."
+        }
+      ]
+    },
+    {
+      "id": "dashmaster-sharp-shadow",
+      "name": "Shadow Sprint",
+      "category": "combat",
+      "charmIds": ["dashmaster", "sharp-shadow"],
+      "description": "The damage dealt by your shadow dash is increased to 1.5 times your nail damage.",
+      "effects": [
+        {
+          "type": "shadow_dash_damage_nail_multiplier",
+          "effect": "Shadow dash contact damage scales to 1.5× nail damage.",
+          "value": 1.5,
+          "notes": "Also affects Fury of the Fallen variants."
+        }
+      ]
+    },
+    {
+      "id": "grubberflys-elegy-fury-of-the-fallen",
+      "name": "Last Mask Silence",
+      "category": "combat",
+      "charmIds": ["grubberflys-elegy", "fury-of-the-fallen"],
+      "description": "When you're down to your last mask, the ranged attack from Grubberfly's Elegy is disabled, but you'll still get the damage boost from Fury of the Fallen.",
+      "effects": [
+        {
+          "type": "projectile_disable_low_hp",
+          "effect": "Elegy beams stop firing at 1 HP while Fury is active.",
+          "value": null,
+          "notes": "Use the boosted nail damage from Fury instead."
+        }
+      ]
+    },
+    {
+      "id": "flukenest-defenders-crest",
+      "name": "Dungcharged Fluke",
+      "category": "combat",
+      "charmIds": ["flukenest", "defenders-crest"],
+      "description": "Instead of a swarm of flukes, you'll fire a single, large, volatile fluke that explodes into a damaging cloud of dung.",
+      "effects": [
+        {
+          "type": "spell_replacement",
+          "effect": "Vengeful Spirit becomes a volatile fluke that bursts into a dung cloud.",
+          "value": {
+            "vengefulSpirit": {
+              "projectiles": 1,
+              "damagePerProjectile": 22,
+              "totalDamage": 22
+            },
+            "shadeSoul": {
+              "projectiles": 1,
+              "damagePerProjectile": 22,
+              "totalDamage": 22
+            }
+          },
+          "notes": "The lingering cloud deals about 22 damage, rising to roughly 29 with Shaman Stone."
+        }
+      ]
+    },
+    {
+      "id": "spore-shroom-defenders-crest",
+      "name": "Toxic Bloom",
+      "category": "combat",
+      "charmIds": ["spore-shroom", "defenders-crest"],
+      "description": "The damaging spore cloud you emit when healing will last longer (around 4.1 seconds) and deal more damage (about 40).",
+      "effects": [
+        {
+          "type": "focus_damage_cloud",
+          "effect": "Spore cloud duration holds at ~4.1s and total damage rises to about 40.",
+          "value": {
+            "totalDamage": 40,
+            "durationSeconds": 4.1
+          },
+          "notes": "Damage scales with time spent inside the cloud."
+        }
+      ]
+    },
+    {
+      "id": "glowing-womb-defenders-crest",
+      "name": "Volatile Hatchlings",
+      "category": "minion",
+      "charmIds": ["glowing-womb", "defenders-crest"],
+      "description": "Your hatchlings will now be volatile, exploding on contact with enemies and creating a small damaging cloud.",
+      "effects": [
+        {
+          "type": "minion_explosion",
+          "effect": "Hatchlings explode into a small Defender's Crest cloud on impact.",
+          "value": null,
+          "notes": "Adds lingering area damage to each hatchling detonation."
+        }
+      ]
+    },
+    {
+      "id": "grubsong-grubberflys-elegy",
+      "name": "Grub Resonance",
+      "category": "combat",
+      "charmIds": ["grubsong", "grubberflys-elegy"],
+      "description": "When you take damage, you'll gain 25 SOUL instead of the usual 15.",
+      "effects": [
+        {
+          "type": "soul_gain_on_damage_taken",
+          "effect": "Taking damage grants 25 SOUL.",
+          "value": 25,
+          "notes": "Stacks with other SOUL regen sources."
+        }
+      ]
+    },
+    {
+      "id": "weaversong-grubsong",
+      "name": "Weaver Chorus",
+      "category": "minion",
+      "charmIds": ["weaversong", "grubsong"],
+      "description": "Your weaverlings will now generate SOUL for you when they hit enemies.",
+      "effects": [
+        {
+          "type": "minion_soul_generation",
+          "effect": "Weaverlings generate SOUL on hit.",
+          "value": null,
+          "notes": "Pairs well with Grubsong's damage-triggered SOUL refunds."
+        }
+      ]
+    },
+    {
+      "id": "jonis-blessing-hiveblood",
+      "name": "Lifeblood Reclamation",
+      "category": "healing-defense",
+      "charmIds": ["jonis-blessing", "hiveblood"],
+      "description": "You can now regenerate your Lifeblood masks, though it takes twice as long (20 seconds).",
+      "effects": [
+        {
+          "type": "lifeblood_regeneration",
+          "effect": "Regenerates Lifeblood masks over 20 seconds.",
+          "value": {
+            "cooldownSeconds": 20
+          },
+          "notes": "Regeneration pauses if additional damage is taken."
+        }
+      ]
+    },
+    {
+      "id": "spore-shroom-deep-focus",
+      "name": "Deep Bloom",
+      "category": "healing-defense",
+      "charmIds": ["spore-shroom", "deep-focus"],
+      "description": "The radius of your damaging spore cloud is increased by 35%.",
+      "effects": [
+        {
+          "type": "focus_damage_cloud_radius_multiplier",
+          "effect": "Spore cloud radius increases by 35%.",
+          "value": 1.35,
+          "notes": "Helps the spores tag enemies from a safer distance."
+        }
+      ]
+    }
+  ],
   "nailUpgrades": [
     {
       "id": "old-nail",
