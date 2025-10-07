@@ -2840,6 +2840,12 @@ h6 {
   gap: 0.5rem;
 }
 
+.synergy-panel__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .synergy-panel__title {
   margin: 0;
   font-size: var(--font-size-subhead);
@@ -2854,6 +2860,38 @@ h6 {
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
   background: rgb(130 207 255 / 12%);
+}
+
+.synergy-panel__toggle {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-muted);
+  padding: 0.1rem 0.75rem;
+  border: 1px solid rgb(130 207 255 / 28%);
+  border-radius: 999px;
+  background: rgb(130 207 255 / 8%);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.synergy-panel__toggle:hover {
+  color: var(--color-foreground);
+  border-color: rgb(130 207 255 / 45%);
+}
+
+.synergy-panel__toggle[aria-pressed='true'] {
+  color: var(--color-foreground);
+  background: rgb(130 207 255 / 16%);
+  border-color: rgb(130 207 255 / 45%);
+}
+
+.synergy-panel__toggle:focus-visible {
+  outline: 2px solid rgb(130 207 255 / 65%);
+  outline-offset: 2px;
 }
 
 .synergy-section {

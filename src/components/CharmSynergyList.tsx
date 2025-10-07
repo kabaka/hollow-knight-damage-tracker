@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useMemo, useState, type FC } from 'react';
 
 import type { Charm, CharmSynergy } from '../data';
 
@@ -13,6 +13,12 @@ type CharmSynergyListProps = {
   readonly iconMap: Map<string, string>;
 };
 
+type CharmSynergySection = {
+  key: string;
+  label: string;
+  items: CharmSynergyStatus[];
+};
+
 const CATEGORY_LABELS = new Map<string, string>([
   ['movement', 'Movement'],
   ['combat', 'Combat'],
@@ -21,6 +27,11 @@ const CATEGORY_LABELS = new Map<string, string>([
 ]);
 
 const CATEGORY_ORDER = ['movement', 'combat', 'healing-defense', 'minion'] as const;
+
+const isPresetCategory = (
+  category: string,
+): category is (typeof CATEGORY_ORDER)[number] =>
+  CATEGORY_ORDER.includes(category as (typeof CATEGORY_ORDER)[number]);
 
 const getCategoryLabel = (category: string) => {
   const preset = CATEGORY_LABELS.get(category);
@@ -39,41 +50,39 @@ export const CharmSynergyList: FC<CharmSynergyListProps> = ({
   charmDetails,
   iconMap,
 }) => {
-  if (statuses.length === 0) {
-    return null;
-  }
+  const [showAllSynergies, setShowAllSynergies] = useState(false);
 
-  const activeCount = statuses.reduce(
-    (total, status) => (status.isActive ? total + 1 : total),
-    0,
+  const activeCount = useMemo(
+    () => statuses.reduce((total, status) => (status.isActive ? total + 1 : total), 0),
+    [statuses],
   );
 
-  const grouped = new Map<string, CharmSynergyStatus[]>();
-  for (const status of statuses) {
-    const list = grouped.get(status.synergy.category) ?? [];
-    list.push(status);
-    grouped.set(status.synergy.category, list);
-  }
+  const visibleStatuses = useMemo(
+    () => (showAllSynergies ? statuses : statuses.filter((status) => status.isActive)),
+    [showAllSynergies, statuses],
+  );
 
-  const orderedCategories = [
-    ...CATEGORY_ORDER.filter((category) => grouped.has(category)),
-    ...[...grouped.keys()].filter(
-      (category) => !CATEGORY_ORDER.includes(category as (typeof CATEGORY_ORDER)[number]),
-    ),
-  ];
+  const grouped = useMemo(() => {
+    const collection = new Map<string, CharmSynergyStatus[]>();
+    for (const status of visibleStatuses) {
+      const list = collection.get(status.synergy.category) ?? [];
+      list.push(status);
+      collection.set(status.synergy.category, list);
+    }
+    return collection;
+  }, [visibleStatuses]);
 
-  return (
-    <div className="synergy-panel">
-      <div className="synergy-panel__header">
-        <h4 className="synergy-panel__title">Synergies</h4>
-        <span
-          className="synergy-panel__summary"
-          aria-label={`${activeCount} active synergies`}
-        >
-          {activeCount}/{statuses.length}
-        </span>
-      </div>
-      {orderedCategories.map((category) => {
+  const orderedCategories = useMemo(
+    () => [
+      ...CATEGORY_ORDER.filter((category) => grouped.has(category)),
+      ...[...grouped.keys()].filter((category) => !isPresetCategory(category)),
+    ],
+    [grouped],
+  );
+
+  const categorySections = useMemo<CharmSynergySection[]>(() => {
+    return orderedCategories
+      .map((category) => {
         const items = grouped.get(category);
         if (!items || items.length === 0) {
           return null;
@@ -84,12 +93,70 @@ export const CharmSynergyList: FC<CharmSynergyListProps> = ({
           }
           return a.synergy.name.localeCompare(b.synergy.name);
         });
-        const label = getCategoryLabel(category);
+        return {
+          key: category,
+          label: getCategoryLabel(category),
+          items: sortedItems,
+        };
+      })
+      .filter((section): section is CharmSynergySection => section !== null);
+  }, [grouped, orderedCategories]);
+
+  const shouldHideCategories = !showAllSynergies;
+
+  const sections = useMemo<CharmSynergySection[]>(() => {
+    if (!shouldHideCategories) {
+      return categorySections;
+    }
+
+    if (categorySections.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        key: 'active-only',
+        label: '',
+        items: categorySections.flatMap((section) => section.items),
+      },
+    ];
+  }, [categorySections, shouldHideCategories]);
+
+  const toggleLabel = showAllSynergies ? 'Show active synergies' : 'Show all synergies';
+
+  if (statuses.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="synergy-panel">
+      <div className="synergy-panel__header">
+        <h4 className="synergy-panel__title">Synergies</h4>
+        <div className="synergy-panel__meta">
+          <span
+            className="synergy-panel__summary"
+            aria-label={`${activeCount} active synergies`}
+          >
+            {activeCount}/{statuses.length}
+          </span>
+          <button
+            type="button"
+            className="synergy-panel__toggle"
+            onClick={() => {
+              setShowAllSynergies((previous) => !previous);
+            }}
+            aria-pressed={showAllSynergies}
+          >
+            {toggleLabel}
+          </button>
+        </div>
+      </div>
+      {sections.map(({ key, label, items }) => {
         return (
-          <div key={category} className="synergy-section">
-            <h5 className="synergy-section__title">{label}</h5>
+          <div key={key} className="synergy-section">
+            {label ? <h5 className="synergy-section__title">{label}</h5> : null}
             <ul className="synergy-list">
-              {sortedItems.map(({ synergy, isActive }) => {
+              {items.map(({ synergy, isActive }) => {
                 const statusClasses = ['synergy-list__item'];
                 if (isActive) {
                   statusClasses.push('synergy-list__item--active');
