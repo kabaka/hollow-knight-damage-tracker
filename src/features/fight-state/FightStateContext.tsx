@@ -1,519 +1,65 @@
 import type { FC, PropsWithChildren } from 'react';
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
-  useReducer,
   useRef,
-  useState,
   useSyncExternalStore,
 } from 'react';
 
 import {
   DEFAULT_CUSTOM_HP,
   bossMap,
-  bossPhaseMap,
   bossSequenceMap,
   resolveSequenceEntries,
-  strengthCharmIds,
 } from '../../data';
-import type {
-  AttackInput,
-  DamageLogAggregates,
-  FightState,
-  SpellLevel,
-} from './fightReducer';
-import {
-  createInitialState,
-  ensureSequenceState,
-  ensureSpellLevels,
-  fightReducer,
-  isCustomBoss,
-  toSequenceStageKey,
-} from './fightReducer';
-import {
-  incrementAggregateComputationCount,
-  incrementAggregateMismatchCount,
-} from './fightStateInstrumentation';
-export type {
-  AttackCategory,
-  AttackEvent,
-  AttackInput,
-  DamageLogAggregates,
-  BuildState,
-  FightState,
-  SpellLevel,
-} from './fightReducer';
-export { CUSTOM_BOSS_ID } from './fightReducer';
-import { persistStateToStorage, restorePersistedState } from './persistence';
+import type { FightState } from './fightReducer';
+import { isCustomBoss, toSequenceStageKey } from './fightReducer';
 import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
+import { createFightStateStore } from './store';
+import type { FightActions, FightStateStoreApi } from './store';
 
-export type DerivedStats = {
-  targetHp: number;
-  totalDamage: number;
-  remainingHp: number;
-  attacksLogged: number;
-  averageDamage: number | null;
-  elapsedMs: number | null;
-  dps: number | null;
-  actionsPerMinute: number | null;
-  estimatedTimeRemainingMs: number | null;
-  fightStartTimestamp: number | null;
-  fightEndTimestamp: number | null;
-  isFightInProgress: boolean;
-  isFightComplete: boolean;
-  frameTimestamp: number;
-  phaseNumber: number | null;
-  phaseCount: number | null;
-  phaseLabel: string | null;
-  phaseThresholds: number[] | null;
-};
+export type { AttackCategory, AttackEvent, AttackInput, DamageLogAggregates, BuildState, FightState, SpellLevel } from './fightReducer';
+export { CUSTOM_BOSS_ID } from './fightReducer';
+export type { DerivedStats, FightActions } from './store';
+export { hasStrengthCharm } from './store';
 
-export type FightActions = {
-  selectBoss: (bossId: string) => void;
-  setCustomTargetHp: (hp: number) => void;
-  setNailUpgrade: (nailUpgradeId: string) => void;
-  setActiveCharms: (charmIds: string[]) => void;
-  updateActiveCharms: (updater: (charmIds: string[]) => string[]) => void;
-  setCharmNotchLimit: (notchLimit: number) => void;
-  setSpellLevel: (spellId: string, level: SpellLevel) => void;
-  logAttack: (input: AttackInput) => void;
-  undoLastAttack: () => void;
-  redoLastAttack: () => void;
-  resetLog: () => void;
-  resetSequence: () => void;
-  startFight: (timestamp?: number) => void;
-  endFight: (timestamp?: number) => void;
-  startSequence: (sequenceId: string) => void;
-  stopSequence: () => void;
-  setSequenceStage: (index: number) => void;
-  advanceSequenceStage: () => void;
-  rewindSequenceStage: () => void;
-  setSequenceCondition: (
-    sequenceId: string,
-    conditionId: string,
-    enabled: boolean,
-  ) => void;
-};
-
-interface DerivedStatsStore {
-  subscribe: (listener: () => void) => () => void;
-  getSnapshot: () => DerivedStats;
-}
-
-interface FightStateStore {
-  subscribe: (listener: () => void) => () => void;
-  getSnapshot: () => FightState;
-}
-
-const FightStateStoreContext = createContext<FightStateStore | undefined>(undefined);
+const FightStateStoreContext = createContext<FightStateStoreApi['stateStore'] | undefined>(
+  undefined,
+);
 const FightActionsContext = createContext<FightActions | undefined>(undefined);
-const FightDerivedStatsContext = createContext<DerivedStatsStore | undefined>(undefined);
+const FightDerivedStatsContext = createContext<
+  FightStateStoreApi['derivedStore'] | undefined
+>(undefined);
 
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-type IdleCallbackOptions = { timeout?: number };
-type IdleDeadline = { didTimeout: boolean; timeRemaining: () => number };
-type IdleCallback = (deadline: IdleDeadline) => void;
-
-interface IdleCallbackGlobal {
-  requestIdleCallback?: (callback: IdleCallback, options?: IdleCallbackOptions) => number;
-  cancelIdleCallback?: (handle: number) => void;
-}
-
-const scheduleIdleTask = (
-  callback: () => void,
-  options?: IdleCallbackOptions,
-): (() => void) => {
-  if (typeof window === 'undefined') {
-    callback();
-    return () => {};
-  }
-
-  const idleWindow = window as Window & IdleCallbackGlobal;
-
-  if (typeof idleWindow.requestIdleCallback === 'function') {
-    const handle = idleWindow.requestIdleCallback(() => {
-      callback();
-    }, options);
-
-    return () => {
-      if (typeof idleWindow.cancelIdleCallback === 'function') {
-        idleWindow.cancelIdleCallback(handle);
-      }
-    };
-  }
-
-  const timeoutId = window.setTimeout(callback, options?.timeout ?? 200);
-  return () => {
-    window.clearTimeout(timeoutId);
-  };
-};
-
-const assertStore = <T,>(value: T | null, message: string): T => {
-  if (value === null) {
+const assertStore = <T,>(value: T | null | undefined, message: string): T => {
+  if (value === null || value === undefined) {
     throw new Error(message);
   }
   return value;
 };
 
-const cloneDamageLogAggregates = (
-  aggregates: DamageLogAggregates,
-): DamageLogAggregates => ({
-  totalDamage: aggregates.totalDamage,
-  attacksLogged: aggregates.attacksLogged,
-  firstAttackTimestamp: aggregates.firstAttackTimestamp,
-  lastAttackTimestamp: aggregates.lastAttackTimestamp,
-});
-
-type DamageLogAggregateCache = {
-  version: number;
-  aggregates: DamageLogAggregates;
-};
-
-const calculateDerivedStats = (
-  state: FightState,
-  frameTimestamp: number,
-  aggregates: DamageLogAggregates,
-): DerivedStats => {
-  const {
-    selectedBossId,
-    customTargetHp,
-    fightEndTimestamp,
-    fightStartTimestamp: storedFightStartTimestamp,
-  } = state;
-  const damageLog = state.damageLog;
-  const baseTargetHp = isCustomBoss(selectedBossId)
-    ? Math.max(1, Math.round(customTargetHp))
-    : (bossMap.get(selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
-  const phaseDefinition = selectedBossId ? bossPhaseMap.get(selectedBossId) : undefined;
-  const phaseTotalHp = phaseDefinition?.phases.length
-    ? phaseDefinition.phases.reduce((sum, phase) => sum + phase.hp, 0)
-    : null;
-  const targetHp = phaseTotalHp && phaseTotalHp > 0 ? phaseTotalHp : baseTargetHp;
-  const { totalDamage, attacksLogged, firstAttackTimestamp } = aggregates;
-  const clampedDamage = Math.max(0, totalDamage);
-
-  let effectiveDamage = Math.min(clampedDamage, targetHp);
-  if (phaseDefinition) {
-    if (phaseDefinition.discardOverkill) {
-      let consumed = 0;
-      let phaseIndex = 0;
-      let phaseRemaining = phaseDefinition.phases.length
-        ? phaseDefinition.phases[phaseIndex].hp
-        : 0;
-
-      for (const event of damageLog) {
-        let damageRemaining = Math.max(0, event.damage);
-        while (damageRemaining > 0 && phaseIndex < phaseDefinition.phases.length) {
-          if (phaseRemaining <= 0) {
-            phaseIndex += 1;
-            if (phaseIndex >= phaseDefinition.phases.length) {
-              break;
-            }
-            phaseRemaining = phaseDefinition.phases[phaseIndex].hp;
-            continue;
-          }
-
-          const applied = Math.min(damageRemaining, phaseRemaining);
-          consumed += applied;
-          phaseRemaining -= applied;
-          damageRemaining -= applied;
-
-          if (phaseRemaining <= 0) {
-            damageRemaining = 0;
-          }
-        }
-
-        if (phaseIndex >= phaseDefinition.phases.length) {
-          break;
-        }
-      }
-
-      effectiveDamage = Math.min(consumed, targetHp);
-    } else {
-      effectiveDamage = Math.min(clampedDamage, targetHp);
-    }
-  }
-
-  const remainingHp = Math.max(0, targetHp - effectiveDamage);
-  const averageDamage = attacksLogged === 0 ? null : totalDamage / attacksLogged;
-
-  let phaseNumber: number | null = null;
-  let phaseCount: number | null = null;
-  let phaseLabel: string | null = null;
-  let phaseThresholds: number[] | null = null;
-
-  if (phaseDefinition && phaseDefinition.phases.length > 0) {
-    phaseCount = phaseDefinition.phases.length;
-    phaseThresholds = [];
-    let accumulated = 0;
-    for (let index = 0; index < phaseDefinition.phases.length; index += 1) {
-      const phase = phaseDefinition.phases[index];
-      accumulated += phase.hp;
-      if (index < phaseDefinition.phases.length - 1) {
-        phaseThresholds.push(Math.max(0, targetHp - accumulated));
-      }
-      if (phaseNumber === null && effectiveDamage < accumulated) {
-        phaseNumber = index + 1;
-        phaseLabel = phase.name;
-      }
-    }
-
-    if (phaseNumber === null) {
-      const lastPhase = phaseDefinition.phases[phaseDefinition.phases.length - 1];
-      phaseNumber = phaseCount;
-      phaseLabel = lastPhase.name;
-    }
-  }
-
-  let fightStartTimestamp = storedFightStartTimestamp;
-  if (fightStartTimestamp === null) {
-    fightStartTimestamp = firstAttackTimestamp;
-  }
-
-  const hasFightStartTimestamp = typeof fightStartTimestamp === 'number';
-
-  let effectiveEndTimestamp = fightEndTimestamp;
-  if (effectiveEndTimestamp === null && hasFightStartTimestamp) {
-    effectiveEndTimestamp = frameTimestamp;
-  }
-
-  const elapsedMs =
-    hasFightStartTimestamp && effectiveEndTimestamp !== null
-      ? Math.max(0, effectiveEndTimestamp - fightStartTimestamp)
-      : null;
-
-  let dps: number | null = null;
-  let actionsPerMinute: number | null = null;
-  if (elapsedMs !== null && elapsedMs > 0) {
-    dps = totalDamage / (elapsedMs / 1000);
-    actionsPerMinute = attacksLogged / (elapsedMs / 60000);
-  }
-
-  let estimatedTimeRemainingMs: number | null;
-  if (remainingHp === 0) {
-    estimatedTimeRemainingMs = 0;
-  } else if (dps !== null && dps > 0) {
-    estimatedTimeRemainingMs = Math.round((remainingHp / dps) * 1000);
-  } else {
-    estimatedTimeRemainingMs = null;
-  }
-
-  const fightHasEnded = fightEndTimestamp !== null;
-  const isFightInProgress = hasFightStartTimestamp && !fightHasEnded;
-  const isFightComplete = hasFightStartTimestamp && fightHasEnded;
-
-  return {
-    targetHp,
-    totalDamage,
-    remainingHp,
-    attacksLogged,
-    averageDamage,
-    elapsedMs,
-    dps,
-    actionsPerMinute,
-    estimatedTimeRemainingMs,
-    fightStartTimestamp,
-    fightEndTimestamp,
-    isFightInProgress,
-    isFightComplete,
-    frameTimestamp,
-    phaseNumber,
-    phaseCount,
-    phaseLabel,
-    phaseThresholds,
-  };
-};
-
 export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [state, dispatch] = useReducer(fightReducer, undefined, () =>
-    restorePersistedState(ensureSequenceState(ensureSpellLevels(createInitialState()))),
+  const storeRef = useRef<FightStateStoreApi | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createFightStateStore();
+  }
+
+  const store = storeRef.current;
+  const { stateStore, derivedStore, actions, refreshDerivedStats, flushPersist, dispatch } = store;
+
+  const state = useSyncExternalStore(
+    stateStore.subscribe,
+    stateStore.getSnapshot,
+    stateStore.getSnapshot,
   );
+
   const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
-  const stateRef = useRef(state);
-  const frameTimestampRef = useRef<number>(Date.now());
-  const [initialAggregateCache] = useState<DamageLogAggregateCache>(() => {
-    incrementAggregateComputationCount();
-    return {
-      version: state.damageLogVersion,
-      aggregates: cloneDamageLogAggregates(state.damageLogAggregates),
-    };
-  });
-  const aggregateCacheRef = useRef<DamageLogAggregateCache>(initialAggregateCache);
-  const [initialDerivedStats] = useState<DerivedStats>(() =>
-    calculateDerivedStats(
-      state,
-      frameTimestampRef.current,
-      initialAggregateCache.aggregates,
-    ),
-  );
-  const derivedRef = useRef<DerivedStats>(initialDerivedStats);
-  const stateListenersRef = useRef<Set<() => void>>(new Set());
-  const derivedListenersRef = useRef<Set<() => void>>(new Set());
-  const derivedStoreRef = useRef<DerivedStatsStore | null>(null);
-  const stateStoreRef = useRef<FightStateStore | null>(null);
-  const cancelPersistRef = useRef<(() => void) | null>(null);
-
-  const notifyState = useCallback(() => {
-    stateListenersRef.current.forEach((listener) => listener());
-  }, []);
-
-  const ensureAggregateCache = useCallback((): DamageLogAggregates => {
-    const stateSnapshot = stateRef.current;
-    const { damageLogVersion, damageLogAggregates } = stateSnapshot;
-    const cache = aggregateCacheRef.current;
-    if (cache.version !== damageLogVersion) {
-      incrementAggregateMismatchCount();
-      incrementAggregateComputationCount();
-      const aggregates = cloneDamageLogAggregates(damageLogAggregates);
-      aggregateCacheRef.current = {
-        version: damageLogVersion,
-        aggregates,
-      };
-      return aggregates;
-    }
-
-    return cache.aggregates;
-  }, []);
-
-  const notifyDerived = useCallback(
-    (timestamp?: number) => {
-      const frameTimestamp = typeof timestamp === 'number' ? timestamp : Date.now();
-      frameTimestampRef.current = frameTimestamp;
-      const aggregates = ensureAggregateCache();
-      derivedRef.current = calculateDerivedStats(
-        stateRef.current,
-        frameTimestamp,
-        aggregates,
-      );
-      derivedListenersRef.current.forEach((listener) => listener());
-    },
-    [ensureAggregateCache],
-  );
-
-  const persistDebounceTimeoutRef = useRef<number | null>(null);
-  const persistDirtyRef = useRef(false);
-  const lastPersistTimestampRef = useRef(0);
-  const PERSIST_DEBOUNCE_MS = 900;
-  const PERSIST_IDLE_TIMEOUT_MS = 1500;
-
-  const persistNow = useCallback(() => {
-    persistStateToStorage(stateRef.current);
-    lastPersistTimestampRef.current = Date.now();
-    persistDirtyRef.current = false;
-  }, []);
-
-  const flushPersist = useCallback(() => {
-    if (typeof window !== 'undefined' && persistDebounceTimeoutRef.current !== null) {
-      window.clearTimeout(persistDebounceTimeoutRef.current);
-      persistDebounceTimeoutRef.current = null;
-    }
-
-    cancelPersistRef.current?.();
-    cancelPersistRef.current = null;
-
-    if (!persistDirtyRef.current) {
-      return;
-    }
-
-    persistNow();
-  }, [persistNow]);
-
-  const schedulePersist = useCallback(() => {
-    persistDirtyRef.current = true;
-
-    if (typeof window === 'undefined') {
-      persistNow();
-      return;
-    }
-
-    const scheduleIdle = () => {
-      cancelPersistRef.current?.();
-      cancelPersistRef.current = scheduleIdleTask(
-        () => {
-          cancelPersistRef.current = null;
-
-          if (!persistDirtyRef.current) {
-            return;
-          }
-
-          const now = Date.now();
-          const lastPersist = lastPersistTimestampRef.current;
-          const hasPersistedBefore = lastPersist > 0;
-          const elapsed = hasPersistedBefore
-            ? now - lastPersist
-            : Number.POSITIVE_INFINITY;
-          if (hasPersistedBefore && elapsed < PERSIST_DEBOUNCE_MS) {
-            if (persistDebounceTimeoutRef.current === null) {
-              const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
-              persistDebounceTimeoutRef.current = window.setTimeout(() => {
-                persistDebounceTimeoutRef.current = null;
-                schedulePersist();
-              }, delay);
-            }
-            return;
-          }
-
-          persistNow();
-        },
-        { timeout: PERSIST_IDLE_TIMEOUT_MS },
-      );
-    };
-
-    if (cancelPersistRef.current || persistDebounceTimeoutRef.current !== null) {
-      return;
-    }
-
-    const now = Date.now();
-    const lastPersist = lastPersistTimestampRef.current;
-    const hasPersistedBefore = lastPersist > 0;
-    const elapsed = hasPersistedBefore ? now - lastPersist : Number.POSITIVE_INFINITY;
-    if (!hasPersistedBefore || elapsed >= PERSIST_DEBOUNCE_MS) {
-      scheduleIdle();
-    } else {
-      const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
-      persistDebounceTimeoutRef.current = window.setTimeout(() => {
-        persistDebounceTimeoutRef.current = null;
-        scheduleIdle();
-      }, delay);
-    }
-  }, [PERSIST_DEBOUNCE_MS, PERSIST_IDLE_TIMEOUT_MS, persistNow]);
-
-  if (!stateStoreRef.current) {
-    stateStoreRef.current = {
-      getSnapshot: () => stateRef.current,
-      subscribe: (listener) => {
-        stateListenersRef.current.add(listener);
-        return () => {
-          stateListenersRef.current.delete(listener);
-        };
-      },
-    } satisfies FightStateStore;
-  }
-
-  if (!derivedStoreRef.current) {
-    derivedStoreRef.current = {
-      getSnapshot: () => derivedRef.current,
-      subscribe: (listener) => {
-        derivedListenersRef.current.add(listener);
-        return () => {
-          derivedListenersRef.current.delete(listener);
-        };
-      },
-    } satisfies DerivedStatsStore;
-  }
-
-  useIsomorphicLayoutEffect(() => {
-    stateRef.current = state;
-    notifyState();
-    schedulePersist();
-    notifyDerived();
-  }, [state, notifyDerived, notifyState, schedulePersist]);
 
   const shouldAnimate =
     state.fightStartTimestamp !== null && state.fightEndTimestamp === null;
@@ -526,7 +72,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     let frameId: number;
 
     const tick = () => {
-      notifyDerived();
+      refreshDerivedStats();
       frameId = window.requestAnimationFrame(tick);
     };
 
@@ -535,13 +81,13 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [shouldAnimate, notifyDerived]);
+  }, [shouldAnimate, refreshDerivedStats]);
 
   useEffect(() => {
     if (!shouldAnimate && state.fightEndTimestamp !== null) {
-      notifyDerived(state.fightEndTimestamp);
+      refreshDerivedStats(state.fightEndTimestamp);
     }
-  }, [shouldAnimate, state.fightEndTimestamp, notifyDerived]);
+  }, [shouldAnimate, state.fightEndTimestamp, refreshDerivedStats]);
 
   useEffect(() => {
     if (state.fightEndTimestamp !== null) {
@@ -658,59 +204,14 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     dispatch,
   ]);
 
-  const actions = useMemo<FightActions>(
-    () => ({
-      selectBoss: (bossId) => dispatch({ type: 'selectBoss', bossId }),
-      setCustomTargetHp: (hp) => dispatch({ type: 'setCustomTargetHp', hp }),
-      setNailUpgrade: (nailUpgradeId) =>
-        dispatch({ type: 'setNailUpgrade', nailUpgradeId }),
-      setActiveCharms: (charmIds) => dispatch({ type: 'setActiveCharms', charmIds }),
-      updateActiveCharms: (updater) => dispatch({ type: 'updateActiveCharms', updater }),
-      setCharmNotchLimit: (notchLimit) =>
-        dispatch({ type: 'setCharmNotchLimit', notchLimit }),
-      setSpellLevel: (spellId, level) =>
-        dispatch({ type: 'setSpellLevel', spellId, level }),
-      logAttack: ({ id, label, damage, category, soulCost, timestamp }) =>
-        dispatch({
-          type: 'logAttack',
-          id,
-          label,
-          damage,
-          category,
-          soulCost,
-          timestamp: timestamp ?? Date.now(),
-        }),
-      undoLastAttack: () => dispatch({ type: 'undoLastAttack' }),
-      redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
-      resetLog: () => dispatch({ type: 'resetLog' }),
-      resetSequence: () => dispatch({ type: 'resetSequence' }),
-      startFight: (timestamp) =>
-        dispatch({ type: 'startFight', timestamp: timestamp ?? Date.now() }),
-      endFight: (timestamp) =>
-        dispatch({ type: 'endFight', timestamp: timestamp ?? Date.now() }),
-      startSequence: (sequenceId) => dispatch({ type: 'startSequence', sequenceId }),
-      stopSequence: () => dispatch({ type: 'stopSequence' }),
-      setSequenceStage: (index) => dispatch({ type: 'setSequenceStage', index }),
-      advanceSequenceStage: () => dispatch({ type: 'advanceSequence' }),
-      rewindSequenceStage: () => dispatch({ type: 'rewindSequence' }),
-      setSequenceCondition: (sequenceId, conditionId, enabled) =>
-        dispatch({
-          type: 'setSequenceCondition',
-          sequenceId,
-          conditionId,
-          enabled,
-        }),
-    }),
-    [],
-  );
   const storeError = 'FightStateProvider failed to initialize derived stats store';
-  const derivedStore = assertStore(derivedStoreRef.current, storeError);
-  const stateStore = assertStore(stateStoreRef.current, storeError);
+  const derivedStoreValue = assertStore(derivedStore, storeError);
+  const stateStoreValue = assertStore(stateStore, storeError);
 
   return (
     <FightActionsContext.Provider value={actions}>
-      <FightStateStoreContext.Provider value={stateStore}>
-        <FightDerivedStatsContext.Provider value={derivedStore}>
+      <FightStateStoreContext.Provider value={stateStoreValue}>
+        <FightDerivedStatsContext.Provider value={derivedStoreValue}>
           {children}
         </FightDerivedStatsContext.Provider>
       </FightStateStoreContext.Provider>
@@ -748,7 +249,7 @@ export const useFightStateSelector = <Selected,>(
     equalityFnRef.current = equalityFn;
   }
 
-  const getSnapshot = useCallback(() => {
+  const getSnapshot = () => {
     const nextSelected = selectorRef.current(store.getSnapshot());
     const previousSelected = selectedRef.current;
     if (
@@ -760,24 +261,21 @@ export const useFightStateSelector = <Selected,>(
       return nextSelected;
     }
     return previousSelected as Selected;
-  }, [store]);
+  };
 
-  const subscribe = useCallback(
-    (notify: () => void) =>
-      store.subscribe(() => {
-        const nextSelected = selectorRef.current(store.getSnapshot());
-        const previousSelected = selectedRef.current;
-        if (
-          !hasSnapshotRef.current ||
-          !equalityFnRef.current(previousSelected as Selected, nextSelected)
-        ) {
-          hasSnapshotRef.current = true;
-          selectedRef.current = nextSelected;
-          notify();
-        }
-      }),
-    [store],
-  );
+  const subscribe = (notify: () => void) =>
+    store.subscribe(() => {
+      const nextSelected = selectorRef.current(store.getSnapshot());
+      const previousSelected = selectedRef.current;
+      if (
+        !hasSnapshotRef.current ||
+        !equalityFnRef.current(previousSelected as Selected, nextSelected)
+      ) {
+        hasSnapshotRef.current = true;
+        selectedRef.current = nextSelected;
+        notify();
+      }
+    });
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };
@@ -796,5 +294,3 @@ export const useFightDerivedStats = () => {
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 };
 
-export const hasStrengthCharm = (charmIds: string[]) =>
-  charmIds.some((id) => strengthCharmIds.has(id));
