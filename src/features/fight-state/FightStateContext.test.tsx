@@ -159,6 +159,41 @@ describe('FightStateProvider persistence', () => {
     persistSpy.mockRestore();
     vi.useRealTimers();
   });
+
+  it('flushes pending persistence work when the provider unmounts', () => {
+    vi.useFakeTimers();
+
+    const persistSpy = vi.spyOn(persistenceModule, 'persistStateToStorage');
+
+    const Consumer = () => {
+      const { actions } = useFightState();
+
+      useEffect(() => {
+        actions.setCustomTargetHp(2468);
+      }, [actions]);
+
+      return null;
+    };
+
+    const { unmount } = render(
+      <FightStateProvider>
+        <Consumer />
+      </FightStateProvider>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+
+    expect(persistSpy).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(persistSpy).toHaveBeenCalled();
+
+    persistSpy.mockRestore();
+    vi.useRealTimers();
+  });
 });
 
 describe('boss sequences', () => {
