@@ -4,7 +4,7 @@ import {
   AttackLogActions,
   AttackLogPanel,
   AttackLogProvider,
-} from '../features/attack-log/AttackLogPanel';
+} from '../features/attack-log';
 import { PlayerConfigModal } from '../features/build-config/PlayerConfigModal';
 import { useBuildConfiguration } from '../features/build-config/useBuildConfiguration';
 import {
