@@ -14,6 +14,20 @@
 - Linting: configure ESLint with TypeScript and React plugins; enforce formatting with Prettier (using `pnpm lint` / `pnpm format`).
 - Testing: use Vitest (unit) and Playwright (end-to-end). Provide scripts `pnpm test` and `pnpm test:e2e`.
 - Before submitting changes, run all relevant scripts locally and ensure GitHub Actions workflows pass.
+- **ESLint output safety**: `pnpm lint:js` (ESLint) can emit single lines well over 4k characters when the `prettier/prettier` rule reports a diff (for example if a minified asset slips into the repo). To prevent the agent terminal from being closed, capture its output to a file and inspect it with a truncation helper instead of streaming it directly:
+
+  ```sh
+  pnpm lint:js > eslint-report.txt 2>&1 || true
+  python - <<'PY'
+  from pathlib import Path
+
+  for raw_line in Path('eslint-report.txt').read_text().splitlines():
+      # Trim the preview while keeping enough context to spot the issue.
+      print((raw_line[:1000] + ' …') if len(raw_line) > 1000 else raw_line)
+  PY
+  ```
+
+  Delete `eslint-report.txt` once you finish investigating so it does not linger in the workspace.
 
 ## Documentation & Communication
 
