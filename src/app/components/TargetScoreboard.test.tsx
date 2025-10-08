@@ -69,7 +69,7 @@ describe('TargetScoreboard', () => {
 
     const metricDefinitions = within(scoreboard).getAllByRole('definition');
     expect(metricDefinitions).not.toHaveLength(0);
-    expect(screen.getByText('Phase 1 – Opening performance')).toBeInTheDocument();
-    expect(screen.getByText('1/4')).toBeInTheDocument();
+    const phaseMetric = within(scoreboard).getByTitle('Phase 1 – Opening performance');
+    expect(within(phaseMetric).getByText('1/4')).toBeInTheDocument();
   });
 });

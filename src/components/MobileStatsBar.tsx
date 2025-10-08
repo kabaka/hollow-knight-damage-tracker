@@ -14,6 +14,7 @@ type MobileStat = {
   readonly label: string;
   readonly primary: string;
   readonly meta?: string | null;
+  readonly title?: string;
 };
 
 export const MobileStatsBar: FC<MobileStatsBarProps> = ({
@@ -63,18 +64,15 @@ export const MobileStatsBar: FC<MobileStatsBarProps> = ({
       id: 'phase',
       label: 'Phase',
       primary:
-        phaseProgress?.current != null
-          ? (phaseLabel ?? `Phase ${phaseProgress.current}`)
-          : (phaseLabel ?? '—'),
-      meta:
-        phaseProgress != null ? `${phaseProgress.current}/${phaseProgress.total}` : null,
+        phaseProgress != null ? `${phaseProgress.current}/${phaseProgress.total}` : '—',
+      title: phaseLabel ?? undefined,
     },
   ];
 
   return (
     <dl className="mobile-stats" aria-label="Combat metrics">
       {metrics.map((metric) => (
-        <div key={metric.id} className="mobile-stats__item">
+        <div key={metric.id} className="mobile-stats__item" title={metric.title}>
           <dt className="mobile-stats__label">{metric.label}</dt>
           <dd className="mobile-stats__value">
             <span className="mobile-stats__value-primary">{metric.primary}</span>
