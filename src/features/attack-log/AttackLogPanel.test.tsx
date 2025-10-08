@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 import { vi } from 'vitest';
 
-import { AttackLogActions, AttackLogPanel, AttackLogProvider } from './AttackLogPanel';
+import { AttackLogActions, AttackLogPanel, AttackLogProvider } from './index';
+import * as scheduleIdleTaskModule from '../../utils/scheduleIdleTask';
 import { PlayerConfigModal } from '../build-config/PlayerConfigModal';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { bossMap, bossSequenceMap, DEFAULT_BOSS_ID, nailUpgrades } from '../../data';
@@ -261,22 +262,31 @@ describe('AttackLogPanel', () => {
 
   it('supports keyboard shortcuts for logging attacks and resetting', async () => {
     const user = userEvent.setup();
+    const scheduleSpy = vi.spyOn(scheduleIdleTaskModule, 'scheduleIdleTask');
 
-    renderWithFightProvider(
-      <AttackLogProvider>
-        <AttackLogActions />
-        <AttackLogPanel />
-      </AttackLogProvider>,
-    );
+    try {
+      renderWithFightProvider(
+        <AttackLogProvider>
+          <AttackLogActions />
+          <AttackLogPanel />
+        </AttackLogProvider>,
+      );
 
-    await user.keyboard('1');
+      await user.keyboard('1');
 
-    await user.keyboard('{Enter}');
+      await waitFor(() => {
+        expect(scheduleSpy).toHaveBeenCalled();
+      });
 
-    const endFightButton = screen.getByRole('button', { name: /fight/i });
-    expect(endFightButton).toBeDisabled();
+      await user.keyboard('{Enter}');
 
-    await user.keyboard('{Escape}');
+      const endFightButton = screen.getByRole('button', { name: /fight/i });
+      expect(endFightButton).toBeDisabled();
+
+      await user.keyboard('{Escape}');
+    } finally {
+      scheduleSpy.mockRestore();
+    }
   });
 
   it('resets sequence progress via quick actions and keyboard shortcut', async () => {

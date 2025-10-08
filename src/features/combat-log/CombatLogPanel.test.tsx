@@ -11,6 +11,7 @@ import {
 import { useFightActions } from '../fight-state/FightStateContext';
 import { renderWithFightProvider } from '../../test-utils/renderWithFightProvider';
 import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
+import * as scheduleIdleTaskModule from '../../utils/scheduleIdleTask';
 
 type FightActions = ReturnType<typeof useFightActions>;
 
@@ -110,6 +111,8 @@ describe('CombatLogPanel', () => {
 
     let actions: FightActions | null = null;
 
+    const scheduleSpy = vi.spyOn(scheduleIdleTaskModule, 'scheduleIdleTask');
+
     try {
       renderWithFightProvider(
         <CombatLogProvider>
@@ -140,6 +143,8 @@ describe('CombatLogPanel', () => {
         expect(requestIdleCallbackMock).toHaveBeenCalled();
       });
 
+      expect(scheduleSpy).toHaveBeenCalled();
+
       await waitFor(() => {
         expect(scheduledCallback).not.toBeNull();
       });
@@ -157,6 +162,7 @@ describe('CombatLogPanel', () => {
 
       expect(setItemSpy).toHaveBeenCalledTimes(1);
     } finally {
+      scheduleSpy.mockRestore();
       setItemSpy.mockRestore();
       if (typeof originalRequestIdleCallback === 'function') {
         idleWindow.requestIdleCallback = originalRequestIdleCallback;
