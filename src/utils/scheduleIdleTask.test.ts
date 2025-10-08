@@ -3,7 +3,9 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { scheduleIdleTask } from './scheduleIdleTask';
 
 describe('scheduleIdleTask', () => {
-  const globalAny = globalThis as typeof globalThis & { window?: Window & Record<string, unknown> };
+  const globalAny = globalThis as typeof globalThis & {
+    window?: Window & Record<string, unknown>;
+  };
   let originalWindow: typeof window | undefined;
 
   beforeEach(() => {
@@ -36,18 +38,19 @@ describe('scheduleIdleTask', () => {
       return 7;
     });
 
-    globalAny.window = {
-      ...originalWindow,
+    globalAny.window = Object.assign({}, originalWindow ?? {}, {
       requestIdleCallback,
       cancelIdleCallback,
-    } as Window & typeof cancelIdleCallback;
+    }) as Window;
 
     const spy = vi.fn();
 
     const cancel = scheduleIdleTask(spy, { timeout: 123 });
 
     expect(requestIdleCallback).toHaveBeenCalledTimes(1);
-    expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 123 });
+    expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), {
+      timeout: 123,
+    });
     expect(spy).toHaveBeenCalledTimes(1);
 
     cancel();
