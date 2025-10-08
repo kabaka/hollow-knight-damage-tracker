@@ -21,14 +21,22 @@ import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 import { createFightStateStore } from './store';
 import type { FightActions, FightStateStoreApi } from './store';
 
-export type { AttackCategory, AttackEvent, AttackInput, DamageLogAggregates, BuildState, FightState, SpellLevel } from './fightReducer';
+export type {
+  AttackCategory,
+  AttackEvent,
+  AttackInput,
+  DamageLogAggregates,
+  BuildState,
+  FightState,
+  SpellLevel,
+} from './fightReducer';
 export { CUSTOM_BOSS_ID } from './fightReducer';
 export type { DerivedStats, FightActions } from './store';
 export { hasStrengthCharm } from './store';
 
-const FightStateStoreContext = createContext<FightStateStoreApi['stateStore'] | undefined>(
-  undefined,
-);
+const FightStateStoreContext = createContext<
+  FightStateStoreApi['stateStore'] | undefined
+>(undefined);
 const FightActionsContext = createContext<FightActions | undefined>(undefined);
 const FightDerivedStatsContext = createContext<
   FightStateStoreApi['derivedStore'] | undefined
@@ -51,7 +59,14 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   }
 
   const store = storeRef.current;
-  const { stateStore, derivedStore, actions, refreshDerivedStats, flushPersist, dispatch } = store;
+  const {
+    stateStore,
+    derivedStore,
+    actions,
+    refreshDerivedStats,
+    flushPersist,
+    dispatch,
+  } = store;
 
   const state = useSyncExternalStore(
     stateStore.subscribe,
@@ -293,4 +308,3 @@ export const useFightDerivedStats = () => {
   }
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 };
-

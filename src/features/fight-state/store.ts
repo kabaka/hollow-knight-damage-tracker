@@ -1,9 +1,4 @@
-import {
-  DEFAULT_CUSTOM_HP,
-  bossMap,
-  bossPhaseMap,
-  strengthCharmIds,
-} from '../../data';
+import { DEFAULT_CUSTOM_HP, bossMap, bossPhaseMap, strengthCharmIds } from '../../data';
 import type {
   AttackInput,
   DamageLogAggregates,
@@ -262,7 +257,7 @@ const calculateDerivedStats = (
 const createInitialFightState = (): FightState =>
   restorePersistedState(ensureSequenceState(ensureSpellLevels(createInitialState())));
 
-const createExternalStore = <T,>(getSnapshot: () => T, listeners: Set<Listener>) => ({
+const createExternalStore = <T>(getSnapshot: () => T, listeners: Set<Listener>) => ({
   getSnapshot,
   subscribe: (listener: Listener) => {
     listeners.add(listener);
@@ -353,31 +348,34 @@ export const createFightStateStore = (
 
     const scheduleIdle = () => {
       cancelPersist?.();
-      cancelPersist = scheduleIdleTask(() => {
-        cancelPersist = null;
+      cancelPersist = scheduleIdleTask(
+        () => {
+          cancelPersist = null;
 
-        if (!persistDirty) {
-          return;
-        }
-
-        const now = Date.now();
-        const hasPersistedBefore = lastPersistTimestamp > 0;
-        const elapsed = hasPersistedBefore
-          ? now - lastPersistTimestamp
-          : Number.POSITIVE_INFINITY;
-        if (hasPersistedBefore && elapsed < PERSIST_DEBOUNCE_MS) {
-          if (persistDebounceTimeoutId === null) {
-            const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
-            persistDebounceTimeoutId = window.setTimeout(() => {
-              persistDebounceTimeoutId = null;
-              schedulePersist();
-            }, delay);
+          if (!persistDirty) {
+            return;
           }
-          return;
-        }
 
-        persistNow();
-      }, { timeout: PERSIST_IDLE_TIMEOUT_MS });
+          const now = Date.now();
+          const hasPersistedBefore = lastPersistTimestamp > 0;
+          const elapsed = hasPersistedBefore
+            ? now - lastPersistTimestamp
+            : Number.POSITIVE_INFINITY;
+          if (hasPersistedBefore && elapsed < PERSIST_DEBOUNCE_MS) {
+            if (persistDebounceTimeoutId === null) {
+              const delay = Math.max(0, PERSIST_DEBOUNCE_MS - elapsed);
+              persistDebounceTimeoutId = window.setTimeout(() => {
+                persistDebounceTimeoutId = null;
+                schedulePersist();
+              }, delay);
+            }
+            return;
+          }
+
+          persistNow();
+        },
+        { timeout: PERSIST_IDLE_TIMEOUT_MS },
+      );
     };
 
     if (cancelPersist || persistDebounceTimeoutId !== null) {
@@ -386,7 +384,9 @@ export const createFightStateStore = (
 
     const now = Date.now();
     const hasPersistedBefore = lastPersistTimestamp > 0;
-    const elapsed = hasPersistedBefore ? now - lastPersistTimestamp : Number.POSITIVE_INFINITY;
+    const elapsed = hasPersistedBefore
+      ? now - lastPersistTimestamp
+      : Number.POSITIVE_INFINITY;
     if (!hasPersistedBefore || elapsed >= PERSIST_DEBOUNCE_MS) {
       scheduleIdle();
     } else {
@@ -413,10 +413,12 @@ export const createFightStateStore = (
   const actions: FightActions = {
     selectBoss: (bossId) => dispatch({ type: 'selectBoss', bossId }),
     setCustomTargetHp: (hp) => dispatch({ type: 'setCustomTargetHp', hp }),
-    setNailUpgrade: (nailUpgradeId) => dispatch({ type: 'setNailUpgrade', nailUpgradeId }),
+    setNailUpgrade: (nailUpgradeId) =>
+      dispatch({ type: 'setNailUpgrade', nailUpgradeId }),
     setActiveCharms: (charmIds) => dispatch({ type: 'setActiveCharms', charmIds }),
     updateActiveCharms: (updater) => dispatch({ type: 'updateActiveCharms', updater }),
-    setCharmNotchLimit: (notchLimit) => dispatch({ type: 'setCharmNotchLimit', notchLimit }),
+    setCharmNotchLimit: (notchLimit) =>
+      dispatch({ type: 'setCharmNotchLimit', notchLimit }),
     setSpellLevel: (spellId, level) =>
       dispatch({ type: 'setSpellLevel', spellId, level }),
     logAttack: ({ id, label, damage, category, soulCost, timestamp }) =>
