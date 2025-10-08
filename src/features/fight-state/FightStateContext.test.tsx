@@ -12,11 +12,11 @@ import {
   useFightStateSelector,
 } from './FightStateContext';
 import type { FightState } from './FightStateContext';
-import * as FightStateContextModule from './FightStateContext';
 import { STORAGE_KEY } from './persistence';
 import * as persistenceModule from './persistence';
 import { bossSequenceMap } from '../../data';
 import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
+import { __TESTING__ as fightStateInstrumentation } from './fightStateInstrumentation';
 
 describe('FightStateProvider persistence', () => {
   beforeEach(() => {
@@ -604,7 +604,7 @@ describe('derived stats caching', () => {
       return null;
     };
 
-    const instrumentation = FightStateContextModule.__TESTING__;
+    const instrumentation = fightStateInstrumentation;
 
     try {
       window.localStorage.clear();
