@@ -15,6 +15,7 @@ import {
 import {
   DEFAULT_CUSTOM_HP,
   bossMap,
+  bossPhaseMap,
   bossSequenceMap,
   resolveSequenceEntries,
   strengthCharmIds,
@@ -61,6 +62,10 @@ export type DerivedStats = {
   isFightInProgress: boolean;
   isFightComplete: boolean;
   frameTimestamp: number;
+  phaseNumber: number | null;
+  phaseCount: number | null;
+  phaseLabel: string | null;
+  phaseThresholds: number[] | null;
 };
 
 export type FightActions = {
@@ -192,12 +197,91 @@ const calculateDerivedStats = (
     fightEndTimestamp,
     fightStartTimestamp: storedFightStartTimestamp,
   } = state;
-  const targetHp = isCustomBoss(selectedBossId)
+  const damageLog = state.damageLog;
+  const baseTargetHp = isCustomBoss(selectedBossId)
     ? Math.max(1, Math.round(customTargetHp))
     : (bossMap.get(selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
+  const phaseDefinition = selectedBossId ? bossPhaseMap.get(selectedBossId) : undefined;
+  const phaseTotalHp = phaseDefinition?.phases.length
+    ? phaseDefinition.phases.reduce((sum, phase) => sum + phase.hp, 0)
+    : null;
+  const targetHp = phaseTotalHp && phaseTotalHp > 0 ? phaseTotalHp : baseTargetHp;
   const { totalDamage, attacksLogged, firstAttackTimestamp } = aggregates;
-  const remainingHp = Math.max(0, targetHp - totalDamage);
+  const clampedDamage = Math.max(0, totalDamage);
+
+  let effectiveDamage = Math.min(clampedDamage, targetHp);
+  if (phaseDefinition) {
+    if (phaseDefinition.discardOverkill) {
+      let consumed = 0;
+      let phaseIndex = 0;
+      let phaseRemaining = phaseDefinition.phases.length
+        ? phaseDefinition.phases[phaseIndex].hp
+        : 0;
+
+      for (const event of damageLog) {
+        let damageRemaining = Math.max(0, event.damage);
+        while (damageRemaining > 0 && phaseIndex < phaseDefinition.phases.length) {
+          if (phaseRemaining <= 0) {
+            phaseIndex += 1;
+            if (phaseIndex >= phaseDefinition.phases.length) {
+              break;
+            }
+            phaseRemaining = phaseDefinition.phases[phaseIndex].hp;
+            continue;
+          }
+
+          const applied = Math.min(damageRemaining, phaseRemaining);
+          consumed += applied;
+          phaseRemaining -= applied;
+          damageRemaining -= applied;
+
+          if (phaseRemaining <= 0) {
+            damageRemaining = 0;
+          }
+        }
+
+        if (phaseIndex >= phaseDefinition.phases.length) {
+          break;
+        }
+      }
+
+      effectiveDamage = Math.min(consumed, targetHp);
+    } else {
+      effectiveDamage = Math.min(clampedDamage, targetHp);
+    }
+  }
+
+  const remainingHp = Math.max(0, targetHp - effectiveDamage);
   const averageDamage = attacksLogged === 0 ? null : totalDamage / attacksLogged;
+
+  let phaseNumber: number | null = null;
+  let phaseCount: number | null = null;
+  let phaseLabel: string | null = null;
+  let phaseThresholds: number[] | null = null;
+
+  if (phaseDefinition && phaseDefinition.phases.length > 0) {
+    phaseCount = phaseDefinition.phases.length;
+    phaseThresholds = [];
+    let accumulated = 0;
+    for (let index = 0; index < phaseDefinition.phases.length; index += 1) {
+      const phase = phaseDefinition.phases[index];
+      accumulated += phase.hp;
+      if (index < phaseDefinition.phases.length - 1) {
+        phaseThresholds.push(Math.max(0, targetHp - accumulated));
+      }
+      if (phaseNumber === null && effectiveDamage < accumulated) {
+        phaseNumber = index + 1;
+        phaseLabel = phase.name;
+      }
+    }
+
+    if (phaseNumber === null) {
+      const lastPhase = phaseDefinition.phases[phaseDefinition.phases.length - 1];
+      phaseNumber = phaseCount;
+      phaseLabel = lastPhase.name;
+    }
+  }
+
   let fightStartTimestamp = storedFightStartTimestamp;
   if (fightStartTimestamp === null) {
     fightStartTimestamp = firstAttackTimestamp;
@@ -250,6 +334,10 @@ const calculateDerivedStats = (
     isFightInProgress,
     isFightComplete,
     frameTimestamp,
+    phaseNumber,
+    phaseCount,
+    phaseLabel,
+    phaseThresholds,
   };
 };
 

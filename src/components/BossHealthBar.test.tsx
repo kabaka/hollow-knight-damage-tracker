@@ -13,6 +13,7 @@ describe('BossHealthBar', () => {
         current={450}
         total={1000}
         progressbarAriaLabel="Boss HP"
+        phaseThresholds={[750, 500, 250]}
         valueLabel="450 / 1000"
       />,
     );
@@ -25,6 +26,9 @@ describe('BossHealthBar', () => {
     expect(progressbar).toHaveAttribute('aria-valuemax', '1000');
     expect(progressbar).toHaveAttribute('aria-valuenow', '450');
     expect(progressbar).toHaveClass('hud-health__track');
+
+    const markers = progressbar.querySelectorAll('.hud-health__marker');
+    expect(markers).toHaveLength(3);
 
     expect(screen.getByText('HP')).toHaveClass('hud-health__label');
     expect(screen.getByText('450 / 1000')).toHaveClass('hud-health__value');

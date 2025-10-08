@@ -18,12 +18,16 @@ const derivedStats: MobileStatsBarProps['derived'] = {
   isFightInProgress: true,
   isFightComplete: false,
   frameTimestamp: 0,
+  phaseNumber: 2,
+  phaseCount: 4,
+  phaseLabel: 'Phase 2 – Blob barrage',
+  phaseThresholds: [825, 650, 400],
 };
 
 const defaultProps: MobileStatsBarProps = {
   derived: derivedStats,
-  stageLabel: 'E. Guardian',
-  stageProgress: { current: 1, total: 10 },
+  phaseLabel: 'Phase 2 – Blob barrage',
+  phaseProgress: { current: 2, total: 4 },
 };
 
 describe('MobileStatsBar', () => {
@@ -38,7 +42,7 @@ describe('MobileStatsBar', () => {
       'DPS',
       'Avg Dmg',
       'APM',
-      'Stage',
+      'Phase',
     ]);
 
     expect(screen.getByText('1:30.32')).toBeInTheDocument();
@@ -47,14 +51,14 @@ describe('MobileStatsBar', () => {
     expect(screen.getByText('(760)')).toBeInTheDocument();
     expect(screen.getByText('48.0')).toBeInTheDocument();
     expect(screen.getByText('(12)')).toBeInTheDocument();
-    expect(screen.getByText('E. Guardian')).toBeInTheDocument();
-    expect(screen.getByText('(1/10)')).toBeInTheDocument();
+    expect(screen.getByText('Phase 2 – Blob barrage')).toBeInTheDocument();
+    expect(screen.getByText('(2/4)')).toBeInTheDocument();
   });
 
   it('falls back gracefully when sequence information is unavailable', () => {
-    render(<MobileStatsBar {...defaultProps} stageLabel={null} stageProgress={null} />);
+    render(<MobileStatsBar {...defaultProps} phaseLabel={null} phaseProgress={null} />);
 
     expect(screen.getByText('—')).toBeInTheDocument();
-    expect(screen.queryByText('(1/10)')).not.toBeInTheDocument();
+    expect(screen.queryByText('(2/4)')).not.toBeInTheDocument();
   });
 });

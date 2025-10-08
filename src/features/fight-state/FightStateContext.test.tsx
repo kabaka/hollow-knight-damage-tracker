@@ -476,6 +476,107 @@ describe('derived stats context', () => {
 
     expect(screen.getByTestId('remaining').textContent).toBe('4000');
   });
+
+  it('reports phase metadata for multi-phase encounters', async () => {
+    const user = userEvent.setup();
+
+    const Observer = () => {
+      const { actions } = useFightState();
+      const derived = useFightDerivedStats();
+      useEffect(() => {
+        actions.selectBoss('the-hollow-knight__standard');
+        actions.startFight();
+      }, [actions]);
+      return (
+        <div>
+          <span data-testid="phase-number">{derived.phaseNumber ?? -1}</span>
+          <span data-testid="phase-count">{derived.phaseCount ?? -1}</span>
+          <span data-testid="phase-label">{derived.phaseLabel ?? 'none'}</span>
+          <span data-testid="marker-count">{derived.phaseThresholds?.length ?? -1}</span>
+          <button
+            type="button"
+            onClick={() =>
+              actions.logAttack({
+                id: 'huge-spell',
+                label: 'Shriek',
+                damage: 500,
+                category: 'spell',
+                soulCost: null,
+              })
+            }
+          >
+            Log phase break
+          </button>
+        </div>
+      );
+    };
+
+    render(
+      <FightStateProvider>
+        <Observer />
+      </FightStateProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('phase-number').textContent).toBe('1');
+      expect(screen.getByTestId('phase-count').textContent).toBe('4');
+      expect(screen.getByTestId('marker-count').textContent).toBe('3');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log phase break' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('phase-number').textContent).toBe('2');
+      expect(screen.getByTestId('phase-label').textContent).toContain('Phase 2');
+    });
+  });
+
+  it('discards overkill damage when a phase consumes its entire health pool', async () => {
+    const user = userEvent.setup();
+
+    const Observer = () => {
+      const { actions } = useFightState();
+      const derived = useFightDerivedStats();
+      useEffect(() => {
+        actions.selectBoss('mantis-lords__standard');
+        actions.startFight();
+      }, [actions]);
+      return (
+        <div>
+          <span data-testid="remaining-hp">{derived.remainingHp}</span>
+          <button
+            type="button"
+            onClick={() =>
+              actions.logAttack({
+                id: 'overkill-strike',
+                label: 'Overkill',
+                damage: 300,
+                category: 'nail',
+              })
+            }
+          >
+            Log overkill
+          </button>
+        </div>
+      );
+    };
+
+    render(
+      <FightStateProvider>
+        <Observer />
+      </FightStateProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('remaining-hp').textContent).toBe('530');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log overkill' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('remaining-hp').textContent).toBe('320');
+    });
+  });
 });
 
 describe('derived stats caching', () => {

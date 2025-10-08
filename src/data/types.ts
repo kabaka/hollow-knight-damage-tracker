@@ -82,6 +82,20 @@ export interface BossTarget {
   version: BossVersion;
 }
 
+export interface BossPhase {
+  id: string;
+  name: string;
+  hp: number;
+  description?: string;
+}
+
+export interface BossPhaseDefinition {
+  targetId: string;
+  phases: BossPhase[];
+  discardOverkill?: boolean;
+  notes?: string;
+}
+
 export type BossSequenceConditionMode = 'include' | 'replace';
 
 export interface BossSequenceCondition {

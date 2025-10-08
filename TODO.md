@@ -26,6 +26,7 @@
 - [ ] Visualize timelines of hits and damage bursts with charts.
 - [ ] Enable importing/exporting loadouts and fight logs (JSON or shareable link).
 - [ ] Integrate audio/visual cues for thresholds (e.g., boss at 25% HP).
+- [ ] Model timed multi-phase encounters (e.g., False Knight/Failed Champion) where HP thresholds depend on vulnerability windows.
 - [ ] Support cooperative race mode where multiple players' logs sync in real time.
 - [ ] Research localization needs and plan translation workflow.
 - [ ] Add accessibility audit with tooling like axe-core and document results.
