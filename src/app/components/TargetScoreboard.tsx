@@ -69,13 +69,10 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
         id: 'phase',
         label: 'Phase',
         value:
-          typeof phaseNumber === 'number'
-            ? (phaseLabel ?? `Phase ${phaseNumber}`)
-            : (phaseLabel ?? '—'),
-        sublabel:
           typeof phaseNumber === 'number' && typeof phaseCount === 'number'
             ? `${phaseNumber}/${phaseCount}`
-            : undefined,
+            : '—',
+        title: phaseLabel ?? undefined,
       },
     ],
     [
@@ -121,6 +118,7 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
             key={metric.id}
             className="hud-metrics__item hud-scoreboard__metric summary-chip"
             data-metric-id={metric.id}
+            title={metric.title}
           >
             <dt className="hud-metrics__label hud-scoreboard__metric-label">
               {metric.label}

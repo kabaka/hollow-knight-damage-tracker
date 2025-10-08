@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { MobileStatsBar, type MobileStatsBarProps } from './MobileStatsBar';
@@ -51,14 +51,14 @@ describe('MobileStatsBar', () => {
     expect(screen.getByText('(760)')).toBeInTheDocument();
     expect(screen.getByText('48.0')).toBeInTheDocument();
     expect(screen.getByText('(12)')).toBeInTheDocument();
-    expect(screen.getByText('Phase 2 – Blob barrage')).toBeInTheDocument();
-    expect(screen.getByText('(2/4)')).toBeInTheDocument();
+    const phaseMetric = screen.getByTitle('Phase 2 – Blob barrage');
+    expect(phaseMetric).toBeInTheDocument();
+    expect(within(phaseMetric).getByText('2/4')).toBeInTheDocument();
   });
 
   it('falls back gracefully when sequence information is unavailable', () => {
     render(<MobileStatsBar {...defaultProps} phaseLabel={null} phaseProgress={null} />);
 
     expect(screen.getByText('—')).toBeInTheDocument();
-    expect(screen.queryByText('(2/4)')).not.toBeInTheDocument();
   });
 });
