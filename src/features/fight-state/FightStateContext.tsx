@@ -34,6 +34,10 @@ import {
   isCustomBoss,
   toSequenceStageKey,
 } from './fightReducer';
+import {
+  incrementAggregateComputationCount,
+  incrementAggregateMismatchCount,
+} from './fightStateInstrumentation';
 export type {
   AttackCategory,
   AttackEvent,
@@ -157,9 +161,6 @@ const assertStore = <T,>(value: T | null, message: string): T => {
   return value;
 };
 
-let aggregateComputationCount = 0;
-let aggregateMismatchCount = 0;
-
 const cloneDamageLogAggregates = (
   aggregates: DamageLogAggregates,
 ): DamageLogAggregates => ({
@@ -168,18 +169,6 @@ const cloneDamageLogAggregates = (
   firstAttackTimestamp: aggregates.firstAttackTimestamp,
   lastAttackTimestamp: aggregates.lastAttackTimestamp,
 });
-
-const testingApi = {
-  getAggregateComputationCount: () => aggregateComputationCount,
-  getAggregateMismatchCount: () => aggregateMismatchCount,
-  resetAggregateComputationCount: () => {
-    aggregateComputationCount = 0;
-    aggregateMismatchCount = 0;
-  },
-};
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const __TESTING__ = testingApi;
 
 type DamageLogAggregateCache = {
   version: number;
@@ -349,7 +338,7 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
   const stateRef = useRef(state);
   const frameTimestampRef = useRef<number>(Date.now());
   const [initialAggregateCache] = useState<DamageLogAggregateCache>(() => {
-    aggregateComputationCount += 1;
+    incrementAggregateComputationCount();
     return {
       version: state.damageLogVersion,
       aggregates: cloneDamageLogAggregates(state.damageLogAggregates),
@@ -379,8 +368,8 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     const { damageLogVersion, damageLogAggregates } = stateSnapshot;
     const cache = aggregateCacheRef.current;
     if (cache.version !== damageLogVersion) {
-      aggregateMismatchCount += 1;
-      aggregateComputationCount += 1;
+      incrementAggregateMismatchCount();
+      incrementAggregateComputationCount();
       const aggregates = cloneDamageLogAggregates(damageLogAggregates);
       aggregateCacheRef.current = {
         version: damageLogVersion,
