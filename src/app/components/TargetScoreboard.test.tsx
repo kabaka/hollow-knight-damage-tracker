@@ -18,6 +18,10 @@ const derivedStats: TargetScoreboardProps['derived'] = {
   isFightInProgress: true,
   isFightComplete: false,
   frameTimestamp: 0,
+  phaseNumber: 1,
+  phaseCount: 4,
+  phaseLabel: 'Phase 1 – Opening performance',
+  phaseThresholds: [750, 500, 250],
 };
 
 const defaultProps: TargetScoreboardProps = {
@@ -53,10 +57,19 @@ describe('TargetScoreboard', () => {
 
     const metricTerms = within(scoreboard).getAllByRole('term');
     expect(metricTerms.map((term) => term.textContent)).toEqual(
-      expect.arrayContaining(['Elapsed', 'Est. Remaining', 'DPS', 'Avg Dmg', 'APM']),
+      expect.arrayContaining([
+        'Elapsed',
+        'Est. Remaining',
+        'DPS',
+        'Avg Dmg',
+        'APM',
+        'Phase',
+      ]),
     );
 
     const metricDefinitions = within(scoreboard).getAllByRole('definition');
     expect(metricDefinitions).not.toHaveLength(0);
+    expect(screen.getByText('Phase 1 – Opening performance')).toBeInTheDocument();
+    expect(screen.getByText('1/4')).toBeInTheDocument();
   });
 });

@@ -171,8 +171,6 @@ const AppContent: FC = () => {
         derived={derived}
         encounterName={encounterName}
         arenaLabel={arenaLabel}
-        stageLabel={stageLabel}
-        stageProgress={stageProgress}
       />
 
       <EncounterSetupPanel

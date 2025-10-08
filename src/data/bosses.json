@@ -179,15 +179,15 @@
     "godhomeVersions": [
       {
         "title": "Attuned",
-        "health": 1100
+        "health": 700
       },
       {
         "title": "Ascended",
-        "health": 1700
+        "health": 880
       },
       {
         "title": "Radiant",
-        "health": 1700
+        "health": 880
       }
     ]
   },
@@ -483,7 +483,7 @@
     "name": "Oblobbles",
     "description": "A pair of flying, spitting husks.",
     "location": "Colosseum of Fools",
-    "health": 720,
+    "health": 330,
     "links": {
       "fandom": "https://hollowknight.wiki/w/Oblobble",
       "fextralife": "https://hollowknight.wiki.fextralife.com/Oblobbles"
@@ -491,15 +491,15 @@
     "godhomeVersions": [
       {
         "title": "Attuned",
-        "health": 900
+        "health": 490
       },
       {
         "title": "Ascended",
-        "health": 1500
+        "health": 578
       },
       {
         "title": "Radiant",
-        "health": 1500
+        "health": 578
       }
     ]
   },
@@ -659,15 +659,15 @@
     "godhomeVersions": [
       {
         "title": "Attuned",
-        "health": 1250
+        "health": 1500
       },
       {
         "title": "Ascended",
-        "health": 1500
+        "health": 1800
       },
       {
         "title": "Radiant",
-        "health": 1500
+        "health": 1800
       }
     ]
   },
@@ -987,7 +987,7 @@
     "name": "Sisters of Battle",
     "description": "Dream variant of the Mantis Lords.",
     "location": "Godhome",
-    "health": 2000,
+    "health": 900,
     "links": {
       "fandom": "https://hollowknight.wiki/w/Sisters_of_Battle",
       "fextralife": "https://hollowknight.wiki.fextralife.com/Sisters+of+Battle"
@@ -995,15 +995,15 @@
     "godhomeVersions": [
       {
         "title": "Attuned",
-        "health": 2000
+        "health": 750
       },
       {
         "title": "Ascended",
-        "health": 2500
+        "health": 900
       },
       {
         "title": "Radiant",
-        "health": 2500
+        "health": 900
       }
     ]
   },
@@ -1057,7 +1057,7 @@
     "name": "Absolute Radiance",
     "description": "The Radiance at the peak of its power.",
     "location": "Godhome",
-    "health": 2300,
+    "health": 2640,
     "links": {
       "fandom": "https://hollowknight.wiki/w/Absolute_Radiance",
       "fextralife": "https://hollowknight.wiki.fextralife.com/Absolute+Radiance"
@@ -1065,15 +1065,15 @@
     "godhomeVersions": [
       {
         "title": "Attuned",
-        "health": 2300
+        "health": 2200
       },
       {
         "title": "Ascended",
-        "health": 2500
+        "health": 2640
       },
       {
         "title": "Radiant",
-        "health": 2500
+        "health": 2640
       }
     ]
   }

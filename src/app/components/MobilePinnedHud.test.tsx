@@ -18,14 +18,16 @@ const derivedStats: MobilePinnedHudProps['derived'] = {
   isFightInProgress: true,
   isFightComplete: false,
   frameTimestamp: 0,
+  phaseNumber: 3,
+  phaseCount: 4,
+  phaseLabel: 'Phase 3 – After 50%',
+  phaseThresholds: [750, 500, 250],
 };
 
 const defaultProps: MobilePinnedHudProps = {
   derived: derivedStats,
   encounterName: 'Eternal Guardian',
   arenaLabel: 'Howling Cliffs',
-  stageLabel: 'E. Guardian',
-  stageProgress: { current: 1, total: 10 },
 };
 
 const renderHud = (props: Partial<MobilePinnedHudProps> = {}) =>

@@ -39,18 +39,22 @@ export type MobilePinnedHudProps = {
   readonly derived: DerivedStats;
   readonly encounterName: string;
   readonly arenaLabel: string | null;
-  readonly stageLabel: string | null;
-  readonly stageProgress: { current: number; total: number } | null;
 };
 
 export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
   derived,
   encounterName,
   arenaLabel,
-  stageLabel,
-  stageProgress,
 }) => {
-  const { targetHp, remainingHp } = derived;
+  const { targetHp, remainingHp, phaseNumber, phaseCount, phaseLabel, phaseThresholds } =
+    derived;
+  const phaseProgress =
+    typeof phaseNumber === 'number' && typeof phaseCount === 'number'
+      ? {
+          current: phaseNumber,
+          total: phaseCount,
+        }
+      : null;
   const [isExpanded, setIsExpanded] = useState<boolean>(() => getStoredExpansionState());
   const statsPanelId = useId();
   const toggleLabelId = useId();
@@ -101,6 +105,7 @@ export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
           total={targetHp}
           progressbarAriaLabel="Boss HP"
           trackClassName="mobile-hud__track"
+          phaseThresholds={phaseThresholds ?? undefined}
           valueLabel={`${formatNumber(remainingHp)} / ${formatNumber(targetHp)}`}
           valueClassName="mobile-hud__value"
         />
@@ -113,8 +118,8 @@ export const MobilePinnedHud: FC<MobilePinnedHudProps> = ({
         >
           <MobileStatsBar
             derived={derived}
-            stageLabel={stageLabel}
-            stageProgress={stageProgress}
+            phaseLabel={phaseLabel}
+            phaseProgress={phaseProgress}
           />
         </div>
         <span className="mobile-hud__toggle-tab" aria-hidden="true">

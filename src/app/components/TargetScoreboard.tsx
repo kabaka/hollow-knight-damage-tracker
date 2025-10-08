@@ -34,6 +34,10 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
     actionsPerMinute,
     attacksLogged,
     totalDamage,
+    phaseNumber,
+    phaseCount,
+    phaseLabel,
+    phaseThresholds,
   } = derived;
   const metrics = useMemo(
     () => [
@@ -61,6 +65,18 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
         sublabel:
           typeof attacksLogged === 'number' ? formatNumber(attacksLogged) : undefined,
       },
+      {
+        id: 'phase',
+        label: 'Phase',
+        value:
+          typeof phaseNumber === 'number'
+            ? (phaseLabel ?? `Phase ${phaseNumber}`)
+            : (phaseLabel ?? '—'),
+        sublabel:
+          typeof phaseNumber === 'number' && typeof phaseCount === 'number'
+            ? `${phaseNumber}/${phaseCount}`
+            : undefined,
+      },
     ],
     [
       actionsPerMinute,
@@ -70,6 +86,9 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
       elapsedMs,
       estimatedTimeRemainingMs,
       totalDamage,
+      phaseCount,
+      phaseLabel,
+      phaseNumber,
     ],
   );
 
@@ -84,6 +103,7 @@ export const TargetScoreboard: FC<TargetScoreboardProps> = ({
           current={remainingHp}
           total={targetHp}
           progressbarAriaLabel="Boss HP"
+          phaseThresholds={phaseThresholds ?? undefined}
           valueLabel={`${formatNumber(remainingHp)} / ${formatNumber(targetHp)}`}
         />
         <StageTimeline

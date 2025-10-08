@@ -1,6 +1,7 @@
 import rawDamage from './damage.json';
 import rawBosses from './bosses.json';
 import rawSequences from './sequences.json';
+import { bossPhaseData } from './phases';
 import type {
   Boss,
   BossSequence,
@@ -18,6 +19,8 @@ import type {
 
 export type {
   Boss,
+  BossPhase,
+  BossPhaseDefinition,
   BossSequence,
   BossSequenceCondition,
   BossSequenceEntry,
@@ -156,6 +159,10 @@ const parsedBossTargets: BossTarget[] = parsedBosses.flatMap((boss) =>
 export const bossTargets = parsedBossTargets;
 
 export const bossMap = new Map(bossTargets.map((target) => [target.id, target]));
+export const bossPhases = bossPhaseData;
+export const bossPhaseMap = new Map(
+  bossPhases.map((definition) => [definition.targetId, definition]),
+);
 export const nailUpgradeMap = new Map(
   nailUpgrades.map((upgrade) => [upgrade.id, upgrade]),
 );

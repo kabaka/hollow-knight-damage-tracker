@@ -5,8 +5,8 @@ import { formatDecimal, formatNumber, formatStopwatch } from '../utils/format';
 
 export type MobileStatsBarProps = {
   readonly derived: DerivedStats;
-  readonly stageLabel: string | null;
-  readonly stageProgress: { current: number; total: number } | null;
+  readonly phaseLabel: string | null;
+  readonly phaseProgress: { current: number; total: number } | null;
 };
 
 type MobileStat = {
@@ -18,8 +18,8 @@ type MobileStat = {
 
 export const MobileStatsBar: FC<MobileStatsBarProps> = ({
   derived,
-  stageLabel,
-  stageProgress,
+  phaseLabel,
+  phaseProgress,
 }) => {
   const {
     elapsedMs,
@@ -60,11 +60,14 @@ export const MobileStatsBar: FC<MobileStatsBarProps> = ({
       meta: formatNumber(attacksLogged),
     },
     {
-      id: 'stage',
-      label: 'Stage',
-      primary: stageLabel ?? '—',
+      id: 'phase',
+      label: 'Phase',
+      primary:
+        phaseProgress?.current != null
+          ? (phaseLabel ?? `Phase ${phaseProgress.current}`)
+          : (phaseLabel ?? '—'),
       meta:
-        stageProgress != null ? `${stageProgress.current}/${stageProgress.total}` : null,
+        phaseProgress != null ? `${phaseProgress.current}/${phaseProgress.total}` : null,
     },
   ];
 
