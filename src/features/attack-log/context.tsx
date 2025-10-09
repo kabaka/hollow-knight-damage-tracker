@@ -1,12 +1,5 @@
-import type { FC, PropsWithChildren, RefObject } from 'react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import type { FC, PropsWithChildren } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useHapticFeedback, type HapticFeedbackType } from '../../utils/haptics';
 import { toSequenceStageKey } from '../fight-state/fightReducer';
@@ -17,45 +10,12 @@ import {
   type FightState,
 } from '../fight-state/FightStateContext';
 import { useSequenceContext } from '../fight-state/useSequenceContext';
+import { AttackLogContext } from './AttackLogContext';
 import { useAttackDefinitions } from './useAttackDefinitions';
 import { useAttackLogShortcuts } from './useAttackLogShortcuts';
-import type { AttackLogActionPayload } from './types';
+import type { AttackLogActionPayload, AttackLogContextValue } from './types';
 
 const ACTIVE_EFFECT_DURATION = 260;
-
-export type AttackLogContextValue = {
-  readonly panelRef: RefObject<HTMLDivElement>;
-  readonly groupsWithMetadata: ReturnType<
-    typeof useAttackDefinitions
-  >['groupsWithMetadata'];
-  readonly logAttack: (attack: AttackLogActionPayload) => void;
-  readonly undoLastAttack: () => void;
-  readonly redoLastAttack: () => void;
-  readonly resetLog: () => void;
-  readonly resetSequence: () => void;
-  readonly toggleFight: () => void;
-  readonly canUndo: boolean;
-  readonly canRedo: boolean;
-  readonly canResetLog: boolean;
-  readonly canResetSequence: boolean;
-  readonly showResetSequence: boolean;
-  readonly fightButtonLabel: string;
-  readonly fightButtonAriaLabel: string;
-  readonly fightButtonShortcut: string;
-  readonly fightButtonDisabled: boolean;
-  readonly triggerActiveEffect: (element: HTMLElement | null) => void;
-  readonly registerActionButton: (id: string, element: HTMLButtonElement | null) => void;
-};
-
-const AttackLogContext = createContext<AttackLogContextValue | null>(null);
-
-export const useAttackLogContext = () => {
-  const context = useContext(AttackLogContext);
-  if (!context) {
-    throw new Error('AttackLog components must be rendered within an AttackLogProvider');
-  }
-  return context;
-};
 
 type AttackLogProviderProps = PropsWithChildren;
 
@@ -158,7 +118,7 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
     derived.remainingHp,
   );
 
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const activeEffectTimeoutsRef = useRef<Map<HTMLElement, number>>(new Map());
   const actionButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const sequenceFeedbackRef = useRef<{

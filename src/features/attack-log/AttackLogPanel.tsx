@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 
 import { AttackButtonGrid } from './components/AttackButtonGrid';
-import { useAttackLogContext } from './context';
+import { useAttackLogContext } from './AttackLogContext';
 
 export const AttackLogPanel: FC = () => {
   const { groupsWithMetadata, logAttack, panelRef, triggerActiveEffect } =

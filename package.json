@@ -24,7 +24,8 @@
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm format:check && pnpm lint && pnpm test:unit"
+    "pre-commit": "pnpm format:check && pnpm lint && pnpm test:unit -- --reporter=dot",
+    "pre-push": "pnpm lint"
   },
   "dependencies": {
     "react": "^19.1.1",
