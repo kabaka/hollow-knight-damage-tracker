@@ -159,7 +159,7 @@ describe('App', () => {
     fireEvent.change(notchSlider, { target: { value: '5' } });
 
     const longnailButton = getCharmButton(/longnail/i);
-    expect(longnailButton).not.toBeDisabled();
+    expect(longnailButton).toBeEnabled();
     await user.click(longnailButton);
     await within(modal).findByRole('button', { name: /longnail/i, pressed: true });
     expect(within(modal).getByRole('status')).toHaveTextContent(/overcharmed/i);
@@ -174,10 +174,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
     const modal = await screen.findByRole('dialog', { name: /player loadout/i });
-    const modalBody = modal.querySelector('.modal__body') as HTMLElement | null;
-    if (!modalBody) {
-      throw new Error('Expected the modal body to be present');
-    }
+    const modalBody = within(modal).getByTestId('modal-body');
 
     modalBody.scrollTop = 200;
 
@@ -195,10 +192,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
     const modal = await screen.findByRole('dialog', { name: /player loadout/i });
-    const modalBody = modal.querySelector('.modal__body') as HTMLElement | null;
-    if (!modalBody) {
-      throw new Error('Expected the modal body to be present');
-    }
+    const modalBody = within(modal).getByTestId('modal-body');
 
     modalBody.scrollTop = 200;
 
@@ -219,32 +213,40 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
     const modal = await screen.findByRole('dialog', { name: /player loadout/i });
 
+    const getEquippedList = () =>
+      within(modal).getByRole('list', { name: /equipped charms/i });
+
     const waitForNoFlights = async () => {
       await waitFor(
         () => {
-          expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
-          expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+          expect(screen.queryAllByTestId('charm-flight-sprite')).toHaveLength(0);
+        },
+        { timeout: CHARM_FLIGHT_TIMEOUT_MS + 400 },
+      );
+      await waitFor(
+        () => {
+          const equippedItems = within(getEquippedList()).queryAllByRole('listitem');
+          for (const item of equippedItems) {
+            expect(item).not.toHaveClass('equipped-panel__item--hidden');
+          }
         },
         { timeout: CHARM_FLIGHT_TIMEOUT_MS + 400 },
       );
     };
-
-    const getEquippedList = () =>
-      within(modal).getByRole('list', { name: /equipped charms/i });
 
     const getEquippedItem = (pattern: RegExp) =>
       within(getEquippedList()).queryByRole('listitem', { name: pattern });
 
     await user.click(within(modal).getAllByRole('button', { name: /fragile heart/i })[0]);
     await waitForNoFlights();
-    expect(getEquippedItem(/fragile heart/i)).not.toBeNull();
+    expect(getEquippedItem(/fragile heart/i)).toBeInTheDocument();
 
     await user.click(
       within(modal).getAllByRole('button', { name: /unbreakable heart/i })[0],
     );
     await waitForNoFlights();
-    expect(getEquippedItem(/unbreakable heart/i)).not.toBeNull();
-    expect(getEquippedItem(/fragile heart/i)).toBeNull();
+    expect(getEquippedItem(/unbreakable heart/i)).toBeInTheDocument();
+    expect(getEquippedItem(/fragile heart/i)).not.toBeInTheDocument();
 
     await user.click(
       within(modal).getAllByRole('button', { name: /unbreakable heart/i })[0],
@@ -274,18 +276,17 @@ describe('App', () => {
       }),
     );
 
-    const selectedOption = within(sequencePanel)
-      .getByRole('radio', { name: /pantheon of the sage/i })
-      .closest('.sequence-selector__option');
-    expect(selectedOption).not.toBeNull();
-
-    const checkbox = within(selectedOption as HTMLElement).getByRole('checkbox', {
+    const conditionToggles = within(sequencePanel).getAllByRole('checkbox', {
       name: /include grey prince zote/i,
     });
-    expect(checkbox).not.toBeChecked();
+    const interactiveCheckbox = conditionToggles.find((input) => !input.disabled);
+    if (!interactiveCheckbox) {
+      throw new Error('Expected an interactive sequence condition toggle');
+    }
+    expect(interactiveCheckbox).not.toBeChecked();
 
-    await user.click(checkbox);
-    expect(checkbox).toBeChecked();
+    await user.click(interactiveCheckbox);
+    expect(interactiveCheckbox).toBeChecked();
   });
 });
 

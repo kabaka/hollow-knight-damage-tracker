@@ -36,14 +36,12 @@ describe('MobileStatsBar', () => {
 
     const metrics = screen.getAllByRole('term');
     expect(metrics).toHaveLength(6);
-    expect(metrics.map((metric) => metric.textContent)).toEqual([
-      'Elapsed',
-      'Est. Remaining',
-      'DPS',
-      'Avg Dmg',
-      'APM',
-      'Phase',
-    ]);
+    expect(metrics[0]).toHaveTextContent('Elapsed');
+    expect(metrics[1]).toHaveTextContent('Est. Remaining');
+    expect(metrics[2]).toHaveTextContent('DPS');
+    expect(metrics[3]).toHaveTextContent('Avg Dmg');
+    expect(metrics[4]).toHaveTextContent('APM');
+    expect(metrics[5]).toHaveTextContent('Phase');
 
     expect(screen.getByText('1:30.32')).toBeInTheDocument();
     expect(screen.getByText('0:08.94')).toBeInTheDocument();

@@ -79,12 +79,12 @@ describe('FightStateProvider persistence', () => {
       </FightStateProvider>,
     );
 
-    expect(screen.getByTestId('selected-boss').textContent).toBe(CUSTOM_BOSS_ID);
-    expect(screen.getByTestId('custom-hp').textContent).toBe('3334');
-    expect(screen.getByTestId('nail-upgrade').textContent).toBe('pure-nail');
-    expect(screen.getByTestId('charms').textContent).toBe('shaman-stone,quick-slash');
-    expect(screen.getByTestId('spell-level').textContent).toBe('upgrade');
-    expect(screen.getByTestId('logged-attacks').textContent).toBe('1');
+    expect(screen.getByTestId('selected-boss')).toHaveTextContent(CUSTOM_BOSS_ID);
+    expect(screen.getByTestId('custom-hp')).toHaveTextContent('3334');
+    expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('pure-nail');
+    expect(screen.getByTestId('charms')).toHaveTextContent('shaman-stone,quick-slash');
+    expect(screen.getByTestId('spell-level')).toHaveTextContent('upgrade');
+    expect(screen.getByTestId('logged-attacks')).toHaveTextContent('1');
   });
 
   it('persists updates to localStorage whenever state changes', async () => {
@@ -255,24 +255,24 @@ describe('boss sequences', () => {
 
     await user.click(screen.getByRole('button', { name: 'Start Sequence' }));
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-id').textContent).toBe(masterSequence.id);
+      expect(screen.getByTestId('sequence-id')).toHaveTextContent(masterSequence.id);
     });
 
     await user.click(screen.getByRole('button', { name: 'Log Completion' }));
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('1');
     });
 
-    expect(screen.getByTestId('selected-boss').textContent).toBe(secondStage.target.id);
-    expect(screen.getByTestId('log-count').textContent).toBe('0');
+    expect(screen.getByTestId('selected-boss')).toHaveTextContent(secondStage.target.id);
+    expect(screen.getByTestId('log-count')).toHaveTextContent('0');
 
     await user.click(screen.getByRole('button', { name: 'Previous Stage' }));
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('0');
     });
 
-    expect(screen.getByTestId('log-count').textContent).toBe('1');
-    expect(screen.getByTestId('log-total').textContent).toBe(
+    expect(screen.getByTestId('log-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('log-total')).toHaveTextContent(
       firstStage.target.hp.toString(),
     );
   });
@@ -321,18 +321,18 @@ describe('useFightStateSelector', () => {
       </FightStateProvider>,
     );
 
-    expect(screen.getByTestId('nail-upgrade').textContent).toBe('old-nail');
+    expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('old-nail');
     expect(renderCounts.build).toBe(1);
 
     await user.click(screen.getByRole('button', { name: 'Log Attack' }));
 
-    expect(screen.getByTestId('nail-upgrade').textContent).toBe('old-nail');
+    expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('old-nail');
     expect(renderCounts.build).toBe(1);
 
     await user.click(screen.getByRole('button', { name: 'Upgrade Nail' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('nail-upgrade').textContent).toBe('coiled-nail');
+      expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('coiled-nail');
     });
     expect(renderCounts.build).toBe(2);
   });
@@ -400,7 +400,7 @@ describe('derived stats context', () => {
       expect(requestAnimationFrameSpy).toHaveBeenCalled();
     });
 
-    expect(screen.getByTestId('attacks-logged').textContent).toBe('1');
+    expect(screen.getByTestId('attacks-logged')).toHaveTextContent('1');
 
     now = 1600;
     expect(Date.now()).toBe(1600);
@@ -495,7 +495,7 @@ describe('derived stats context', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('target-hp').textContent).toBe('20');
+      expect(screen.getByTestId('target-hp')).toHaveTextContent('20');
     });
 
     const startButton = screen.getByRole('button', { name: 'Start fight' });
@@ -506,10 +506,10 @@ describe('derived stats context', () => {
     await user.click(screen.getByRole('button', { name: 'Log hit' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('elapsed').textContent).toBe('4000');
+      expect(screen.getByTestId('elapsed')).toHaveTextContent('4000');
     });
 
-    expect(screen.getByTestId('remaining').textContent).toBe('4000');
+    expect(screen.getByTestId('remaining')).toHaveTextContent('4000');
   });
 
   it('reports phase metadata for multi-phase encounters', async () => {
@@ -553,16 +553,16 @@ describe('derived stats context', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('phase-number').textContent).toBe('1');
-      expect(screen.getByTestId('phase-count').textContent).toBe('4');
-      expect(screen.getByTestId('marker-count').textContent).toBe('3');
+      expect(screen.getByTestId('phase-number')).toHaveTextContent('1');
+      expect(screen.getByTestId('phase-count')).toHaveTextContent('4');
+      expect(screen.getByTestId('marker-count')).toHaveTextContent('3');
     });
 
     await user.click(screen.getByRole('button', { name: 'Log phase break' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('phase-number').textContent).toBe('2');
-      expect(screen.getByTestId('phase-label').textContent).toContain('Phase 2');
+      expect(screen.getByTestId('phase-number')).toHaveTextContent('2');
+      expect(screen.getByTestId('phase-label')).toHaveTextContent(/Phase 2/i);
     });
   });
 
@@ -603,13 +603,13 @@ describe('derived stats context', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('remaining-hp').textContent).toBe('530');
+      expect(screen.getByTestId('remaining-hp')).toHaveTextContent('530');
     });
 
     await user.click(screen.getByRole('button', { name: 'Log overkill' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('remaining-hp').textContent).toBe('320');
+      expect(screen.getByTestId('remaining-hp')).toHaveTextContent('320');
     });
   });
 });

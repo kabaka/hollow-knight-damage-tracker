@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -29,8 +29,8 @@ describe('PlayerConfigModal charms', () => {
     vi.useRealTimers();
   });
 
-  it('retains rapid charm selections without dropping earlier choices', () => {
-    vi.useFakeTimers();
+  it('retains rapid charm selections without dropping earlier choices', async () => {
+    const user = userEvent.setup();
     openModal();
 
     const compassButton = screen.getByRole('button', {
@@ -40,53 +40,49 @@ describe('PlayerConfigModal charms', () => {
       name: /gathering swarm/i,
     });
 
-    act(() => {
-      fireEvent.click(compassButton);
-      fireEvent.click(swarmButton);
-    });
-
-    act(() => {
-      vi.runAllTimers();
-    });
+    await user.click(compassButton);
+    await user.click(swarmButton);
 
     const equippedList = screen.getByRole('list', { name: /equipped charms/i });
-    const equippedItems = within(equippedList).getAllByRole('listitem');
-
-    expect(equippedItems).toHaveLength(2);
-    expect(equippedItems[0]).toHaveTextContent(/wayward compass/i);
-    expect(equippedItems[1]).toHaveTextContent(/gathering swarm/i);
+    await waitFor(() => {
+      const equippedItems = within(equippedList).getAllByRole('listitem');
+      expect(equippedItems).toHaveLength(2);
+      expect(equippedItems[0]).toHaveTextContent(/wayward compass/i);
+      expect(equippedItems[1]).toHaveTextContent(/gathering swarm/i);
+    });
   });
 
-  it('recovers hidden equipped slots when flights are interrupted mid-transition', () => {
-    vi.useFakeTimers();
+  it('recovers hidden equipped slots when flights are interrupted mid-transition', async () => {
+    const user = userEvent.setup();
     openModal();
 
     const modal = screen.getByRole('dialog', { name: /player loadout/i });
-    const [fragileButton] = within(modal).getAllByRole('button', {
-      name: /fragile heart/i,
-    });
-    const [unbreakableButton] = within(modal).getAllByRole('button', {
-      name: /unbreakable heart/i,
-    });
+    const clickCharm = async (pattern: RegExp) => {
+      const buttons = within(modal).getAllByRole('button', { name: pattern });
+      const target =
+        buttons.find((button) => button.getAttribute('aria-pressed') === 'true') ??
+        buttons[0];
+      await user.click(target);
+    };
 
-    act(() => {
-      fireEvent.click(fragileButton);
-      fireEvent.click(unbreakableButton);
-      fireEvent.click(fragileButton);
-    });
+    await clickCharm(/fragile heart/i);
+    await clickCharm(/unbreakable heart/i);
+    await clickCharm(/fragile heart/i);
 
-    act(() => {
-      vi.advanceTimersByTime(CHARM_FLIGHT_TIMEOUT_MS + 60);
-    });
-
-    expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
-    expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+    await waitFor(
+      () => {
+        expect(screen.queryAllByTestId('charm-flight-sprite')).toHaveLength(0);
+      },
+      { timeout: CHARM_FLIGHT_TIMEOUT_MS + 400 },
+    );
 
     const equippedList = within(modal).getByRole('list', { name: /equipped charms/i });
-    const equippedItems = within(equippedList).getAllByRole('listitem');
-
-    expect(equippedItems).toHaveLength(1);
-    expect(equippedItems[0]).toHaveTextContent(/fragile heart/i);
+    await waitFor(() => {
+      const equippedItems = within(equippedList).getAllByRole('listitem');
+      expect(equippedItems).toHaveLength(1);
+      expect(equippedItems[0]).toHaveTextContent(/fragile heart/i);
+      expect(equippedItems[0]).not.toHaveClass('equipped-panel__item--hidden');
+    });
   });
 
   it('reveals equipped charms after real flight durations', async () => {
@@ -109,25 +105,42 @@ describe('PlayerConfigModal charms', () => {
 
     await user.click(fragileButton);
     await waitFor(() => {
-      expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
-      expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+      expect(screen.queryAllByTestId('charm-flight-sprite')).toHaveLength(0);
+    });
+    await waitFor(() => {
+      const equippedItems = within(modal).queryAllByRole('listitem');
+      for (const item of equippedItems) {
+        expect(item).not.toHaveClass('equipped-panel__item--hidden');
+      }
     });
 
     await clickVariant(/unbreakable heart/i);
     await waitFor(() => {
-      expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
-      expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+      expect(screen.queryAllByTestId('charm-flight-sprite')).toHaveLength(0);
+    });
+    await waitFor(() => {
+      const equippedItems = within(modal).queryAllByRole('listitem');
+      for (const item of equippedItems) {
+        expect(item).not.toHaveClass('equipped-panel__item--hidden');
+      }
     });
     const equippedList = within(modal).getByRole('list', { name: /equipped charms/i });
     const equippedItems = within(equippedList).getAllByRole('listitem');
     expect(equippedItems).toHaveLength(1);
     expect(equippedItems[0]).toHaveTextContent(/unbreakable heart/i);
-    expect(within(modal).queryByRole('listitem', { name: /fragile heart/i })).toBeNull();
+    expect(
+      within(modal).queryByRole('listitem', { name: /fragile heart/i }),
+    ).not.toBeInTheDocument();
 
     await clickVariant(/unbreakable heart/i);
     await waitFor(() => {
-      expect(modal.querySelectorAll('.charm-flight')).toHaveLength(0);
-      expect(modal.querySelectorAll('.equipped-panel__item--hidden')).toHaveLength(0);
+      expect(screen.queryAllByTestId('charm-flight-sprite')).toHaveLength(0);
+    });
+    await waitFor(() => {
+      const equippedItems = within(modal).queryAllByRole('listitem');
+      for (const item of equippedItems) {
+        expect(item).not.toHaveClass('equipped-panel__item--hidden');
+      }
     });
     await waitFor(() => {
       expect(within(equippedList).queryAllByRole('listitem')).toHaveLength(0);
@@ -151,11 +164,11 @@ describe('CharmFlightSprite', () => {
     const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame');
     const onComplete = vi.fn();
 
-    const { container, unmount } = render(
+    const view = render(
       <CharmFlightSprite animation={baseAnimation} onComplete={onComplete} />,
     );
 
-    const element = container.querySelector('.charm-flight') as HTMLImageElement;
+    const element = screen.getByTestId('charm-flight-sprite') as HTMLImageElement;
     const rectSpy = vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
       width: baseAnimation.size.width,
       height: baseAnimation.size.height,
@@ -169,7 +182,7 @@ describe('CharmFlightSprite', () => {
     } as DOMRect);
 
     expect(rafCallbacks).toHaveLength(1);
-    expect(element.style.transform).toBe('translate(5px, 10px)');
+    expect(element).toHaveStyle({ transform: 'translate(5px, 10px)' });
 
     act(() => {
       rafCallbacks[0](0);
@@ -182,10 +195,10 @@ describe('CharmFlightSprite', () => {
       rafCallbacks[1](16);
     });
 
-    expect(element.style.transform).toBe('translate(20px, 40px)');
+    expect(element).toHaveStyle({ transform: 'translate(20px, 40px)' });
     expect(onComplete).not.toHaveBeenCalled();
 
-    unmount();
+    view.unmount();
 
     expect(requestSpy).toHaveBeenCalledTimes(2);
     expect(cancelSpy).toHaveBeenCalledWith(1);

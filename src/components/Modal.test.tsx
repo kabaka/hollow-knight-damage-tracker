@@ -14,11 +14,11 @@ describe('Modal', () => {
       </Modal>,
     );
 
-    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body).toHaveStyle({ overflow: 'hidden' });
 
     unmount();
 
-    expect(document.body.style.overflow).toBe('auto');
+    expect(document.body).toHaveStyle({ overflow: 'auto' });
   });
 
   it('focuses the close button when opened', async () => {

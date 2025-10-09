@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import { BossHealthBar } from './BossHealthBar';
 
@@ -27,8 +27,7 @@ describe('BossHealthBar', () => {
     expect(progressbar).toHaveAttribute('aria-valuenow', '450');
     expect(progressbar).toHaveClass('hud-health__track');
 
-    const markers = progressbar.querySelectorAll('.hud-health__marker');
-    expect(markers).toHaveLength(3);
+    expect(within(progressbar).getAllByTestId('boss-health-marker')).toHaveLength(3);
 
     expect(screen.getByText('HP')).toHaveClass('hud-health__label');
     expect(screen.getByText('450 / 1000')).toHaveClass('hud-health__value');

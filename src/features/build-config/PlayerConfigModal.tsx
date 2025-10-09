@@ -161,6 +161,7 @@ export const CharmFlightSprite: FC<{
       alt=""
       aria-hidden="true"
       className="charm-flight"
+      data-testid="charm-flight-sprite"
       style={{
         width: `${animation.size.width}px`,
         height: `${animation.size.height}px`,

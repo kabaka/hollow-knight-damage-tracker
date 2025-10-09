@@ -80,7 +80,9 @@ export const Modal: FC<ModalProps> = ({
             Close
           </button>
         </header>
-        <div className="modal__body">{children}</div>
+        <div className="modal__body" data-testid="modal-body">
+          {children}
+        </div>
       </div>
     </div>
   );

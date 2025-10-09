@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -142,16 +142,15 @@ describe('SequenceSelector', () => {
     await user.click(pantheonToggle);
     expect(onConditionToggle).toHaveBeenCalledWith('include-grey-prince', false);
 
-    const trialOption = screen
-      .getByRole('radio', { name: /trial of the warrior/i })
-      .closest('.sequence-selector__option');
-    expect(trialOption).not.toBeNull();
-
-    const trialToggle = within(trialOption as HTMLElement).getByRole('checkbox', {
+    const conditionToggles = screen.getAllByRole('checkbox', {
       name: /Double damage mode/i,
     });
-    expect(trialToggle).toBeDisabled();
-    expect(trialToggle).toBeChecked();
+    const disabledToggle = conditionToggles.find((toggle) => toggle.disabled);
+    if (!disabledToggle) {
+      throw new Error('Expected a disabled Trial of the Warrior modifier');
+    }
+    expect(disabledToggle).toBeDisabled();
+    expect(disabledToggle).toBeChecked();
   });
 
   it('shows the selected sequence preview using resolved entries', async () => {
