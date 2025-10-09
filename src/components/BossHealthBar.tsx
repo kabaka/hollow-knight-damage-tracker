@@ -74,6 +74,7 @@ export const BossHealthBar: FC<BossHealthBarProps> = ({
           <span
             key={`marker-${index}`}
             className="hud-health__marker"
+            data-testid="boss-health-marker"
             style={{ left: `${percent}%` }}
             aria-hidden="true"
           />

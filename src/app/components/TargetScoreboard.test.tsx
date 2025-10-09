@@ -56,16 +56,13 @@ describe('TargetScoreboard', () => {
     ).toBeDisabled();
 
     const metricTerms = within(scoreboard).getAllByRole('term');
-    expect(metricTerms.map((term) => term.textContent)).toEqual(
-      expect.arrayContaining([
-        'Elapsed',
-        'Est. Remaining',
-        'DPS',
-        'Avg Dmg',
-        'APM',
-        'Phase',
-      ]),
-    );
+    expect(metricTerms).toHaveLength(6);
+    expect(within(scoreboard).getByText('Elapsed')).toBeInTheDocument();
+    expect(within(scoreboard).getByText('Est. Remaining')).toBeInTheDocument();
+    expect(within(scoreboard).getByText('DPS')).toBeInTheDocument();
+    expect(within(scoreboard).getByText('Avg Dmg')).toBeInTheDocument();
+    expect(within(scoreboard).getByText('APM')).toBeInTheDocument();
+    expect(within(scoreboard).getByText('Phase')).toBeInTheDocument();
 
     const metricDefinitions = within(scoreboard).getAllByRole('definition');
     expect(metricDefinitions).not.toHaveLength(0);

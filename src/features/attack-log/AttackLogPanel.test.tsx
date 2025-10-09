@@ -186,28 +186,28 @@ describe('AttackLogPanel', () => {
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
-    expect(endFightButton).not.toBeDisabled();
+    expect(endFightButton).toBeEnabled();
 
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     await user.click(nailStrikeButton);
 
-    expect(undoButton).not.toBeDisabled();
+    expect(undoButton).toBeEnabled();
     expect(redoButton).toBeDisabled();
-    expect(resetButton).not.toBeDisabled();
-    expect(endFightButton).not.toBeDisabled();
+    expect(resetButton).toBeEnabled();
+    expect(endFightButton).toBeEnabled();
 
     await user.click(undoButton);
-    expect(redoButton).not.toBeDisabled();
+    expect(redoButton).toBeEnabled();
     expect(endFightButton).toBeDisabled();
 
     await user.click(redoButton);
-    expect(endFightButton).not.toBeDisabled();
+    expect(endFightButton).toBeEnabled();
 
     await user.click(resetButton);
     expect(undoButton).toBeDisabled();
     expect(redoButton).toBeDisabled();
     expect(resetButton).toBeDisabled();
-    expect(endFightButton).not.toBeDisabled();
+    expect(endFightButton).toBeEnabled();
   });
 
   it('plays the sequence completion haptic when ending standalone fights', async () => {
@@ -245,12 +245,12 @@ describe('AttackLogPanel', () => {
     );
 
     const startButton = screen.getByRole('button', { name: /start fight/i });
-    expect(startButton).not.toBeDisabled();
+    expect(startButton).toBeEnabled();
 
     await user.keyboard('{Enter}');
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /end fight/i })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: /end fight/i })).toBeEnabled();
     });
 
     await user.keyboard('{Enter}');
@@ -301,7 +301,7 @@ describe('AttackLogPanel', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('active-sequence').textContent).toBe(masterSequence.id);
+      expect(screen.getByTestId('active-sequence')).toHaveTextContent(masterSequence.id);
     });
 
     const resetSequenceButton = await screen.findByRole('button', {
@@ -313,17 +313,17 @@ describe('AttackLogPanel', () => {
     await user.click(screen.getByRole('button', { name: /advance stage/i }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('1');
     });
 
     await waitFor(() => {
-      expect(resetSequenceButton).not.toBeDisabled();
+      expect(resetSequenceButton).toBeEnabled();
     });
 
     await user.click(resetSequenceButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('0');
     });
 
     expect(resetSequenceButton).toBeDisabled();
@@ -331,21 +331,21 @@ describe('AttackLogPanel', () => {
     await user.click(screen.getByRole('button', { name: /advance stage/i }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('1');
     });
 
     const nailStrikeButton = await screen.findByRole('button', { name: /nail strike/i });
     await user.click(nailStrikeButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId('log-count').textContent).toBe('1');
+      expect(screen.getByTestId('log-count')).toHaveTextContent('1');
     });
 
     await user.keyboard('{Shift>}{Escape}{/Shift}');
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
-      expect(screen.getByTestId('log-count').textContent).toBe('0');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('0');
+      expect(screen.getByTestId('log-count')).toHaveTextContent('0');
     });
 
     expect(resetSequenceButton).toBeDisabled();
@@ -365,16 +365,16 @@ describe('AttackLogPanel', () => {
     const endFightButton = screen.getByRole('button', { name: /start fight/i });
     const resetButton = screen.getByRole('button', { name: 'Clear attack log' });
 
-    expect(endFightButton).not.toBeDisabled();
+    expect(endFightButton).toBeEnabled();
 
     await user.click(nailStrikeButton);
-    expect(endFightButton).not.toBeDisabled();
+    expect(endFightButton).toBeEnabled();
 
     await user.click(endFightButton);
     expect(endFightButton).toBeDisabled();
 
     await user.click(resetButton);
-    expect(endFightButton).not.toBeDisabled();
+    expect(endFightButton).toBeEnabled();
 
     await user.click(nailStrikeButton);
     await user.keyboard('{Enter}');
@@ -440,7 +440,7 @@ describe('AttackLogPanel', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('active-sequence').textContent).toBe(masterSequence.id);
+      expect(screen.getByTestId('active-sequence')).toHaveTextContent(masterSequence.id);
     });
 
     await waitFor(() => {
@@ -472,7 +472,7 @@ describe('AttackLogPanel', () => {
     await expectHaptic('sequence-stage-complete');
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('1');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('1');
     });
 
     await act(async () => {
@@ -481,7 +481,7 @@ describe('AttackLogPanel', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe('0');
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent('0');
     });
 
     triggerMock.mockClear();
@@ -499,7 +499,7 @@ describe('AttackLogPanel', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('sequence-index').textContent).toBe(
+      expect(screen.getByTestId('sequence-index')).toHaveTextContent(
         String(finalStageIndex),
       );
     });

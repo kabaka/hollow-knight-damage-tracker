@@ -164,13 +164,6 @@ export default [
       ...disableTypeCheckedRules,
       ...testingLibraryReactRules,
       ...jestDomRecommendedRules,
-      'testing-library/no-node-access': 'off',
-      'testing-library/no-container': 'off',
-      'testing-library/no-unnecessary-act': 'off',
-      'jest-dom/prefer-enabled-disabled': 'off',
-      'jest-dom/prefer-to-have-style': 'off',
-      'jest-dom/prefer-to-have-text-content': 'off',
-      'jest-dom/prefer-in-document': 'off',
     },
   },
 ];
