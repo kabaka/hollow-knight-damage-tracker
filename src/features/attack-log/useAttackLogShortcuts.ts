@@ -2,11 +2,7 @@ import { useEffect, type RefObject } from 'react';
 
 import { scheduleIdleTask } from '../../utils/scheduleIdleTask';
 import { RESET_SHORTCUT_KEY } from './useAttackDefinitions';
-import type { AttackLogActionPayload } from './types';
-import type { useAttackDefinitions } from './useAttackDefinitions';
-
-type AttackDefinitionsResult = ReturnType<typeof useAttackDefinitions>;
-type ShortcutMap = AttackDefinitionsResult['shortcutMap'];
+import type { AttackLogActionPayload, AttackShortcutMap } from './types';
 
 type AttackLogShortcutsOptions = {
   canEndFight: boolean;
@@ -18,8 +14,8 @@ type AttackLogShortcutsOptions = {
   handleResetLog: () => void;
   handleResetSequence: () => void;
   handleLogAttack: (attack: AttackLogActionPayload) => void;
-  panelRef: RefObject<HTMLDivElement>;
-  shortcutMap: ShortcutMap;
+  panelRef: RefObject<HTMLDivElement | null>;
+  shortcutMap: AttackShortcutMap;
   triggerActiveEffect: (element: HTMLElement | null) => void;
   getActionButton: (id: string) => HTMLButtonElement | null;
 };
@@ -62,14 +58,14 @@ export const useAttackLogShortcuts = ({
 
     const highlightAttackButton = (attackId: string) => {
       highlightElement(() => {
-        const root = panelRef.current;
-        if (!root) {
+        if (panelRef.current === null) {
           return null;
         }
 
-        return (
-          root.querySelector<HTMLButtonElement>(`[data-attack-id='${attackId}']`) ?? null
+        const button = panelRef.current.querySelector<HTMLButtonElement>(
+          `[data-attack-id='${attackId}']`,
         );
+        return button ?? null;
       }, triggerActiveEffect);
     };
 

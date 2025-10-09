@@ -1,7 +1,7 @@
 import { useCallback, type FC, type PointerEvent, type KeyboardEvent } from 'react';
 
 import { AppButton } from '../../../components/AppButton';
-import { useAttackLogContext } from '../context';
+import { useAttackLogContext } from '../AttackLogContext';
 import { isActivationKey } from './isActivationKey';
 
 const RESET_SEQUENCE_SHORTCUT = 'Shift+Escape';
