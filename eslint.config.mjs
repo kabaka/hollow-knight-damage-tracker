@@ -8,6 +8,8 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactRefreshPlugin from 'eslint-plugin-react-refresh';
+import testingLibraryPlugin from 'eslint-plugin-testing-library';
+import jestDomPlugin from 'eslint-plugin-jest-dom';
 import prettierConfig from 'eslint-config-prettier';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +36,10 @@ const prettierRecommendedRules = {
   ...prettierConfig.rules,
   'prettier/prettier': 'error',
 };
+
+const testingLibraryReactRules = testingLibraryPlugin.configs['flat/react']?.rules ?? {};
+
+const jestDomRecommendedRules = jestDomPlugin.configs['flat/recommended']?.rules ?? {};
 
 const baseLanguageOptions = {
   ...(tsBaseConfig?.languageOptions ?? {}),
@@ -124,7 +130,7 @@ export default [
     plugins: basePlugins,
   },
   {
-    files: ['tests/**/*.{ts,tsx}', 'vitest.setup.ts'],
+    files: ['vitest.setup.ts'],
     languageOptions: {
       ...baseLanguageOptions,
       parserOptions: {
@@ -135,6 +141,36 @@ export default [
     plugins: basePlugins,
     rules: {
       ...disableTypeCheckedRules,
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}', 'tests/**/*.ts'],
+    languageOptions: {
+      ...baseLanguageOptions,
+      parserOptions: {
+        ...baseLanguageOptions.parserOptions,
+        project: false,
+      },
+    },
+    plugins: {
+      ...basePlugins,
+      'testing-library': testingLibraryPlugin,
+      'jest-dom': jestDomPlugin,
+    },
+    settings: {
+      'testing-library/utils-module': '@testing-library/react',
+    },
+    rules: {
+      ...disableTypeCheckedRules,
+      ...testingLibraryReactRules,
+      ...jestDomRecommendedRules,
+      'testing-library/no-node-access': 'off',
+      'testing-library/no-container': 'off',
+      'testing-library/no-unnecessary-act': 'off',
+      'jest-dom/prefer-enabled-disabled': 'off',
+      'jest-dom/prefer-to-have-style': 'off',
+      'jest-dom/prefer-to-have-text-content': 'off',
+      'jest-dom/prefer-in-document': 'off',
     },
   },
 ];
