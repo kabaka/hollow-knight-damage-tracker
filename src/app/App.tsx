@@ -67,14 +67,20 @@ const AppContent: FC = () => {
   const previousRemainingRef = useRef<number>(derived.remainingHp);
 
   useEffect(() => {
-    if (
-      derived.targetHp > 0 &&
-      derived.remainingHp === 0 &&
-      previousRemainingRef.current > 0
-    ) {
-      setPanelGlow('victory');
-    }
+    const previousRemaining = previousRemainingRef.current;
     previousRemainingRef.current = derived.remainingHp;
+
+    if (derived.targetHp <= 0 || derived.remainingHp !== 0 || previousRemaining <= 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPanelGlow('victory');
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [derived.remainingHp, derived.targetHp]);
 
   useEffect(() => {

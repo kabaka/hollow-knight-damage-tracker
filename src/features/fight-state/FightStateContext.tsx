@@ -6,17 +6,11 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   useSyncExternalStore,
 } from 'react';
 
-import {
-  DEFAULT_CUSTOM_HP,
-  bossMap,
-  bossSequenceMap,
-  resolveSequenceEntries,
-} from '../../data';
 import type { FightState } from './fightReducer';
-import { isCustomBoss, toSequenceStageKey } from './fightReducer';
 import { PERSIST_FLUSH_EVENT } from '../../utils/persistenceEvents';
 import { createFightStateStore } from './store';
 import type { FightActions, FightStateStoreApi } from './store';
@@ -53,28 +47,14 @@ const assertStore = <T,>(value: T | null | undefined, message: string): T => {
 };
 
 export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
-  const storeRef = useRef<FightStateStoreApi | null>(null);
-  if (!storeRef.current) {
-    storeRef.current = createFightStateStore();
-  }
-
-  const store = storeRef.current;
-  const {
-    stateStore,
-    derivedStore,
-    actions,
-    refreshDerivedStats,
-    flushPersist,
-    dispatch,
-  } = store;
+  const [store] = useState(() => createFightStateStore());
+  const { stateStore, derivedStore, actions, refreshDerivedStats, flushPersist } = store;
 
   const state = useSyncExternalStore(
     stateStore.subscribe,
     stateStore.getSnapshot,
     stateStore.getSnapshot,
   );
-
-  const sequenceCompletionRef = useRef<Map<string, number>>(new Map());
 
   const shouldAnimate =
     state.fightStartTimestamp !== null && state.fightEndTimestamp === null;
@@ -163,62 +143,6 @@ export const FightStateProvider: FC<PropsWithChildren> = ({ children }) => {
     [flushPersist],
   );
 
-  useEffect(() => {
-    if (!state.activeSequenceId) {
-      sequenceCompletionRef.current.clear();
-      return;
-    }
-
-    const sequence = bossSequenceMap.get(state.activeSequenceId);
-    if (!sequence) {
-      return;
-    }
-
-    const resolvedEntries = resolveSequenceEntries(
-      sequence,
-      state.sequenceConditions[state.activeSequenceId] ?? undefined,
-    );
-
-    if (resolvedEntries.length === 0) {
-      return;
-    }
-
-    const stageKey = toSequenceStageKey(state.activeSequenceId, state.sequenceIndex);
-
-    const targetHp = isCustomBoss(state.selectedBossId)
-      ? Math.max(1, Math.round(state.customTargetHp))
-      : (bossMap.get(state.selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
-    const totalDamage = state.damageLogAggregates.totalDamage;
-    const remainingHp = Math.max(0, targetHp - totalDamage);
-
-    if (state.damageLog.length === 0 || remainingHp > 0) {
-      sequenceCompletionRef.current.delete(stageKey);
-      return;
-    }
-
-    if (state.sequenceIndex >= resolvedEntries.length - 1) {
-      return;
-    }
-
-    const lastEvent = state.damageLog[state.damageLog.length - 1];
-
-    if (sequenceCompletionRef.current.get(stageKey) === lastEvent.timestamp) {
-      return;
-    }
-
-    sequenceCompletionRef.current.set(stageKey, lastEvent.timestamp);
-    dispatch({ type: 'advanceSequence' });
-  }, [
-    state.activeSequenceId,
-    state.sequenceIndex,
-    state.damageLog,
-    state.damageLogAggregates.totalDamage,
-    state.sequenceConditions,
-    state.selectedBossId,
-    state.customTargetHp,
-    dispatch,
-  ]);
-
   const storeError = 'FightStateProvider failed to initialize derived stats store';
   const derivedStoreValue = assertStore(derivedStore, storeError);
   const stateStoreValue = assertStore(stateStore, storeError);
@@ -256,13 +180,13 @@ export const useFightStateSelector = <Selected,>(
   const selectedRef = useRef<Selected>();
   const hasSnapshotRef = useRef(false);
 
-  if (selectorRef.current !== selector) {
+  useEffect(() => {
     selectorRef.current = selector;
-  }
+  }, [selector]);
 
-  if (equalityFnRef.current !== equalityFn) {
+  useEffect(() => {
     equalityFnRef.current = equalityFn;
-  }
+  }, [equalityFn]);
 
   const getSnapshot = () => {
     const nextSelected = selectorRef.current(store.getSnapshot());

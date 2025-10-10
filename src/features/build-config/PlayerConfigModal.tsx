@@ -505,24 +505,30 @@ const PlayerConfigModalContent: FC = () => {
       return;
     }
 
-    setPanelCharmStates((current) => {
-      let didChange = false;
-      const next = new Map(current);
+    const timeoutId = window.setTimeout(() => {
+      setPanelCharmStates((current) => {
+        let didChange = false;
+        const next = new Map(current);
 
-      for (const [charmId, state] of current.entries()) {
-        if (state === 'entering') {
-          next.set(charmId, 'visible');
-          clearPanelStateFallback(charmId);
-          didChange = true;
-        } else if (state === 'exiting' && !activeCharmIds.includes(charmId)) {
-          next.delete(charmId);
-          clearPanelStateFallback(charmId);
-          didChange = true;
+        for (const [charmId, state] of current.entries()) {
+          if (state === 'entering') {
+            next.set(charmId, 'visible');
+            clearPanelStateFallback(charmId);
+            didChange = true;
+          } else if (state === 'exiting' && !activeCharmIds.includes(charmId)) {
+            next.delete(charmId);
+            clearPanelStateFallback(charmId);
+            didChange = true;
+          }
         }
-      }
 
-      return didChange ? next : current;
-    });
+        return didChange ? next : current;
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [activeCharmIds, charmFlights.length, clearPanelStateFallback]);
 
   useEffect(() => {
