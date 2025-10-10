@@ -178,7 +178,9 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   useEffect(
     () => () => {
       const timeouts = activeEffectTimeoutsRef.current;
-      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      timeouts.forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
       timeouts.clear();
     },
     [],

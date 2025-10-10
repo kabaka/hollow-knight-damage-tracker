@@ -45,7 +45,9 @@ export const AttackLogActions: FC = () => {
   return (
     <div className="attack-log__actions" role="group" aria-label="Attack log controls">
       <AppButton
-        ref={(element) => registerActionButton('undo', element)}
+        ref={(element) => {
+          registerActionButton('undo', element);
+        }}
         type="button"
         onPointerDown={handlePointerEffect}
         onKeyDown={handleKeyEffect}
@@ -56,7 +58,9 @@ export const AttackLogActions: FC = () => {
         Undo
       </AppButton>
       <AppButton
-        ref={(element) => registerActionButton('redo', element)}
+        ref={(element) => {
+          registerActionButton('redo', element);
+        }}
         type="button"
         onPointerDown={handlePointerEffect}
         onKeyDown={handleKeyEffect}
@@ -67,7 +71,9 @@ export const AttackLogActions: FC = () => {
         Redo
       </AppButton>
       <AppButton
-        ref={(element) => registerActionButton('reset-log', element)}
+        ref={(element) => {
+          registerActionButton('reset-log', element);
+        }}
         type="button"
         onPointerDown={handlePointerEffect}
         onKeyDown={handleKeyEffect}
@@ -82,7 +88,9 @@ export const AttackLogActions: FC = () => {
       </AppButton>
       {showResetSequence ? (
         <AppButton
-          ref={(element) => registerActionButton('reset-sequence', element)}
+          ref={(element) => {
+            registerActionButton('reset-sequence', element);
+          }}
           type="button"
           onPointerDown={handlePointerEffect}
           onKeyDown={handleKeyEffect}
@@ -97,7 +105,9 @@ export const AttackLogActions: FC = () => {
         </AppButton>
       ) : null}
       <AppButton
-        ref={(element) => registerActionButton('end-fight', element)}
+        ref={(element) => {
+          registerActionButton('end-fight', element);
+        }}
         type="button"
         onPointerDown={handlePointerEffect}
         onKeyDown={handleKeyEffect}

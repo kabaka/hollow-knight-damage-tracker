@@ -307,14 +307,18 @@ export const createFightStateStore = (
   };
 
   const notifyState = () => {
-    stateListeners.forEach((listener) => listener());
+    stateListeners.forEach((listener) => {
+      listener();
+    });
   };
 
   const notifyDerived = (timestamp?: number) => {
     frameTimestamp = typeof timestamp === 'number' ? timestamp : Date.now();
     const aggregates = ensureAggregateCache();
     derived = calculateDerivedStats(state, frameTimestamp, aggregates);
-    derivedListeners.forEach((listener) => listener());
+    derivedListeners.forEach((listener) => {
+      listener();
+    });
   };
 
   const sequenceCompletionTimestamps = new Map<string, number>();
@@ -495,17 +499,28 @@ export const createFightStateStore = (
   };
 
   const actions: FightActions = {
-    selectBoss: (bossId) => dispatch({ type: 'selectBoss', bossId }),
-    setCustomTargetHp: (hp) => dispatch({ type: 'setCustomTargetHp', hp }),
-    setNailUpgrade: (nailUpgradeId) =>
-      dispatch({ type: 'setNailUpgrade', nailUpgradeId }),
-    setActiveCharms: (charmIds) => dispatch({ type: 'setActiveCharms', charmIds }),
-    updateActiveCharms: (updater) => dispatch({ type: 'updateActiveCharms', updater }),
-    setCharmNotchLimit: (notchLimit) =>
-      dispatch({ type: 'setCharmNotchLimit', notchLimit }),
-    setSpellLevel: (spellId, level) =>
-      dispatch({ type: 'setSpellLevel', spellId, level }),
-    logAttack: ({ id, label, damage, category, soulCost, timestamp }) =>
+    selectBoss: (bossId) => {
+      dispatch({ type: 'selectBoss', bossId });
+    },
+    setCustomTargetHp: (hp) => {
+      dispatch({ type: 'setCustomTargetHp', hp });
+    },
+    setNailUpgrade: (nailUpgradeId) => {
+      dispatch({ type: 'setNailUpgrade', nailUpgradeId });
+    },
+    setActiveCharms: (charmIds) => {
+      dispatch({ type: 'setActiveCharms', charmIds });
+    },
+    updateActiveCharms: (updater) => {
+      dispatch({ type: 'updateActiveCharms', updater });
+    },
+    setCharmNotchLimit: (notchLimit) => {
+      dispatch({ type: 'setCharmNotchLimit', notchLimit });
+    },
+    setSpellLevel: (spellId, level) => {
+      dispatch({ type: 'setSpellLevel', spellId, level });
+    },
+    logAttack: ({ id, label, damage, category, soulCost, timestamp }) => {
       dispatch({
         type: 'logAttack',
         id,
@@ -514,27 +529,49 @@ export const createFightStateStore = (
         category,
         soulCost,
         timestamp: timestamp ?? Date.now(),
-      }),
-    undoLastAttack: () => dispatch({ type: 'undoLastAttack' }),
-    redoLastAttack: () => dispatch({ type: 'redoLastAttack' }),
-    resetLog: () => dispatch({ type: 'resetLog' }),
-    resetSequence: () => dispatch({ type: 'resetSequence' }),
-    startFight: (timestamp) =>
-      dispatch({ type: 'startFight', timestamp: timestamp ?? Date.now() }),
-    endFight: (timestamp) =>
-      dispatch({ type: 'endFight', timestamp: timestamp ?? Date.now() }),
-    startSequence: (sequenceId) => dispatch({ type: 'startSequence', sequenceId }),
-    stopSequence: () => dispatch({ type: 'stopSequence' }),
-    setSequenceStage: (index) => dispatch({ type: 'setSequenceStage', index }),
-    advanceSequenceStage: () => dispatch({ type: 'advanceSequence' }),
-    rewindSequenceStage: () => dispatch({ type: 'rewindSequence' }),
-    setSequenceCondition: (sequenceId, conditionId, enabled) =>
+      });
+    },
+    undoLastAttack: () => {
+      dispatch({ type: 'undoLastAttack' });
+    },
+    redoLastAttack: () => {
+      dispatch({ type: 'redoLastAttack' });
+    },
+    resetLog: () => {
+      dispatch({ type: 'resetLog' });
+    },
+    resetSequence: () => {
+      dispatch({ type: 'resetSequence' });
+    },
+    startFight: (timestamp) => {
+      dispatch({ type: 'startFight', timestamp: timestamp ?? Date.now() });
+    },
+    endFight: (timestamp) => {
+      dispatch({ type: 'endFight', timestamp: timestamp ?? Date.now() });
+    },
+    startSequence: (sequenceId) => {
+      dispatch({ type: 'startSequence', sequenceId });
+    },
+    stopSequence: () => {
+      dispatch({ type: 'stopSequence' });
+    },
+    setSequenceStage: (index) => {
+      dispatch({ type: 'setSequenceStage', index });
+    },
+    advanceSequenceStage: () => {
+      dispatch({ type: 'advanceSequence' });
+    },
+    rewindSequenceStage: () => {
+      dispatch({ type: 'rewindSequence' });
+    },
+    setSequenceCondition: (sequenceId, conditionId, enabled) => {
       dispatch({
         type: 'setSequenceCondition',
         sequenceId,
         conditionId,
         enabled,
-      }),
+      });
+    },
   };
 
   const stateStore = createExternalStore(() => state, stateListeners);

@@ -232,7 +232,9 @@ const SequenceOption: FC<SequenceOptionProps> = ({
                     disabled={!isInteractive}
                     onChange={
                       isInteractive && onConditionToggle
-                        ? (event) => onConditionToggle(condition.id, event.target.checked)
+                        ? (event) => {
+                            onConditionToggle(condition.id, event.target.checked);
+                          }
                         : undefined
                     }
                   />
@@ -267,7 +269,9 @@ const SequenceOption: FC<SequenceOptionProps> = ({
                   <button
                     type="button"
                     className="sequence-selector__stage"
-                    onClick={() => onStageSelect?.(index)}
+                    onClick={() => {
+                      onStageSelect?.(index);
+                    }}
                     aria-current={isCurrent ? 'true' : undefined}
                   >
                     <span className="sequence-selector__stage-index">

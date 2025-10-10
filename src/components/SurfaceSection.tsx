@@ -36,7 +36,7 @@ export const SurfaceSection = <T extends ElementType = 'section'>(
     ...rest
   } = props;
 
-  const Component = (as ?? 'section') as ElementType;
+  const Component: ElementType = as ?? 'section';
 
   return (
     <Component
