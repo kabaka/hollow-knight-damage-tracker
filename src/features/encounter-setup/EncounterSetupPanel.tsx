@@ -76,7 +76,13 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
 
   useEffect(() => {
     const derivedMode = sequenceSelectValue ? SEQUENCE_MODE : SINGLE_TARGET_MODE;
-    setMode((current) => (current === derivedMode ? current : derivedMode));
+    const timeoutId = window.setTimeout(() => {
+      setMode((current) => (current === derivedMode ? current : derivedMode));
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [sequenceSelectValue]);
 
   const handleModeChange = (nextMode: EncounterMode) => {

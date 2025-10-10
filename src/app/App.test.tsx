@@ -71,10 +71,7 @@ describe('App', () => {
     const sequenceSelect = await screen.findByLabelText(/sequence/i, {
       selector: 'select',
     });
-    await user.selectOptions(
-      sequenceSelect,
-      within(sequenceSelect).getByRole('option', { name: /pantheon of the master/i }),
-    );
+    await user.selectOptions(sequenceSelect, 'pantheon-of-the-master');
 
     const banner = screen.getByRole('banner');
     await waitFor(() => {
@@ -261,7 +258,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: /setup/i }));
     await user.click(screen.getByRole('tab', { name: /sequence run/i }));
-    const sequencePanel = screen.getByRole('tabpanel', { name: /sequence run/i });
+    const sequencePanel = await screen.findByRole('tabpanel', { name: /sequence run/i });
 
     const sequenceChoices = within(sequencePanel).getByRole('radiogroup', {
       name: /sequence run/i,

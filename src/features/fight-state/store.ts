@@ -1,4 +1,11 @@
-import { DEFAULT_CUSTOM_HP, bossMap, bossPhaseMap, strengthCharmIds } from '../../data';
+import {
+  DEFAULT_CUSTOM_HP,
+  bossMap,
+  bossPhaseMap,
+  bossSequenceMap,
+  resolveSequenceEntries,
+  strengthCharmIds,
+} from '../../data';
 import type {
   AttackInput,
   DamageLogAggregates,
@@ -12,6 +19,7 @@ import {
   ensureSpellLevels,
   fightReducer,
   isCustomBoss,
+  toSequenceStageKey,
 } from './fightReducer';
 import { persistStateToStorage, restorePersistedState } from './persistence';
 import { scheduleIdleTask } from '../../utils/scheduleIdleTask';
@@ -309,6 +317,81 @@ export const createFightStateStore = (
     derivedListeners.forEach((listener) => listener());
   };
 
+  const sequenceCompletionTimestamps = new Map<string, number>();
+
+  const pruneSequenceCompletionCache = (activeSequenceId: string | null) => {
+    if (!activeSequenceId) {
+      if (sequenceCompletionTimestamps.size > 0) {
+        sequenceCompletionTimestamps.clear();
+      }
+      return;
+    }
+
+    const prefix = `${activeSequenceId}#`;
+    for (const key of Array.from(sequenceCompletionTimestamps.keys())) {
+      if (!key.startsWith(prefix)) {
+        sequenceCompletionTimestamps.delete(key);
+      }
+    }
+  };
+
+  const applySequenceAutoAdvance = (currentState: FightState): FightState => {
+    const { activeSequenceId } = currentState;
+    if (!activeSequenceId) {
+      pruneSequenceCompletionCache(null);
+      return currentState;
+    }
+
+    const sequence = bossSequenceMap.get(activeSequenceId);
+    if (!sequence) {
+      pruneSequenceCompletionCache(null);
+      return currentState;
+    }
+
+    const resolvedEntries = resolveSequenceEntries(
+      sequence,
+      currentState.sequenceConditions[activeSequenceId] ?? undefined,
+    );
+
+    if (resolvedEntries.length === 0) {
+      pruneSequenceCompletionCache(null);
+      return currentState;
+    }
+
+    const stageKey = toSequenceStageKey(activeSequenceId, currentState.sequenceIndex);
+    pruneSequenceCompletionCache(activeSequenceId);
+
+    if (currentState.sequenceIndex >= resolvedEntries.length - 1) {
+      sequenceCompletionTimestamps.delete(stageKey);
+      return currentState;
+    }
+
+    const targetHp = isCustomBoss(currentState.selectedBossId)
+      ? Math.max(1, Math.round(currentState.customTargetHp))
+      : (bossMap.get(currentState.selectedBossId)?.hp ?? DEFAULT_CUSTOM_HP);
+    const totalDamage = currentState.damageLogAggregates.totalDamage;
+    const remainingHp = Math.max(0, targetHp - totalDamage);
+
+    if (currentState.damageLog.length === 0 || remainingHp > 0) {
+      sequenceCompletionTimestamps.delete(stageKey);
+      return currentState;
+    }
+
+    const lastEvent = currentState.damageLog[currentState.damageLog.length - 1];
+    if (sequenceCompletionTimestamps.get(stageKey) === lastEvent.timestamp) {
+      return currentState;
+    }
+
+    sequenceCompletionTimestamps.set(stageKey, lastEvent.timestamp);
+
+    const advancedState = fightReducer(currentState, { type: 'advanceSequence' });
+    if (advancedState === currentState) {
+      return currentState;
+    }
+
+    return applySequenceAutoAdvance(advancedState);
+  };
+
   let persistDebounceTimeoutId: number | null = null;
   let cancelPersist: (() => void) | null = null;
   let persistDirty = false;
@@ -399,7 +482,8 @@ export const createFightStateStore = (
   };
 
   const dispatch = (action: FightAction) => {
-    const nextState = fightReducer(state, action);
+    const reducedState = fightReducer(state, action);
+    const nextState = applySequenceAutoAdvance(reducedState);
     if (nextState === state) {
       return;
     }

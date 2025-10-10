@@ -281,11 +281,13 @@ describe('boss sequences', () => {
 describe('useFightStateSelector', () => {
   it('does not re-render when unrelated slices update', async () => {
     const user = userEvent.setup();
-    const renderCounts = { build: 0 };
+    const onBuildRender = vi.fn();
 
     const BuildConsumer = () => {
       const nailUpgradeId = useFightStateSelector((state) => state.build.nailUpgradeId);
-      renderCounts.build += 1;
+      useEffect(() => {
+        onBuildRender();
+      });
       return <span data-testid="nail-upgrade">{nailUpgradeId}</span>;
     };
 
@@ -322,19 +324,23 @@ describe('useFightStateSelector', () => {
     );
 
     expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('old-nail');
-    expect(renderCounts.build).toBe(1);
+    await waitFor(() => {
+      expect(onBuildRender).toHaveBeenCalledTimes(1);
+    });
 
     await user.click(screen.getByRole('button', { name: 'Log Attack' }));
 
     expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('old-nail');
-    expect(renderCounts.build).toBe(1);
+    expect(onBuildRender).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole('button', { name: 'Upgrade Nail' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('nail-upgrade')).toHaveTextContent('coiled-nail');
     });
-    expect(renderCounts.build).toBe(2);
+    await waitFor(() => {
+      expect(onBuildRender).toHaveBeenCalledTimes(2);
+    });
   });
 });
 
@@ -615,7 +621,7 @@ describe('derived stats context', () => {
 });
 
 describe('derived stats caching', () => {
-  it('reuses aggregated damage metrics between animation frames', () => {
+  it('reuses aggregated damage metrics between animation frames', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
 
@@ -630,12 +636,17 @@ describe('derived stats caching', () => {
         window.clearTimeout(handle as unknown as number);
       });
 
-    let capturedActions!: ReturnType<typeof useFightActions>;
-    let capturedState!: FightState;
+    type Snapshot = {
+      state: FightState;
+      actions: ReturnType<typeof useFightActions>;
+    };
+
+    const captureSnapshot = vi.fn<(snapshot: Snapshot) => void>();
     const Harness = () => {
       const { state, actions: contextActions } = useFightState();
-      capturedActions = contextActions;
-      capturedState = state;
+      useEffect(() => {
+        captureSnapshot({ state, actions: contextActions });
+      }, [state, contextActions]);
       return null;
     };
 
@@ -651,8 +662,22 @@ describe('derived stats caching', () => {
         </FightStateProvider>,
       );
 
-      const actions = capturedActions;
-      const readCapturedState = () => capturedState;
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(captureSnapshot).toHaveBeenCalled();
+
+      const latestSnapshot = () => {
+        const entry = captureSnapshot.mock.calls.at(-1);
+        if (!entry) {
+          throw new Error('No captured state available');
+        }
+        return entry[0];
+      };
+
+      const readCapturedState = () => latestSnapshot().state;
+      const actions = latestSnapshot().actions;
       const initialCalls = instrumentation.getAggregateComputationCount();
       const initialMismatches = instrumentation.getAggregateMismatchCount();
       const initialVersion = readCapturedState().damageLogVersion;

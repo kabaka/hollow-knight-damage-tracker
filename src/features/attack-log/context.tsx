@@ -263,34 +263,52 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
       return;
     }
 
-    const key = toSequenceStageKey(
-      sequenceContext.activeSequenceId,
-      sequenceContext.cappedSequenceIndex,
-    );
-    const hasEnded =
-      (state.sequenceManualEndFlags[key] ?? false) ||
-      state.sequenceFightEndTimestamps[key] != null;
-    const { lastCompletionKey, wasCompleted } = sequenceFeedbackRef.current;
-
-    if (hasEnded && (!wasCompleted || lastCompletionKey !== key)) {
-      triggerHaptics(
-        sequenceContext.hasNextSequenceStage
-          ? 'sequence-stage-complete'
-          : 'sequence-complete',
-      );
-      sequenceFeedbackRef.current.lastCompletionKey = key;
-      sequenceFeedbackRef.current.wasCompleted = true;
+    const entries = sequenceContext.sequenceEntries;
+    if (entries.length === 0) {
       return;
     }
 
-    if (!hasEnded && lastCompletionKey === key) {
-      sequenceFeedbackRef.current.wasCompleted = false;
+    const keysToInspect: Array<{ key: string; index: number }> = [];
+    if (sequenceContext.cappedSequenceIndex > 0) {
+      const previousIndex = sequenceContext.cappedSequenceIndex - 1;
+      keysToInspect.push({
+        key: toSequenceStageKey(sequenceContext.activeSequenceId, previousIndex),
+        index: previousIndex,
+      });
+    }
+
+    keysToInspect.push({
+      key: toSequenceStageKey(
+        sequenceContext.activeSequenceId,
+        sequenceContext.cappedSequenceIndex,
+      ),
+      index: sequenceContext.cappedSequenceIndex,
+    });
+
+    for (const { key, index } of keysToInspect) {
+      const hasEnded =
+        (state.sequenceManualEndFlags[key] ?? false) ||
+        state.sequenceFightEndTimestamps[key] != null;
+
+      const { lastCompletionKey, wasCompleted } = sequenceFeedbackRef.current;
+
+      if (hasEnded && (!wasCompleted || lastCompletionKey !== key)) {
+        const isFinalStage = index >= entries.length - 1;
+        triggerHaptics(isFinalStage ? 'sequence-complete' : 'sequence-stage-complete');
+        sequenceFeedbackRef.current.lastCompletionKey = key;
+        sequenceFeedbackRef.current.wasCompleted = true;
+        break;
+      }
+
+      if (!hasEnded && lastCompletionKey === key) {
+        sequenceFeedbackRef.current.wasCompleted = false;
+      }
     }
   }, [
     sequenceContext.activeSequenceId,
     sequenceContext.cappedSequenceIndex,
-    sequenceContext.hasNextSequenceStage,
     sequenceContext.isSequenceActive,
+    sequenceContext.sequenceEntries,
     state.sequenceFightEndTimestamps,
     state.sequenceManualEndFlags,
     triggerHaptics,
