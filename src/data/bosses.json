@@ -44,6 +44,10 @@
       {
         "title": "Radiant",
         "health": 1680
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1260
       }
     ]
   },
@@ -68,6 +72,10 @@
       {
         "title": "Radiant",
         "health": 1800
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1260
       }
     ]
   },
@@ -92,6 +100,10 @@
       {
         "title": "Radiant",
         "health": 1165
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 900
       }
     ]
   },
@@ -116,6 +128,10 @@
       {
         "title": "Radiant",
         "health": 1050
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 750
       }
     ]
   },
@@ -164,6 +180,10 @@
       {
         "title": "Radiant",
         "health": 1250
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 700
       }
     ]
   },
@@ -236,6 +256,10 @@
       {
         "title": "Radiant",
         "health": 1250
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1500
       }
     ]
   },
@@ -404,6 +428,10 @@
       {
         "title": "Radiant",
         "health": 1650
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1250
       }
     ]
   },
@@ -476,6 +504,10 @@
       {
         "title": "Radiant",
         "health": 1000
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 850
       }
     ]
   },
@@ -500,6 +532,10 @@
       {
         "title": "Radiant",
         "health": 578
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1500
       }
     ]
   },
@@ -668,6 +704,10 @@
       {
         "title": "Radiant",
         "health": 1800
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1250
       }
     ]
   },
@@ -692,6 +732,10 @@
       {
         "title": "Radiant",
         "health": 1500
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1200
       }
     ]
   },
@@ -740,6 +784,10 @@
       {
         "title": "Radiant",
         "health": 650
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 416
       }
     ]
   },
@@ -764,6 +812,10 @@
       {
         "title": "Radiant",
         "health": 650
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 416
       }
     ]
   },
@@ -860,6 +912,10 @@
       {
         "title": "Radiant",
         "health": 650
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 520
       }
     ]
   },
@@ -908,6 +964,10 @@
       {
         "title": "Radiant",
         "health": 2000
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 2100
       }
     ]
   },
@@ -1004,6 +1064,10 @@
       {
         "title": "Radiant",
         "health": 900
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 3450
       }
     ]
   },
@@ -1039,6 +1103,10 @@
       {
         "title": "Radiant",
         "health": 1750
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 1600
       }
     ]
   },
@@ -1074,6 +1142,10 @@
       {
         "title": "Radiant",
         "health": 2640
+      },
+      {
+        "title": "Pantheon of Hallownest",
+        "health": 2181
       }
     ]
   }

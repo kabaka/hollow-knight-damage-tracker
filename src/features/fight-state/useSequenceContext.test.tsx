@@ -67,17 +67,17 @@ describe('useSequenceContext', () => {
     expect(result.current.context.hasPreviousSequenceStage).toBe(true);
   });
 
-  it('resolves conditional sequence entries and replacement targets', () => {
+  it('resolves optional sequence entries and Pantheon-specific targets', () => {
     const hallownest = bossSequenceMap.get('pantheon-of-hallownest');
     if (!hallownest) {
       throw new Error('Missing pantheon sequence fixture for tests');
     }
 
-    const mantisIndex = hallownest.entries.findIndex(
-      (entry) => entry.condition?.id === 'replace-mantis-lords',
+    const sistersIndex = hallownest.entries.findIndex(
+      (entry) => entry.target.bossName === 'Sisters of Battle',
     );
-    if (mantisIndex === -1) {
-      throw new Error('Failed to locate Mantis Lords stage in test data');
+    if (sistersIndex === -1) {
+      throw new Error('Failed to locate Sisters of Battle stage in test data');
     }
 
     const { result } = renderHook(
@@ -90,33 +90,23 @@ describe('useSequenceContext', () => {
 
     act(() => {
       result.current.actions.startSequence(hallownest.id);
-      result.current.actions.setSequenceStage(mantisIndex);
+      result.current.actions.setSequenceStage(sistersIndex);
     });
 
-    expect(result.current.context.sequenceEntries[mantisIndex]?.target.bossName).toBe(
-      'Mantis Lords',
-    );
-    expect(result.current.context.labels?.stageLabel).toBe('Mantis Lords');
-    const initialLength = result.current.context.sequenceEntries.length;
-    expect(result.current.context.sequenceConditionValues['replace-mantis-lords']).toBe(
-      false,
-    );
-
-    act(() => {
-      result.current.actions.setSequenceCondition(
-        hallownest.id,
-        'replace-mantis-lords',
-        true,
-      );
-    });
-
-    expect(result.current.context.sequenceEntries[mantisIndex]?.target.bossName).toBe(
+    expect(result.current.context.sequenceEntries[sistersIndex]?.target.bossName).toBe(
       'Sisters of Battle',
     );
+    expect(
+      result.current.context.sequenceEntries[sistersIndex]?.target.version.title,
+    ).toBe('Pantheon of Hallownest');
     expect(result.current.context.labels?.stageLabel).toBe('Sisters of Battle');
-    expect(result.current.context.sequenceConditionValues['replace-mantis-lords']).toBe(
-      true,
-    );
+    const initialLength = result.current.context.sequenceEntries.length;
+    expect(
+      Object.hasOwn(
+        result.current.context.sequenceConditionValues,
+        'replace-mantis-lords',
+      ),
+    ).toBe(false);
 
     act(() => {
       result.current.actions.setSequenceCondition(
