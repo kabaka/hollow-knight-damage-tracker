@@ -62,6 +62,8 @@ const AppContent: FC = () => {
     activeSequence,
     sequenceConditionValues,
     handleSequenceConditionToggle,
+    sequenceBindingValues,
+    handleSequenceBindingToggle,
     currentSequenceEntry,
   } = useBuildConfiguration();
 
@@ -213,6 +215,8 @@ const AppContent: FC = () => {
         onStageSelect={handleSequenceStageChange}
         sequenceConditionValues={sequenceConditionValues}
         onConditionToggle={handleSequenceConditionToggle}
+        sequenceBindingValues={sequenceBindingValues}
+        onBindingToggle={handleSequenceBindingToggle}
       />
 
       <main className="app-main">

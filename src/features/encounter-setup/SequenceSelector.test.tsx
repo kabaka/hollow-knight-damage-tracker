@@ -43,6 +43,20 @@ describe('SequenceSelector', () => {
         defaultEnabled: false,
       },
     ],
+    bindings: [
+      {
+        id: 'nail-binding',
+        label: 'Nail Binding',
+        description: 'Reduce Nail damage to 80%.',
+        defaultEnabled: false,
+      },
+      {
+        id: 'charms-binding',
+        label: 'Charms Binding',
+        description: 'Disable all charm effects.',
+        defaultEnabled: false,
+      },
+    ],
   };
 
   const trialSequence: SequenceSelectorProps['bossSequences'][number] = {
@@ -58,6 +72,7 @@ describe('SequenceSelector', () => {
         defaultEnabled: true,
       },
     ],
+    bindings: [],
   };
 
   const renderSelector = (overrides: Partial<SequenceSelectorProps> = {}) => {
@@ -73,6 +88,8 @@ describe('SequenceSelector', () => {
       onStageSelect: vi.fn(),
       sequenceConditionValues: {},
       onConditionToggle: vi.fn(),
+      sequenceBindingValues: {},
+      onBindingToggle: vi.fn(),
       ...overrides,
     };
 
@@ -82,6 +99,7 @@ describe('SequenceSelector', () => {
       onSequenceChange: defaultProps.onSequenceChange,
       onStageSelect: defaultProps.onStageSelect,
       onConditionToggle: defaultProps.onConditionToggle,
+      onBindingToggle: defaultProps.onBindingToggle,
       ...render(<SequenceSelector {...defaultProps} />),
     };
   };
@@ -151,6 +169,43 @@ describe('SequenceSelector', () => {
     }
     expect(disabledToggle).toBeDisabled();
     expect(disabledToggle).toBeChecked();
+  });
+
+  it('renders Pantheon bindings and toggles their state when interactive', async () => {
+    const alternatePantheon: SequenceSelectorProps['bossSequences'][number] = {
+      ...pantheonSequence,
+      id: 'pantheon-2',
+      name: 'Pantheon of the Artist',
+      entries: [createEntry('p2-gorb', 'Gorb')],
+      bindings: pantheonSequence.bindings?.map((binding) => ({ ...binding })) ?? [],
+    };
+
+    const { user, onBindingToggle } = renderSelector({
+      bossSequences: [pantheonSequence, alternatePantheon, trialSequence],
+      sequenceSelectValue: pantheonSequence.id,
+      sequenceEntries: pantheonSequence.entries,
+      sequenceBindingValues: {
+        'nail-binding': true,
+        'charms-binding': false,
+      },
+    });
+
+    const bindingToggles = screen.getAllByRole('checkbox', { name: /Nail Binding/i });
+    const nailBindingToggle = bindingToggles.find((toggle) => !toggle.disabled);
+    if (!nailBindingToggle) {
+      throw new Error('Expected an interactive Nail Binding toggle');
+    }
+    expect(nailBindingToggle).toBeEnabled();
+    expect(nailBindingToggle).toBeChecked();
+
+    await user.click(nailBindingToggle);
+    expect(onBindingToggle).toHaveBeenCalledWith('nail-binding', false);
+
+    const disabledBindingToggle = bindingToggles.find((toggle) => toggle.disabled);
+    if (!disabledBindingToggle) {
+      throw new Error('Expected a disabled Nail Binding toggle for unselected sequences');
+    }
+    expect(disabledBindingToggle).toBeDisabled();
   });
 
   it('shows the selected sequence preview using resolved entries', async () => {

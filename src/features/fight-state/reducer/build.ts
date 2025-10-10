@@ -73,6 +73,7 @@ export const createInitialState = (): FightState => ({
   sequenceLogAggregates: {},
   sequenceRedoStacks: {},
   sequenceConditions: {},
+  sequenceBindings: {},
   fightStartTimestamp: null,
   fightManuallyStarted: false,
   fightEndTimestamp: null,

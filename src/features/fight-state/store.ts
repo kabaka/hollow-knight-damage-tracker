@@ -74,6 +74,7 @@ export type FightActions = {
     conditionId: string,
     enabled: boolean,
   ) => void;
+  setSequenceBinding: (sequenceId: string, bindingId: string, enabled: boolean) => void;
 };
 
 type Listener = () => void;
@@ -569,6 +570,14 @@ export const createFightStateStore = (
         type: 'setSequenceCondition',
         sequenceId,
         conditionId,
+        enabled,
+      });
+    },
+    setSequenceBinding: (sequenceId, bindingId, enabled) => {
+      dispatch({
+        type: 'setSequenceBinding',
+        sequenceId,
+        bindingId,
         enabled,
       });
     },

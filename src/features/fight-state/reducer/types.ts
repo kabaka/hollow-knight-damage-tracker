@@ -42,6 +42,7 @@ export interface FightState {
   sequenceLogAggregates: Partial<Record<string, DamageLogAggregates>>;
   sequenceRedoStacks: Partial<Record<string, AttackEvent[]>>;
   sequenceConditions: Partial<Record<string, Record<string, boolean>>>;
+  sequenceBindings: Partial<Record<string, Record<string, boolean>>>;
   fightStartTimestamp: number | null;
   fightManuallyStarted: boolean;
   fightEndTimestamp: number | null;
@@ -96,6 +97,12 @@ export type FightAction =
       type: 'setSequenceCondition';
       sequenceId: string;
       conditionId: string;
+      enabled: boolean;
+    }
+  | {
+      type: 'setSequenceBinding';
+      sequenceId: string;
+      bindingId: string;
       enabled: boolean;
     };
 

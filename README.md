@@ -39,6 +39,7 @@ Hollow Knight Damage Tracker is a responsive companion app for players, co-comme
 ### Track every encounter
 
 - **Sequence flow:** Queue Godhome pantheons, the Black Egg Temple rush, and other multi-boss runs while the tracker advances the moment a boss hits zero masks.
+- **Pantheon bindings:** Toggle Nail, Shell, Charms, and Soul bindings for Godhome runs—damage calculations adapt automatically when the Nail binding or disabled charms would change the math.
 - **Boss presets & custom pools:** Jump between Attuned, Ascended, and Radiant variants—or punch in a custom HP target for drills.
 - **Keyboard-first logging:** Number-row + QWERTY shortcuts (plus <kbd>Esc</kbd> / <kbd>Shift</kbd>+<kbd>Esc</kbd>) keep spectators and co-op partners quick on the draw.
 

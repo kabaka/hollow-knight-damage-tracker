@@ -137,6 +137,13 @@ describe('fight-state persistence', () => {
           },
           broken: 'nope',
         },
+        sequenceBindings: {
+          'pantheon-of-the-sage': {
+            'nail-binding': 'true',
+            bogus: 'maybe',
+          },
+          broken: 'nope',
+        },
         fightEndTimestamp: 'not-a-number',
         fightManuallyEnded: 'nope',
         sequenceFightEndTimestamps: {
@@ -191,6 +198,9 @@ describe('fight-state persistence', () => {
     ).toBe(true);
     const sageConditions = merged.sequenceConditions['pantheon-of-the-sage'] ?? {};
     expect(Object.prototype.hasOwnProperty.call(sageConditions, 'bogus')).toBe(false);
+    expect(merged.sequenceBindings['pantheon-of-the-sage']?.['nail-binding']).toBe(true);
+    const sageBindings = merged.sequenceBindings['pantheon-of-the-sage'] ?? {};
+    expect(Object.prototype.hasOwnProperty.call(sageBindings, 'bogus')).toBe(false);
   });
 
   it('restores persisted state from localStorage when payloads are valid', () => {
@@ -214,6 +224,7 @@ describe('fight-state persistence', () => {
         sequenceLogs: {},
         sequenceRedoStacks: {},
         sequenceConditions: {},
+        sequenceBindings: {},
         fightEndTimestamp: null,
         fightManuallyEnded: false,
         sequenceFightEndTimestamps: {},

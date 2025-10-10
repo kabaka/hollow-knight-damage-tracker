@@ -3,6 +3,7 @@ import {
   charmSynergyKeyMap,
   getCharmSynergyKey,
   nailUpgrades,
+  pantheonBindingIds,
   shamanStoneMultipliers,
   spells,
 } from '../../data';
@@ -87,6 +88,22 @@ export const RESET_SHORTCUT_KEY = 'Escape';
 export const FURY_MULTIPLIER = 1.75;
 const GRUBBERFLY_BEAM_MULTIPLIER = 0.5;
 
+const NAIL_BINDING_DAMAGE = new Map<number, number>([
+  [5, 4],
+  [9, 7],
+  [13, 10],
+  [17, 13],
+  [21, 13],
+]);
+
+const NAIL_BINDING_STRENGTH_DAMAGE = new Map<number, number>([
+  [5, 6],
+  [9, 10],
+  [13, 15],
+  [17, 20],
+  [21, 20],
+]);
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -118,6 +135,25 @@ const getCharmSynergyEffectRecord = (charmIds: readonly string[], effectType: st
   return effect && isRecord(effect.value) ? effect.value : null;
 };
 
+const getBoundNailDamage = (baseDamage: number, hasStrength: boolean): number => {
+  if (hasStrength) {
+    const mapped = NAIL_BINDING_STRENGTH_DAMAGE.get(baseDamage);
+    if (mapped !== undefined) {
+      return mapped;
+    }
+    const withoutStrength = getBoundNailDamage(baseDamage, false);
+    return Math.min(Math.round(withoutStrength * 1.5), 20);
+  }
+
+  const mapped = NAIL_BINDING_DAMAGE.get(baseDamage);
+  if (mapped !== undefined) {
+    return mapped;
+  }
+
+  const reduced = Math.floor(baseDamage * 0.8);
+  return baseDamage > 13 ? 13 : reduced;
+};
+
 const getCharmSynergyEffectNumber = (charmIds: readonly string[], effectType: string) => {
   const effect = getCharmSynergyEffect(charmIds, effectType);
   return effect ? toNumber(effect.value) : null;
@@ -136,29 +172,42 @@ const getVariantDamage = (variant: (typeof spells)[number]['base']) => {
   return 0;
 };
 
-export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
+export interface AttackGroupOptions {
+  bindings?: Record<string, boolean>;
+}
+
+export function buildAttackGroups(
+  build: FightState['build'],
+  options?: AttackGroupOptions,
+): AttackGroup[] {
   if (nailUpgrades.length === 0) {
     throw new Error('Nail upgrade data is unavailable.');
   }
 
   const fallbackNailUpgrade = nailUpgrades[0];
 
+  const bindingFlags = options?.bindings ?? {};
+  const isNailBindingActive = bindingFlags[pantheonBindingIds.nail] ?? false;
+  const isCharmsBindingActive = bindingFlags[pantheonBindingIds.charms] ?? false;
+
   const nailUpgrade =
     nailUpgrades.find((upgrade) => upgrade.id === build.nailUpgradeId) ??
     fallbackNailUpgrade;
-  const hasStrength = hasStrengthCharm(build.activeCharmIds);
-  const hasFury = build.activeCharmIds.includes('fury-of-the-fallen');
-  const hasShamanStone = build.activeCharmIds.includes('shaman-stone');
-  const hasSpellTwister = build.activeCharmIds.includes('spell-twister');
-  const hasFlukenest = build.activeCharmIds.includes('flukenest');
-  const hasDashmaster = build.activeCharmIds.includes('dashmaster');
-  const hasDefendersCrest = build.activeCharmIds.includes('defenders-crest');
-  const hasDeepFocus = build.activeCharmIds.includes('deep-focus');
-  const hasGrubsong = build.activeCharmIds.includes('grubsong');
+  const effectiveCharmIds = isCharmsBindingActive ? [] : build.activeCharmIds;
+  const hasStrength = hasStrengthCharm(effectiveCharmIds);
+  const hasFury = effectiveCharmIds.includes('fury-of-the-fallen');
+  const hasShamanStone = effectiveCharmIds.includes('shaman-stone');
+  const hasSpellTwister = effectiveCharmIds.includes('spell-twister');
+  const hasFlukenest = effectiveCharmIds.includes('flukenest');
+  const hasDashmaster = effectiveCharmIds.includes('dashmaster');
+  const hasDefendersCrest = effectiveCharmIds.includes('defenders-crest');
+  const hasDeepFocus = effectiveCharmIds.includes('deep-focus');
+  const hasGrubsong = effectiveCharmIds.includes('grubsong');
 
   const baseNailDamage = nailUpgrade.damage;
-  const strengthMultiplier = hasStrength ? 1.5 : 1;
-  const nailDamageExact = baseNailDamage * strengthMultiplier;
+  const nailDamageExact = isNailBindingActive
+    ? getBoundNailDamage(baseNailDamage, hasStrength)
+    : baseNailDamage * (hasStrength ? 1.5 : 1);
   const nailDamage = Math.round(nailDamageExact);
   const furyMultiplier = hasFury ? FURY_MULTIPLIER : 1;
   const furyNailDamageExact = nailDamageExact * furyMultiplier;
@@ -306,7 +355,7 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
     }
   };
 
-  for (const charmId of build.activeCharmIds) {
+  for (const charmId of effectiveCharmIds) {
     switch (charmId) {
       case 'fury-of-the-fallen': {
         if (hasFury) {

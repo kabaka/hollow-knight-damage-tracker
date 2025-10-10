@@ -1659,6 +1659,11 @@ h6 {
   gap: 0.45rem;
 }
 
+.sequence-selector__option-conditions-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .sequence-selector__option-conditions-title {
   font-size: var(--font-size-caption);
   color: var(--color-muted);

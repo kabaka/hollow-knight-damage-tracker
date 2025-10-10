@@ -200,6 +200,39 @@ const sanitizeSequenceConditions = (
   return { ...fallback, ...sanitized };
 };
 
+const sanitizeSequenceBindings = (
+  value: unknown,
+  fallback: FightState['sequenceBindings'],
+): FightState['sequenceBindings'] => {
+  if (!isRecord(value)) {
+    return { ...fallback };
+  }
+
+  const sanitized: FightState['sequenceBindings'] = {};
+  for (const [sequenceId, rawBindings] of Object.entries(value)) {
+    if (!isRecord(rawBindings)) {
+      continue;
+    }
+
+    const bindings: Record<string, boolean> = {};
+    for (const [bindingId, rawValue] of Object.entries(rawBindings)) {
+      if (typeof rawValue === 'boolean') {
+        bindings[bindingId] = rawValue;
+      } else if (rawValue === 'true') {
+        bindings[bindingId] = true;
+      } else if (rawValue === 'false') {
+        bindings[bindingId] = false;
+      }
+    }
+
+    if (Object.keys(bindings).length > 0) {
+      sanitized[sequenceId] = bindings;
+    }
+  }
+
+  return { ...fallback, ...sanitized };
+};
+
 const sanitizeOptionalTimestamp = (
   value: unknown,
   fallback: number | null,
@@ -337,6 +370,10 @@ export const mergePersistedState = (
     persisted.sequenceConditions,
     fallback.sequenceConditions,
   );
+  const sequenceBindings = sanitizeSequenceBindings(
+    persisted.sequenceBindings,
+    fallback.sequenceBindings,
+  );
   const fightStartTimestamp = sanitizeOptionalTimestamp(
     persisted.fightStartTimestamp,
     fallback.fightStartTimestamp,
@@ -390,6 +427,7 @@ export const mergePersistedState = (
       sequenceLogAggregates,
       sequenceRedoStacks,
       sequenceConditions,
+      sequenceBindings,
       fightStartTimestamp,
       fightManuallyStarted,
       fightEndTimestamp,
