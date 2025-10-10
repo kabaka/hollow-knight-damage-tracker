@@ -88,7 +88,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     container:
-      image: mcr.microsoft.com/playwright:v1.55.1-jammy
+      image: mcr.microsoft.com/playwright:v1.56.0-jammy
     env:
       HOME: /root
     steps:
