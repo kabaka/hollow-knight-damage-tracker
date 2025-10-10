@@ -40,6 +40,13 @@ describe('useSequenceContext', () => {
     expect(result.current.context.currentSequenceEntry?.id).toBe(
       masterSequence.entries[0]?.id,
     );
+    const expectedBindingDefaults = masterSequence.bindings.reduce<
+      Record<string, boolean>
+    >((acc, binding) => {
+      acc[binding.id] = binding.defaultEnabled;
+      return acc;
+    }, {});
+    expect(result.current.context.sequenceBindingValues).toEqual(expectedBindingDefaults);
     expect(result.current.context.labels?.sequenceName).toBe(masterSequence.name);
     expect(result.current.context.labels?.stageNumber).toBe(1);
     expect(result.current.context.labels?.stageLabel).toBe(
@@ -107,6 +114,7 @@ describe('useSequenceContext', () => {
         'replace-mantis-lords',
       ),
     ).toBe(false);
+    expect(result.current.context.sequenceBindingValues['nail-binding']).toBeUndefined();
 
     act(() => {
       result.current.actions.setSequenceCondition(
@@ -125,5 +133,11 @@ describe('useSequenceContext', () => {
         (entry) => entry.target.bossName === 'Grey Prince Zote',
       ),
     ).toBe(true);
+
+    act(() => {
+      result.current.actions.setSequenceBinding(hallownest.id, 'nail-binding', true);
+    });
+
+    expect(result.current.context.sequenceBindingValues['nail-binding']).toBe(true);
   });
 });

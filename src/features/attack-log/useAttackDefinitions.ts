@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 
 import type { FightState } from '../fight-state/FightStateContext';
-import { buildAttackGroups, buildAttackMetadata } from './attackDefinitionBuilders';
+import {
+  buildAttackGroups,
+  buildAttackMetadata,
+  type AttackGroupOptions,
+} from './attackDefinitionBuilders';
 
 export {
   FURY_MULTIPLIER,
@@ -17,8 +21,15 @@ export type {
   AttackWithMetadata,
 } from './attackDefinitionBuilders';
 
-export const useAttackDefinitions = ({ build }: FightState, remainingHp: number) => {
-  const baseGroups = useMemo(() => buildAttackGroups(build), [build]);
+export const useAttackDefinitions = (
+  { build }: FightState,
+  remainingHp: number,
+  bindings?: AttackGroupOptions['bindings'],
+) => {
+  const baseGroups = useMemo(
+    () => buildAttackGroups(build, { bindings }),
+    [build, bindings],
+  );
 
   return useMemo(
     () => buildAttackMetadata(baseGroups, remainingHp),

@@ -105,6 +105,7 @@ export const useBuildConfiguration = () => {
     activeSequence,
     sequenceEntries,
     sequenceConditionValues,
+    sequenceBindingValues,
     cappedSequenceIndex,
     currentSequenceEntry,
     isSequenceActive,
@@ -298,6 +299,16 @@ export const useBuildConfiguration = () => {
     [actions, activeSequence],
   );
 
+  const handleSequenceBindingToggle = useCallback(
+    (bindingId: string, enabled: boolean) => {
+      if (!activeSequence) {
+        return;
+      }
+      actions.setSequenceBinding(activeSequence.id, bindingId, enabled);
+    },
+    [actions, activeSequence],
+  );
+
   const handleBossChange = useCallback(
     (bossId: string) => {
       if (bossId === CUSTOM_BOSS_ID) {
@@ -364,6 +375,7 @@ export const useBuildConfiguration = () => {
     activeSequence,
     sequenceEntries,
     sequenceConditionValues,
+    sequenceBindingValues,
     hasNextSequenceStage,
     hasPreviousSequenceStage,
     sequenceSelectValue,
@@ -372,6 +384,7 @@ export const useBuildConfiguration = () => {
     handleAdvanceSequence,
     handleRewindSequence,
     handleSequenceConditionToggle,
+    handleSequenceBindingToggle,
     currentSequenceEntry,
     cappedSequenceIndex,
     selectedTarget,

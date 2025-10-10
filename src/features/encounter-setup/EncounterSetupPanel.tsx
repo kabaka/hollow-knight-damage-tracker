@@ -44,6 +44,10 @@ export type EncounterSetupPanelProps = {
     typeof useBuildConfiguration
   >['sequenceConditionValues'];
   readonly onConditionToggle: (conditionId: string, enabled: boolean) => void;
+  readonly sequenceBindingValues: ReturnType<
+    typeof useBuildConfiguration
+  >['sequenceBindingValues'];
+  readonly onBindingToggle: (bindingId: string, enabled: boolean) => void;
 };
 
 export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
@@ -66,6 +70,8 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
   onStageSelect,
   sequenceConditionValues,
   onConditionToggle,
+  sequenceBindingValues,
+  onBindingToggle,
 }) => {
   const [mode, setMode] = useState<EncounterMode>(
     sequenceSelectValue ? SEQUENCE_MODE : SINGLE_TARGET_MODE,
@@ -186,6 +192,8 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
             onStageSelect={onStageSelect}
             sequenceConditionValues={sequenceConditionValues}
             onConditionToggle={onConditionToggle}
+            sequenceBindingValues={sequenceBindingValues}
+            onBindingToggle={onBindingToggle}
           />
         </section>
       </div>

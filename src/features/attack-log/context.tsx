@@ -116,6 +116,7 @@ export const AttackLogProvider: FC<AttackLogProviderProps> = ({ children }) => {
   const { groupsWithMetadata, shortcutMap } = useAttackDefinitions(
     state,
     derived.remainingHp,
+    sequenceContext.sequenceBindingValues,
   );
 
   const panelRef = useRef<HTMLDivElement | null>(null);

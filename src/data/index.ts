@@ -5,6 +5,7 @@ import { bossPhaseData } from './phases';
 import type {
   Boss,
   BossSequence,
+  BossSequenceBinding,
   BossSequenceCondition,
   BossSequenceEntry,
   BossSequenceEntryCondition,
@@ -22,6 +23,7 @@ export type {
   BossPhase,
   BossPhaseDefinition,
   BossSequence,
+  BossSequenceBinding,
   BossSequenceCondition,
   BossSequenceEntry,
   BossSequenceEntryCondition,
@@ -168,7 +170,24 @@ export const nailUpgradeMap = new Map(
 );
 export const spellMap = new Map(spells.map((spell) => [spell.id, spell]));
 
+export const pantheonBindingIds = {
+  nail: 'nail-binding',
+  shell: 'shell-binding',
+  charms: 'charms-binding',
+  soul: 'soul-binding',
+} as const;
+
+export type PantheonBindingId =
+  (typeof pantheonBindingIds)[keyof typeof pantheonBindingIds];
+
 type RawSequenceConditionDefinition = {
+  id: string;
+  label?: string;
+  description?: string;
+  defaultEnabled?: boolean;
+};
+
+type RawSequenceBindingDefinition = {
   id: string;
   label?: string;
   description?: string;
@@ -192,6 +211,7 @@ type RawSequence = {
   name: string;
   category?: string;
   conditions?: RawSequenceConditionDefinition[];
+  bindings?: RawSequenceBindingDefinition[];
   entries: RawSequenceEntry[];
 };
 
@@ -226,6 +246,7 @@ const parsedSequences: BossSequence[] = rawSequenceData
   .map((sequence) => {
     const sequenceId = toSlug(sequence.id || sequence.name);
     const conditionDefinitions = new Map<string, BossSequenceCondition>();
+    const bindingDefinitions = new Map<string, BossSequenceBinding>();
 
     const ensureConditionDefinition = (
       definition: RawSequenceConditionDefinition | undefined,
@@ -260,6 +281,43 @@ const parsedSequences: BossSequence[] = rawSequenceData
         rawCondition,
         rawCondition.id,
         rawCondition.label?.trim() || rawCondition.id.replace(/-/g, ' '),
+      );
+    });
+
+    const ensureBindingDefinition = (
+      definition: RawSequenceBindingDefinition | undefined,
+      fallbackId: string,
+      fallbackLabel: string,
+    ) => {
+      const bindingId = definition?.id ?? fallbackId;
+      if (!bindingId) {
+        return null;
+      }
+
+      if (bindingDefinitions.has(bindingId)) {
+        return bindingDefinitions.get(bindingId) ?? null;
+      }
+
+      const label = definition?.label?.trim() || fallbackLabel;
+      const binding: BossSequenceBinding = {
+        id: bindingId,
+        label,
+        description: definition?.description?.trim() || undefined,
+        defaultEnabled: Boolean(definition?.defaultEnabled),
+      };
+      bindingDefinitions.set(bindingId, binding);
+      return binding;
+    };
+
+    (sequence.bindings ?? []).forEach((rawBinding) => {
+      if (!rawBinding.id) {
+        return;
+      }
+
+      ensureBindingDefinition(
+        rawBinding,
+        rawBinding.id,
+        rawBinding.label?.trim() || rawBinding.id.replace(/-/g, ' '),
       );
     });
 
@@ -314,6 +372,7 @@ const parsedSequences: BossSequence[] = rawSequenceData
       category: sequence.category ?? 'Boss Sequences',
       entries,
       conditions: Array.from(conditionDefinitions.values()),
+      bindings: Array.from(bindingDefinitions.values()),
     } satisfies BossSequence;
   })
   .filter((sequence) => sequence.entries.length > 0);
@@ -326,6 +385,12 @@ export const bossSequenceMap = new Map(
 const buildConditionDefaults = (sequence: BossSequence) =>
   sequence.conditions.reduce<Record<string, boolean>>((acc, condition) => {
     acc[condition.id] = condition.defaultEnabled;
+    return acc;
+  }, {});
+
+const buildBindingDefaults = (sequence: BossSequence) =>
+  sequence.bindings.reduce<Record<string, boolean>>((acc, binding) => {
+    acc[binding.id] = binding.defaultEnabled;
     return acc;
   }, {});
 
@@ -342,6 +407,24 @@ export const getSequenceConditionValues = (
   for (const [conditionId, value] of Object.entries(overrides)) {
     if (typeof value === 'boolean') {
       values[conditionId] = value;
+    }
+  }
+  return values;
+};
+
+export const getSequenceBindingValues = (
+  sequence: BossSequence,
+  overrides: Record<string, boolean> | undefined,
+) => {
+  const defaults = buildBindingDefaults(sequence);
+  if (!overrides) {
+    return defaults;
+  }
+
+  const values = { ...defaults };
+  for (const [bindingId, value] of Object.entries(overrides)) {
+    if (typeof value === 'boolean') {
+      values[bindingId] = value;
     }
   }
   return values;

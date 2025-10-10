@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { nailUpgrades, spells } from '../../data';
+import { nailUpgrades, pantheonBindingIds, spells } from '../../data';
 import type { FightState } from '../fight-state/FightStateContext';
 import { createInitialState } from '../fight-state/fightReducer';
 import {
@@ -178,6 +178,63 @@ describe('useAttackDefinitions helpers', () => {
     const attackIds = spellsGroup?.attacks.map((attack) => attack.id) ?? [];
 
     expect(attackIds.some((id) => id.startsWith(`${firstSpell.id}-`))).toBe(false);
+  });
+
+  it('reduces nail damage when the Nail Binding is enabled', () => {
+    const state = createFightState({
+      build: {
+        nailUpgradeId: 'pure-nail',
+        activeCharmIds: [],
+        spellLevels: DEFAULT_SPELL_LEVELS,
+      },
+    });
+
+    const [nailGroup] = buildAttackGroups(state.build, {
+      bindings: { [pantheonBindingIds.nail]: true },
+    });
+    const nailStrike = nailGroup.attacks.find((attack) => attack.id === 'nail-strike');
+    expect(nailStrike?.damage).toBe(13);
+
+    const strengthState = createFightState({
+      build: {
+        nailUpgradeId: 'pure-nail',
+        activeCharmIds: ['fragile-strength'],
+        spellLevels: DEFAULT_SPELL_LEVELS,
+      },
+    });
+    const [strengthGroup] = buildAttackGroups(strengthState.build, {
+      bindings: { [pantheonBindingIds.nail]: true },
+    });
+    const strengthStrike = strengthGroup.attacks.find(
+      (attack) => attack.id === 'nail-strike',
+    );
+    expect(strengthStrike?.damage).toBe(20);
+  });
+
+  it('suppresses charm-based bonuses when the Charms Binding is active', () => {
+    const state = createFightState({
+      build: {
+        nailUpgradeId: 'pure-nail',
+        activeCharmIds: ['fragile-strength', 'fury-of-the-fallen'],
+        spellLevels: DEFAULT_SPELL_LEVELS,
+      },
+    });
+
+    const groups = buildAttackGroups(state.build, {
+      bindings: { [pantheonBindingIds.charms]: true },
+    });
+
+    const nailGroup = groups.find((group) => group.id === 'nail-attacks');
+    const nailStrike = nailGroup?.attacks.find((attack) => attack.id === 'nail-strike');
+    expect(nailStrike?.damage).toBe(
+      nailUpgrades.find((upgrade) => upgrade.id === 'pure-nail')?.damage ?? 0,
+    );
+
+    const charmGroup = groups.find((group) => group.id === 'charm-effects');
+    const furyVariant = charmGroup?.attacks.find(
+      (attack) => attack.id === 'nail-strike-fury',
+    );
+    expect(furyVariant).toBeUndefined();
   });
 
   it('builds shortcut metadata including hits remaining for each attack', () => {

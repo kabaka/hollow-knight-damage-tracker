@@ -2,6 +2,13 @@ import { useId, useMemo, type FC } from 'react';
 
 import type { useBuildConfiguration } from '../build-config/useBuildConfiguration';
 
+type SequenceModifier = {
+  id: string;
+  label: string;
+  description?: string;
+  defaultEnabled: boolean;
+};
+
 export type SequenceSelectorProps = {
   readonly title: string;
   readonly description: string;
@@ -16,6 +23,10 @@ export type SequenceSelectorProps = {
     typeof useBuildConfiguration
   >['sequenceConditionValues'];
   readonly onConditionToggle: (conditionId: string, enabled: boolean) => void;
+  readonly sequenceBindingValues: ReturnType<
+    typeof useBuildConfiguration
+  >['sequenceBindingValues'];
+  readonly onBindingToggle: (bindingId: string, enabled: boolean) => void;
 };
 
 export const SequenceSelector: FC<SequenceSelectorProps> = ({
@@ -30,6 +41,8 @@ export const SequenceSelector: FC<SequenceSelectorProps> = ({
   onStageSelect,
   sequenceConditionValues,
   onConditionToggle,
+  sequenceBindingValues,
+  onBindingToggle,
 }) => {
   const headingId = useId();
   const descriptionId = useId();
@@ -127,6 +140,9 @@ export const SequenceSelector: FC<SequenceSelectorProps> = ({
                     conditions={sequence.conditions}
                     conditionValues={sequenceConditionValues}
                     onConditionToggle={onConditionToggle}
+                    bindings={sequence.bindings}
+                    bindingValues={sequenceBindingValues}
+                    onBindingToggle={onBindingToggle}
                     isInteractive={isSelected}
                     entries={isSelected ? sequenceEntries : undefined}
                     cappedSequenceIndex={cappedSequenceIndex}
@@ -150,9 +166,12 @@ type SequenceOptionProps = {
   readonly value: string;
   readonly isSelected: boolean;
   readonly onSelect: (value: string) => void;
-  readonly conditions?: SequenceSelectorProps['bossSequences'][number]['conditions'];
+  readonly conditions?: SequenceModifier[];
   readonly conditionValues?: SequenceSelectorProps['sequenceConditionValues'];
   readonly onConditionToggle?: SequenceSelectorProps['onConditionToggle'];
+  readonly bindings?: SequenceModifier[];
+  readonly bindingValues?: SequenceSelectorProps['sequenceBindingValues'];
+  readonly onBindingToggle?: SequenceSelectorProps['onBindingToggle'];
   readonly isInteractive?: boolean;
   readonly entries?: SequenceSelectorProps['sequenceEntries'];
   readonly cappedSequenceIndex?: number;
@@ -170,6 +189,9 @@ const SequenceOption: FC<SequenceOptionProps> = ({
   conditions,
   conditionValues,
   onConditionToggle,
+  bindings,
+  bindingValues,
+  onBindingToggle,
   isInteractive = false,
   entries,
   cappedSequenceIndex,
@@ -179,8 +201,35 @@ const SequenceOption: FC<SequenceOptionProps> = ({
     onSelect(value);
   };
 
-  const hasConditions = Boolean(conditions && conditions.length > 0);
   const resolvedConditionValues = conditionValues ?? {};
+  const resolvedBindingValues = bindingValues ?? {};
+
+  const modifierSections = [
+    conditions && conditions.length > 0
+      ? {
+          key: 'conditions' as const,
+          title: 'Sequence modifiers',
+          items: conditions,
+          values: resolvedConditionValues,
+          onToggle: onConditionToggle,
+        }
+      : null,
+    bindings && bindings.length > 0
+      ? {
+          key: 'bindings' as const,
+          title: 'Bindings',
+          items: bindings,
+          values: resolvedBindingValues,
+          onToggle: onBindingToggle,
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    key: 'conditions' | 'bindings';
+    title: string;
+    items: SequenceModifier[];
+    values: Record<string, boolean>;
+    onToggle?: SequenceOptionProps['onConditionToggle'];
+  }>;
 
   return (
     <div
@@ -214,44 +263,48 @@ const SequenceOption: FC<SequenceOptionProps> = ({
           </span>
         ) : null}
       </div>
-      {hasConditions ? (
+      {modifierSections.length > 0 ? (
         <div className="sequence-selector__option-conditions" role="group">
-          <span className="sequence-selector__option-conditions-title">
-            Sequence modifiers
-          </span>
-          <div className="sequence-selector__option-conditions-grid">
-            {conditions?.map((condition) => {
-              const isEnabled = isInteractive
-                ? resolvedConditionValues[condition.id]
-                : condition.defaultEnabled;
-              return (
-                <label key={condition.id} className="sequence-selector__condition-option">
-                  <input
-                    type="checkbox"
-                    checked={isEnabled}
-                    disabled={!isInteractive}
-                    onChange={
-                      isInteractive && onConditionToggle
-                        ? (event) => {
-                            onConditionToggle(condition.id, event.target.checked);
-                          }
-                        : undefined
-                    }
-                  />
-                  <span>
-                    <span className="sequence-selector__condition-label">
-                      {condition.label}
-                    </span>
-                    {condition.description ? (
-                      <span className="sequence-selector__condition-description">
-                        {condition.description}
+          {modifierSections.map((section) => (
+            <div key={section.key} className="sequence-selector__option-conditions-group">
+              <span className="sequence-selector__option-conditions-title">
+                {section.title}
+              </span>
+              <div className="sequence-selector__option-conditions-grid">
+                {section.items.map((item) => {
+                  const isEnabled = isInteractive
+                    ? section.values[item.id]
+                    : item.defaultEnabled;
+                  return (
+                    <label key={item.id} className="sequence-selector__condition-option">
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        disabled={!isInteractive}
+                        onChange={
+                          isInteractive && section.onToggle
+                            ? (event) => {
+                                section.onToggle?.(item.id, event.target.checked);
+                              }
+                            : undefined
+                        }
+                      />
+                      <span>
+                        <span className="sequence-selector__condition-label">
+                          {item.label}
+                        </span>
+                        {item.description ? (
+                          <span className="sequence-selector__condition-description">
+                            {item.description}
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           {!isInteractive ? (
             <p className="sequence-selector__option-conditions-note">
               Select this sequence to adjust modifiers.

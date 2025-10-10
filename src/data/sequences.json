@@ -4,6 +4,32 @@
     "name": "Pantheon of the Master",
     "category": "Godhome Pantheons",
     "conditions": [],
+    "bindings": [
+      {
+        "id": "nail-binding",
+        "label": "Nail Binding",
+        "description": "Reduce Nail damage to 80% (capped at 13). Nail Arts scale from the bound damage.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "shell-binding",
+        "label": "Shell Binding",
+        "description": "Limit the Knight to four Masks. Lifeblood and Heart-granted masks remain available.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "charms-binding",
+        "label": "Charms Binding",
+        "description": "Disable all charm effects for this run.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "soul-binding",
+        "label": "Soul Binding",
+        "description": "Cap SOUL at 33 and disable additional Soul Vessels.",
+        "defaultEnabled": false
+      }
+    ],
     "entries": [
       {
         "boss": "Vengefly King",
@@ -52,6 +78,32 @@
     "name": "Pantheon of the Artist",
     "category": "Godhome Pantheons",
     "conditions": [],
+    "bindings": [
+      {
+        "id": "nail-binding",
+        "label": "Nail Binding",
+        "description": "Reduce Nail damage to 80% (capped at 13). Nail Arts scale from the bound damage.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "shell-binding",
+        "label": "Shell Binding",
+        "description": "Limit the Knight to four Masks. Lifeblood and Heart-granted masks remain available.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "charms-binding",
+        "label": "Charms Binding",
+        "description": "Disable all charm effects for this run.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "soul-binding",
+        "label": "Soul Binding",
+        "description": "Cap SOUL at 33 and disable additional Soul Vessels.",
+        "defaultEnabled": false
+      }
+    ],
     "entries": [
       {
         "boss": "Xero",
@@ -104,6 +156,84 @@
         "id": "include-grey-prince-zote",
         "label": "Include Grey Prince Zote",
         "description": "Enable if you rescued Zote and unlocked his Godhome fight.",
+        "defaultEnabled": false
+      }
+    ],
+    "bindings": [
+      {
+        "id": "nail-binding",
+        "label": "Nail Binding",
+        "description": "Reduce Nail damage to 80% (capped at 13). Nail Arts scale from the bound damage.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "shell-binding",
+        "label": "Shell Binding",
+        "description": "Limit the Knight to four Masks. Lifeblood and Heart-granted masks remain available.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "charms-binding",
+        "label": "Charms Binding",
+        "description": "Disable all charm effects for this run.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "soul-binding",
+        "label": "Soul Binding",
+        "description": "Cap SOUL at 33 and disable additional Soul Vessels.",
+        "defaultEnabled": false
+      }
+    ],
+    "bindings": [
+      {
+        "id": "nail-binding",
+        "label": "Nail Binding",
+        "description": "Reduce Nail damage to 80% (capped at 13). Nail Arts scale from the bound damage.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "shell-binding",
+        "label": "Shell Binding",
+        "description": "Limit the Knight to four Masks. Lifeblood and Heart-granted masks remain available.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "charms-binding",
+        "label": "Charms Binding",
+        "description": "Disable all charm effects for this run.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "soul-binding",
+        "label": "Soul Binding",
+        "description": "Cap SOUL at 33 and disable additional Soul Vessels.",
+        "defaultEnabled": false
+      }
+    ],
+    "bindings": [
+      {
+        "id": "nail-binding",
+        "label": "Nail Binding",
+        "description": "Reduce Nail damage to 80% (capped at 13). Nail Arts scale from the bound damage.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "shell-binding",
+        "label": "Shell Binding",
+        "description": "Limit the Knight to four Masks. Lifeblood and Heart-granted masks remain available.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "charms-binding",
+        "label": "Charms Binding",
+        "description": "Disable all charm effects for this run.",
+        "defaultEnabled": false
+      },
+      {
+        "id": "soul-binding",
+        "label": "Soul Binding",
+        "description": "Cap SOUL at 33 and disable additional Soul Vessels.",
         "defaultEnabled": false
       }
     ],

@@ -117,10 +117,18 @@ export interface BossSequenceEntry {
   condition?: BossSequenceEntryCondition;
 }
 
+export interface BossSequenceBinding {
+  id: string;
+  label: string;
+  description?: string;
+  defaultEnabled: boolean;
+}
+
 export interface BossSequence {
   id: string;
   name: string;
   category: string;
   entries: BossSequenceEntry[];
   conditions: BossSequenceCondition[];
+  bindings: BossSequenceBinding[];
 }

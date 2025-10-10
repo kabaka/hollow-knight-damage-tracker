@@ -436,6 +436,19 @@ export const fightReducer = (state: FightState, action: FightAction): FightState
 
       return ensureSequenceState(clearedLogsState);
     }
+    case 'setSequenceBinding': {
+      const existing = state.sequenceBindings[action.sequenceId] ?? {};
+      return {
+        ...state,
+        sequenceBindings: {
+          ...state.sequenceBindings,
+          [action.sequenceId]: {
+            ...existing,
+            [action.bindingId]: action.enabled,
+          },
+        },
+      };
+    }
     case 'setSequenceStage':
       return state.activeSequenceId
         ? loadSequenceStage(
