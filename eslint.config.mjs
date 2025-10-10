@@ -90,6 +90,10 @@ export default [
       'react/prop-types': 'off',
       'react/jsx-boolean-value': ['error', 'never'],
       'react/self-closing-comp': ['error'],
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/globals': 'off',
       'react-refresh/only-export-components': [
         'warn',
         {

@@ -190,7 +190,7 @@ const PlayerConfigModalContent: FC = () => {
     build,
   } = useBuildConfiguration();
 
-  const charmIconMap = useMemo(createCharmIconMap, []);
+  const charmIconMap = useMemo(() => createCharmIconMap(), []);
   const workbenchRef = useRef<HTMLDivElement | null>(null);
   const charmSlotRefs = useRef(new Map<string, HTMLButtonElement | null>());
   const equippedCharmRefs = useRef(new Map<string, HTMLDivElement | null>());
