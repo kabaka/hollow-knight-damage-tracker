@@ -93,10 +93,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const toNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+const isNumberArray = (value: unknown): value is number[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'number');
+
 const toNumberArray = (value: unknown): number[] | null =>
-  Array.isArray(value) && value.every((item) => typeof item === 'number')
-    ? (value as number[])
-    : null;
+  isNumberArray(value) ? value : null;
 
 const getCharmEffect = (charmId: string, effectType: string) =>
   charmMap.get(charmId)?.effects.find((effect) => effect.type === effectType);
@@ -179,7 +180,9 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
     },
   ];
 
-  const nailArtLabelMap = new Map(NAIL_ARTS.map((art) => [art.id, art.label] as const));
+  const nailArtLabelMap = new Map<string, string>(
+    NAIL_ARTS.map<[string, string]>((art) => [art.id, art.label]),
+  );
 
   const nailArtAttacks: AttackDefinition[] = NAIL_ARTS.map(
     ({ id, label, multiplier, baseDescription }) => {
@@ -213,19 +216,15 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
 
     if (hasFlukenest && spell.id === 'vengeful-spirit') {
       const crestReplacement = hasDefendersCrest
-        ? (getCharmSynergyEffectRecord(
+        ? getCharmSynergyEffectRecord(
             ['flukenest', 'defenders-crest'],
             'spell_replacement',
-          ) as Record<string, unknown> | null)
+          )
         : null;
       const replacements =
-        crestReplacement ??
-        (getCharmEffectRecord('flukenest', 'spell_replacement') as Record<
-          string,
-          unknown
-        > | null);
-      if (replacements && isRecord(replacements[variant.key])) {
-        const replacement = replacements[variant.key] as Record<string, unknown>;
+        crestReplacement ?? getCharmEffectRecord('flukenest', 'spell_replacement');
+      const replacement = replacements?.[variant.key];
+      if (isRecord(replacement)) {
         const totalDamage = toNumber(replacement.totalDamage);
         const projectiles = toNumber(replacement.projectiles);
         const damagePerProjectile = toNumber(replacement.damagePerProjectile);
@@ -389,11 +388,7 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'defenders-crest': {
-        const auraData = getCharmEffectRecord('defenders-crest', 'damage_aura') as {
-          minDamage?: unknown;
-          maxDamage?: unknown;
-          tickRateSeconds?: unknown;
-        } | null;
+        const auraData = getCharmEffectRecord('defenders-crest', 'damage_aura');
         if (auraData) {
           const minDamage = toNumber(auraData.minDamage);
           const maxDamage = toNumber(auraData.maxDamage);
@@ -418,17 +413,13 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
       }
       case 'spore-shroom': {
         const crestEnhancedData = hasDefendersCrest
-          ? (getCharmSynergyEffectRecord(
+          ? getCharmSynergyEffectRecord(
               ['spore-shroom', 'defenders-crest'],
               'focus_damage_cloud',
-            ) as { totalDamage?: unknown; durationSeconds?: unknown } | null)
+            )
           : null;
         const sporeData =
-          crestEnhancedData ??
-          (getCharmEffectRecord('spore-shroom', 'focus_damage_cloud') as {
-            totalDamage?: unknown;
-            durationSeconds?: unknown;
-          } | null);
+          crestEnhancedData ?? getCharmEffectRecord('spore-shroom', 'focus_damage_cloud');
         if (sporeData) {
           const totalDamage = toNumber(sporeData.totalDamage);
           const duration = toNumber(sporeData.durationSeconds);
@@ -463,10 +454,7 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'glowing-womb': {
-        const wombData = getCharmEffectRecord('glowing-womb', 'minion_summon') as {
-          damage?: unknown;
-          soulCost?: unknown;
-        } | null;
+        const wombData = getCharmEffectRecord('glowing-womb', 'minion_summon');
         if (wombData) {
           const damage = toNumber(wombData.damage);
           const soulCost = toNumber(wombData.soulCost) ?? undefined;
@@ -493,10 +481,7 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'weaversong': {
-        const weaverData = getCharmEffectRecord('weaversong', 'minion_summon') as {
-          count?: unknown;
-          damage?: unknown;
-        } | null;
+        const weaverData = getCharmEffectRecord('weaversong', 'minion_summon');
         if (weaverData) {
           const damage = toNumber(weaverData.damage);
           const count = toNumber(weaverData.count);
@@ -520,9 +505,7 @@ export function buildAttackGroups(build: FightState['build']): AttackGroup[] {
         break;
       }
       case 'grimmchild': {
-        const grimmchildData = getCharmEffectRecord('grimmchild', 'minion_summon') as {
-          damagePerLevel?: unknown;
-        } | null;
+        const grimmchildData = getCharmEffectRecord('grimmchild', 'minion_summon');
         if (grimmchildData) {
           const damagePerLevel = toNumberArray(grimmchildData.damagePerLevel);
           if (damagePerLevel) {

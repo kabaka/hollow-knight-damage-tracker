@@ -118,7 +118,9 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
         <button
           type="button"
           className="target-selector__options-toggle"
-          onClick={() => setOptionsOpen((open) => !open)}
+          onClick={() => {
+            setOptionsOpen((open) => !open);
+          }}
           aria-expanded={isOptionsOpen}
           aria-controls="target-selector-options"
         >
@@ -133,7 +135,9 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
             id="boss-search"
             type="search"
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+            }}
             placeholder="Search by name"
             autoComplete="off"
             aria-describedby="boss-search-results"
@@ -165,7 +169,9 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
                     id={optionId}
                     value={boss.id}
                     checked={isSelected}
-                    onChange={() => onBossChange(boss.id)}
+                    onChange={() => {
+                      onBossChange(boss.id);
+                    }}
                   />
                   <span className="target-selector__boss-marker" aria-hidden="true" />
                   <span className="target-selector__boss-copy">
@@ -193,7 +199,9 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
                   id="boss-target-custom"
                   value={CUSTOM_BOSS_ID}
                   checked={bossSelectValue === CUSTOM_BOSS_ID}
-                  onChange={() => onBossChange(CUSTOM_BOSS_ID)}
+                  onChange={() => {
+                    onBossChange(CUSTOM_BOSS_ID);
+                  }}
                 />
                 <span className="target-selector__boss-marker" aria-hidden="true" />
                 <span className="target-selector__boss-copy">
@@ -220,7 +228,9 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
             <span className="target-selector__field-label">Boss version</span>
             <select
               value={selectedTarget.id}
-              onChange={(event) => onBossVersionChange(event.target.value)}
+              onChange={(event) => {
+                onBossVersionChange(event.target.value);
+              }}
             >
               {selectedBoss.versions.map((version) => (
                 <option key={version.targetId} value={version.targetId}>
@@ -240,7 +250,9 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
               inputMode="numeric"
               pattern="[0-9]*"
               value={customHpDraft}
-              onChange={(event) => handleCustomHpDraftChange(event.target.value)}
+              onChange={(event) => {
+                handleCustomHpDraftChange(event.target.value);
+              }}
               onBlur={() => {
                 if (customHpDraft === '') {
                   setCustomHpDraft(customTargetHp.toString());

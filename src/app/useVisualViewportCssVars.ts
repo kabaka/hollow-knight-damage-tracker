@@ -33,8 +33,9 @@ export const useVisualViewportCssVars = () => {
     const root = document.documentElement;
 
     const viewport = window.visualViewport;
-    const handleChange = () =>
+    const handleChange = () => {
       updateViewportCssVars(root, window.visualViewport ?? viewport);
+    };
 
     updateViewportCssVars(root, viewport);
 

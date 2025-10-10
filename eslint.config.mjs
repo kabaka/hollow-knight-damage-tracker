@@ -106,10 +106,6 @@ export default [
         },
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-confusing-void-expression': 'off',
-      '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'off',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/restrict-template-expressions': [
         'error',
         {

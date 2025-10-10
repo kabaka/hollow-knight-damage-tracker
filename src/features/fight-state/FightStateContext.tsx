@@ -193,13 +193,14 @@ export const useFightStateSelector = <Selected,>(
     const previousSelected = selectedRef.current;
     if (
       !hasSnapshotRef.current ||
-      !equalityFnRef.current(previousSelected as Selected, nextSelected)
+      previousSelected === undefined ||
+      !equalityFnRef.current(previousSelected, nextSelected)
     ) {
       hasSnapshotRef.current = true;
       selectedRef.current = nextSelected;
       return nextSelected;
     }
-    return previousSelected as Selected;
+    return previousSelected;
   };
 
   const subscribe = (notify: () => void) =>
@@ -208,7 +209,8 @@ export const useFightStateSelector = <Selected,>(
       const previousSelected = selectedRef.current;
       if (
         !hasSnapshotRef.current ||
-        !equalityFnRef.current(previousSelected as Selected, nextSelected)
+        previousSelected === undefined ||
+        !equalityFnRef.current(previousSelected, nextSelected)
       ) {
         hasSnapshotRef.current = true;
         selectedRef.current = nextSelected;

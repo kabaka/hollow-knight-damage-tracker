@@ -644,7 +644,9 @@ const PlayerConfigModalContent: FC = () => {
                   min={MIN_NOTCH_LIMIT}
                   max={MAX_NOTCH_LIMIT}
                   value={notchLimit}
-                  onChange={(event) => setNotchLimit(Number(event.target.value))}
+                  onChange={(event) => {
+                    setNotchLimit(Number(event.target.value));
+                  }}
                 />
               </label>
               <p className="notch-panel__description">
@@ -806,7 +808,9 @@ const PlayerConfigModalContent: FC = () => {
                   key={preset.id}
                   type="button"
                   className="preset-buttons__button"
-                  onClick={() => applyCharmPreset(preset.charmIds)}
+                  onClick={() => {
+                    applyCharmPreset(preset.charmIds);
+                  }}
                 >
                   {preset.label}
                 </button>
@@ -814,7 +818,9 @@ const PlayerConfigModalContent: FC = () => {
               <button
                 type="button"
                 className="preset-buttons__button"
-                onClick={() => applyCharmPreset([])}
+                onClick={() => {
+                  applyCharmPreset([]);
+                }}
               >
                 Clear charms
               </button>
@@ -837,7 +843,9 @@ const PlayerConfigModalContent: FC = () => {
                   name={`spell-${spell.id}`}
                   value="none"
                   checked={build.spellLevels[spell.id] === 'none'}
-                  onChange={() => setSpellLevel(spell.id, 'none')}
+                  onChange={() => {
+                    setSpellLevel(spell.id, 'none');
+                  }}
                 />
                 <span>Not acquired</span>
               </label>
@@ -847,7 +855,9 @@ const PlayerConfigModalContent: FC = () => {
                   name={`spell-${spell.id}`}
                   value="base"
                   checked={build.spellLevels[spell.id] === 'base'}
-                  onChange={() => setSpellLevel(spell.id, 'base')}
+                  onChange={() => {
+                    setSpellLevel(spell.id, 'base');
+                  }}
                 />
                 <span>{spell.base.name}</span>
               </label>
@@ -858,7 +868,9 @@ const PlayerConfigModalContent: FC = () => {
                     name={`spell-${spell.id}`}
                     value="upgrade"
                     checked={build.spellLevels[spell.id] === 'upgrade'}
-                    onChange={() => setSpellLevel(spell.id, 'upgrade')}
+                    onChange={() => {
+                      setSpellLevel(spell.id, 'upgrade');
+                    }}
                   />
                   <span>{spell.upgrade.name}</span>
                 </label>
@@ -878,7 +890,9 @@ const PlayerConfigModalContent: FC = () => {
             <select
               id="nail-level"
               value={build.nailUpgradeId}
-              onChange={(event) => setNailUpgrade(event.target.value)}
+              onChange={(event) => {
+                setNailUpgrade(event.target.value);
+              }}
             >
               {nailUpgrades.map((upgrade) => (
                 <option key={upgrade.id} value={upgrade.id}>

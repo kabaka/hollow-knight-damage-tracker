@@ -31,8 +31,12 @@ const AppContent: FC = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isSetupOpen, setSetupOpen] = useState(false);
   const [isHelpOpen, setHelpOpen] = useState(false);
-  const handleCloseLoadout = useCallback(() => setModalOpen(false), [setModalOpen]);
-  const handleCloseHelp = useCallback(() => setHelpOpen(false), [setHelpOpen]);
+  const handleCloseLoadout = useCallback(() => {
+    setModalOpen(false);
+  }, [setModalOpen]);
+  const handleCloseHelp = useCallback(() => {
+    setHelpOpen(false);
+  }, [setHelpOpen]);
 
   const {
     bosses,
@@ -96,7 +100,9 @@ const AppContent: FC = () => {
       glowTimeoutRef.current = null;
     }, duration);
     glowTimeoutRef.current = timeoutId;
-    return () => window.clearTimeout(timeoutId);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [panelGlow]);
 
   useEffect(
@@ -131,7 +137,9 @@ const AppContent: FC = () => {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [
     handleAdvanceSequence,
     handleRewindSequence,
@@ -162,9 +170,15 @@ const AppContent: FC = () => {
         encounterName={encounterName}
         versionLabel={versionLabel}
         arenaLabel={arenaLabel}
-        onToggleSetup={() => setSetupOpen((open) => !open)}
-        onOpenLoadout={() => setModalOpen(true)}
-        onOpenHelp={() => setHelpOpen(true)}
+        onToggleSetup={() => {
+          setSetupOpen((open) => !open);
+        }}
+        onOpenLoadout={() => {
+          setModalOpen(true);
+        }}
+        onOpenHelp={() => {
+          setHelpOpen(true);
+        }}
         isSetupOpen={isSetupOpen}
         stageLabel={stageLabel}
         stageProgress={stageProgress}

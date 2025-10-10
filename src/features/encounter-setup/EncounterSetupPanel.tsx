@@ -135,7 +135,9 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
               className="encounter-setup__mode-button"
               aria-selected={mode === tab.value}
               aria-controls={tab.controls}
-              onClick={() => handleModeChange(tab.value)}
+              onClick={() => {
+                handleModeChange(tab.value);
+              }}
             >
               {tab.label}
             </button>

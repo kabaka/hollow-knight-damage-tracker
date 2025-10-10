@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const env = process.env as NodeJS.ProcessEnv;
+const env = process.env;
 
 const isCI = env.CI === 'true' || env.CI === '1';
 const usePreview =
