@@ -208,12 +208,6 @@
     "category": "Godhome Pantheons",
     "conditions": [
       {
-        "id": "replace-mantis-lords",
-        "label": "Sisters of Battle unlocked",
-        "description": "Swap to the Sisters of Battle variant after completing their encounter in Godhome.",
-        "defaultEnabled": false
-      },
-      {
         "id": "include-grey-prince-zote",
         "label": "Include Grey Prince Zote",
         "description": "Enable if you rescued Zote and unlocked his Godhome fight.",
@@ -223,7 +217,7 @@
     "entries": [
       {
         "boss": "Vengefly King",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Gruz Mother",
@@ -231,7 +225,7 @@
       },
       {
         "boss": "False Knight",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Massive Moss Charger",
@@ -239,11 +233,11 @@
       },
       {
         "boss": "Hornet (Protector)",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Gorb",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Dung Defender",
@@ -255,15 +249,15 @@
       },
       {
         "boss": "Brooding Mawlek",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Brothers Oro & Mato",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Xero",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Crystal Guardian",
@@ -271,23 +265,15 @@
       },
       {
         "boss": "Soul Master",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Oblobbles",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
-        "boss": "Mantis Lords",
-        "version": "Attuned",
-        "condition": {
-          "id": "replace-mantis-lords",
-          "mode": "replace",
-          "replacement": {
-            "boss": "Sisters of Battle",
-            "version": "Attuned"
-          }
-        }
+        "boss": "Sisters of Battle",
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Marmu",
@@ -323,7 +309,7 @@
       },
       {
         "boss": "God Tamer",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Troupe Master Grimm",
@@ -331,11 +317,11 @@
       },
       {
         "boss": "Galien",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Grey Prince Zote",
-        "version": "Attuned",
+        "version": "Pantheon of Hallownest",
         "condition": {
           "id": "include-grey-prince-zote",
           "mode": "include"
@@ -359,7 +345,7 @@
       },
       {
         "boss": "Lost Kin",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "No Eyes",
@@ -387,19 +373,19 @@
       },
       {
         "boss": "Failed Champion",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Nightmare King Grimm",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Pure Vessel",
-        "version": "Attuned"
+        "version": "Pantheon of Hallownest"
       },
       {
         "boss": "Absolute Radiance",
-        "version": "Final Boss"
+        "version": "Pantheon of Hallownest"
       }
     ]
   },
