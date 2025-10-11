@@ -76,7 +76,7 @@ describe('SequenceSelector', () => {
   };
 
   const renderSelector = (overrides: Partial<SequenceSelectorProps> = {}) => {
-    const defaultProps: SequenceSelectorProps = {
+    let currentProps: SequenceSelectorProps = {
       title: 'Sequence run',
       description: 'Configure a full sequence run.',
       placeholder: 'Select a sequence',
@@ -94,13 +94,21 @@ describe('SequenceSelector', () => {
     };
 
     const user = userEvent.setup();
+    const view = render(<SequenceSelector {...currentProps} />);
+
+    const rerenderWith = (nextOverrides: Partial<SequenceSelectorProps> = {}) => {
+      currentProps = { ...currentProps, ...nextOverrides };
+      view.rerender(<SequenceSelector {...currentProps} />);
+    };
+
     return {
       user,
-      onSequenceChange: defaultProps.onSequenceChange,
-      onStageSelect: defaultProps.onStageSelect,
-      onConditionToggle: defaultProps.onConditionToggle,
-      onBindingToggle: defaultProps.onBindingToggle,
-      ...render(<SequenceSelector {...defaultProps} />),
+      rerenderWith,
+      onSequenceChange: currentProps.onSequenceChange,
+      onStageSelect: currentProps.onStageSelect,
+      onConditionToggle: currentProps.onConditionToggle,
+      onBindingToggle: currentProps.onBindingToggle,
+      ...view,
     };
   };
 
@@ -141,8 +149,8 @@ describe('SequenceSelector', () => {
     expect(fallbackSelect).toHaveValue(pantheonSequence.id);
   });
 
-  it('exposes sequence conditions while disabling unselected options', async () => {
-    const { user, onConditionToggle } = renderSelector({
+  it('renders sequence conditions only for the active sequence', async () => {
+    const { user, onConditionToggle, rerenderWith } = renderSelector({
       sequenceSelectValue: pantheonSequence.id,
       sequenceEntries: pantheonSequence.entries,
       sequenceConditionValues: {
@@ -160,15 +168,24 @@ describe('SequenceSelector', () => {
     await user.click(pantheonToggle);
     expect(onConditionToggle).toHaveBeenCalledWith('include-grey-prince', false);
 
-    const conditionToggles = screen.getAllByRole('checkbox', {
+    expect(
+      screen.queryByRole('checkbox', { name: /Double damage mode/i }),
+    ).not.toBeInTheDocument();
+
+    rerenderWith({
+      sequenceSelectValue: trialSequence.id,
+      sequenceEntries: trialSequence.entries,
+      sequenceConditionValues: {
+        'include-grey-prince': false,
+        'double-damage': true,
+      },
+    });
+
+    const trialToggle = screen.getByRole('checkbox', {
       name: /Double damage mode/i,
     });
-    const disabledToggle = conditionToggles.find((toggle) => toggle.disabled);
-    if (!disabledToggle) {
-      throw new Error('Expected a disabled Trial of the Warrior modifier');
-    }
-    expect(disabledToggle).toBeDisabled();
-    expect(disabledToggle).toBeChecked();
+    expect(trialToggle).toBeEnabled();
+    expect(trialToggle).toBeChecked();
   });
 
   it('renders Pantheon bindings and toggles their state when interactive', async () => {
@@ -180,7 +197,7 @@ describe('SequenceSelector', () => {
       bindings: pantheonSequence.bindings?.map((binding) => ({ ...binding })) ?? [],
     };
 
-    const { user, onBindingToggle } = renderSelector({
+    const { user, onBindingToggle, rerenderWith } = renderSelector({
       bossSequences: [pantheonSequence, alternatePantheon, trialSequence],
       sequenceSelectValue: pantheonSequence.id,
       sequenceEntries: pantheonSequence.entries,
@@ -190,22 +207,31 @@ describe('SequenceSelector', () => {
       },
     });
 
-    const bindingToggles = screen.getAllByRole('checkbox', { name: /Nail Binding/i });
-    const nailBindingToggle = bindingToggles.find((toggle) => !toggle.disabled);
-    if (!nailBindingToggle) {
-      throw new Error('Expected an interactive Nail Binding toggle');
-    }
+    expect(screen.getAllByRole('checkbox', { name: /Nail Binding/i })).toHaveLength(1);
+
+    const nailBindingToggle = screen.getByRole('checkbox', { name: /Nail Binding/i });
     expect(nailBindingToggle).toBeEnabled();
     expect(nailBindingToggle).toBeChecked();
 
     await user.click(nailBindingToggle);
     expect(onBindingToggle).toHaveBeenCalledWith('nail-binding', false);
 
-    const disabledBindingToggle = bindingToggles.find((toggle) => toggle.disabled);
-    if (!disabledBindingToggle) {
-      throw new Error('Expected a disabled Nail Binding toggle for unselected sequences');
-    }
-    expect(disabledBindingToggle).toBeDisabled();
+    rerenderWith({
+      sequenceSelectValue: alternatePantheon.id,
+      sequenceEntries: alternatePantheon.entries,
+      sequenceBindingValues: {
+        'nail-binding': false,
+        'charms-binding': true,
+      },
+    });
+
+    expect(screen.getAllByRole('checkbox', { name: /Nail Binding/i })).toHaveLength(1);
+
+    const alternateNailBindingToggle = screen.getByRole('checkbox', {
+      name: /Nail Binding/i,
+    });
+    expect(alternateNailBindingToggle).toBeEnabled();
+    expect(alternateNailBindingToggle).not.toBeChecked();
   });
 
   it('shows the selected sequence preview using resolved entries', async () => {
