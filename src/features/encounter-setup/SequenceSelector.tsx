@@ -231,6 +231,8 @@ const SequenceOption: FC<SequenceOptionProps> = ({
     onToggle?: SequenceOptionProps['onConditionToggle'];
   }>;
 
+  const shouldShowModifierSections = isInteractive && modifierSections.length > 0;
+
   return (
     <div
       className="sequence-selector__option"
@@ -263,7 +265,7 @@ const SequenceOption: FC<SequenceOptionProps> = ({
           </span>
         ) : null}
       </div>
-      {modifierSections.length > 0 ? (
+      {shouldShowModifierSections ? (
         <div className="sequence-selector__option-conditions" role="group">
           {modifierSections.map((section) => (
             <div key={section.key} className="sequence-selector__option-conditions-group">
@@ -272,17 +274,14 @@ const SequenceOption: FC<SequenceOptionProps> = ({
               </span>
               <div className="sequence-selector__option-conditions-grid">
                 {section.items.map((item) => {
-                  const isEnabled = isInteractive
-                    ? section.values[item.id]
-                    : item.defaultEnabled;
+                  const isEnabled = section.values[item.id] ?? item.defaultEnabled;
                   return (
                     <label key={item.id} className="sequence-selector__condition-option">
                       <input
                         type="checkbox"
                         checked={isEnabled}
-                        disabled={!isInteractive}
                         onChange={
-                          isInteractive && section.onToggle
+                          section.onToggle
                             ? (event) => {
                                 section.onToggle?.(item.id, event.target.checked);
                               }
@@ -305,11 +304,6 @@ const SequenceOption: FC<SequenceOptionProps> = ({
               </div>
             </div>
           ))}
-          {!isInteractive ? (
-            <p className="sequence-selector__option-conditions-note">
-              Select this sequence to adjust modifiers.
-            </p>
-          ) : null}
         </div>
       ) : null}
       {isInteractive && entries ? (

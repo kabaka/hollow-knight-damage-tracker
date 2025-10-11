@@ -1701,12 +1701,6 @@ h6 {
   margin-top: 0.15rem;
 }
 
-.sequence-selector__option-conditions-note {
-  margin: 0;
-  font-size: var(--font-size-caption);
-  color: var(--color-muted);
-}
-
 .sequence-selector__stages {
   display: grid;
   gap: 0.35rem;
