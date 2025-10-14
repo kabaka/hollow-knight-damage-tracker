@@ -117,18 +117,13 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
   );
 
   return (
-    <section
-      id="encounter-setup"
-      className="encounter-setup"
-      aria-label="Encounter setup"
-      hidden={!isOpen}
-    >
-      <div className="encounter-setup__mode-toggle">
-        <span id={modeTablistId} className="encounter-setup__mode-label">
+    <div className="boss-config" hidden={!isOpen}>
+      <div className="boss-config__mode-toggle">
+        <span id={modeTablistId} className="boss-config__mode-label">
           Encounter mode
         </span>
         <div
-          className="encounter-setup__mode-segments"
+          className="boss-config__mode-tabs"
           role="tablist"
           aria-labelledby={modeTablistId}
         >
@@ -138,7 +133,7 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
               type="button"
               id={tab.id}
               role="tab"
-              className="encounter-setup__mode-button"
+              className="boss-config__mode-button"
               aria-selected={mode === tab.value}
               aria-controls={tab.controls}
               onClick={() => {
@@ -151,52 +146,52 @@ export const EncounterSetupPanel: FC<EncounterSetupPanelProps> = ({
         </div>
       </div>
 
-      <div className="encounter-setup__grid">
-        <section
-          id={singleTargetPanelId}
-          role="tabpanel"
-          aria-labelledby={`${singleTargetPanelId}-tab`}
-          hidden={mode !== SINGLE_TARGET_MODE}
-        >
-          <TargetSelector
-            title={MODE_COPY[SINGLE_TARGET_MODE].title}
-            description={MODE_COPY[SINGLE_TARGET_MODE].description}
-            bosses={bosses}
-            bossSelectValue={bossSelectValue}
-            onBossChange={onBossChange}
-            selectedBoss={selectedBoss}
-            selectedBossId={selectedBossId}
-            onBossVersionChange={onBossVersionChange}
-            selectedTarget={selectedTarget}
-            selectedVersion={selectedVersion}
-            customTargetHp={customTargetHp}
-            onCustomHpChange={onCustomHpChange}
-          />
-        </section>
+      <section
+        id={singleTargetPanelId}
+        className="boss-config__panel"
+        role="tabpanel"
+        aria-labelledby={`${singleTargetPanelId}-tab`}
+        hidden={mode !== SINGLE_TARGET_MODE}
+      >
+        <TargetSelector
+          title={MODE_COPY[SINGLE_TARGET_MODE].title}
+          description={MODE_COPY[SINGLE_TARGET_MODE].description}
+          bosses={bosses}
+          bossSelectValue={bossSelectValue}
+          onBossChange={onBossChange}
+          selectedBoss={selectedBoss}
+          selectedBossId={selectedBossId}
+          onBossVersionChange={onBossVersionChange}
+          selectedTarget={selectedTarget}
+          selectedVersion={selectedVersion}
+          customTargetHp={customTargetHp}
+          onCustomHpChange={onCustomHpChange}
+        />
+      </section>
 
-        <section
-          id={sequencePanelId}
-          role="tabpanel"
-          aria-labelledby={`${sequencePanelId}-tab`}
-          hidden={mode !== SEQUENCE_MODE}
-        >
-          <SequenceSelector
-            title={MODE_COPY[SEQUENCE_MODE].title}
-            description={MODE_COPY[SEQUENCE_MODE].description}
-            placeholder="Select a sequence"
-            bossSequences={bossSequences}
-            sequenceSelectValue={sequenceSelectValue}
-            onSequenceChange={onSequenceChange}
-            sequenceEntries={sequenceEntries}
-            cappedSequenceIndex={cappedSequenceIndex}
-            onStageSelect={onStageSelect}
-            sequenceConditionValues={sequenceConditionValues}
-            onConditionToggle={onConditionToggle}
-            sequenceBindingValues={sequenceBindingValues}
-            onBindingToggle={onBindingToggle}
-          />
-        </section>
-      </div>
-    </section>
+      <section
+        id={sequencePanelId}
+        className="boss-config__panel"
+        role="tabpanel"
+        aria-labelledby={`${sequencePanelId}-tab`}
+        hidden={mode !== SEQUENCE_MODE}
+      >
+        <SequenceSelector
+          title={MODE_COPY[SEQUENCE_MODE].title}
+          description={MODE_COPY[SEQUENCE_MODE].description}
+          placeholder="Select a sequence"
+          bossSequences={bossSequences}
+          sequenceSelectValue={sequenceSelectValue}
+          onSequenceChange={onSequenceChange}
+          sequenceEntries={sequenceEntries}
+          cappedSequenceIndex={cappedSequenceIndex}
+          onStageSelect={onStageSelect}
+          sequenceConditionValues={sequenceConditionValues}
+          onConditionToggle={onConditionToggle}
+          sequenceBindingValues={sequenceBindingValues}
+          onBindingToggle={onBindingToggle}
+        />
+      </section>
+    </div>
   );
 };
