@@ -3264,14 +3264,73 @@ h6 {
 }
 
 .spell-card__option {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem;
   font-size: 0.95rem;
+}
+
+.spell-card__option-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.spell-card__option-title {
+  font-weight: 600;
 }
 
 .spell-card__option--muted {
   color: var(--color-muted);
+}
+
+.stat-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.stat-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.stat-list__term {
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.stat-list__value {
+  font-weight: 600;
+  margin: 0;
+}
+
+.metadata-block {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.metadata-block__label {
+  font-size: var(--font-size-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-right: 0.35rem;
+}
+
+.metadata-block__value {
+  color: var(--color-text);
 }
 
 .form-grid {
@@ -3297,8 +3356,16 @@ h6 {
 .form-grid__summary {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.45rem;
   font-size: 0.9rem;
+}
+
+.form-grid__summary-label {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 @media (width <= 720px) {
