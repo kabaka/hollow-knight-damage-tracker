@@ -1,15 +1,29 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
-const openEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Setup' }).click();
-  const panel = page.locator('#encounter-setup');
-  await expect(panel).toBeVisible();
-  return panel;
+type BossFightSetup = { modal: Locator; panel: Locator };
+
+const openLoadoutModal = async (page: Page): Promise<Locator> => {
+  await page.getByRole('button', { name: /Open loadout configuration/i }).click();
+  const modal = page.getByRole('dialog', { name: 'Player Loadout' });
+  await expect(modal).toBeVisible();
+  return modal;
 };
 
-const closeEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Setup' }).click();
-  await expect(page.locator('#encounter-setup')).toBeHidden();
+const closeLoadoutModal = async (modal: Locator) => {
+  await modal.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+};
+
+const openBossFightSetup = async (page: Page): Promise<BossFightSetup> => {
+  const modal = await openLoadoutModal(page);
+  const bossFightTab = modal.getByRole('tab', { name: 'Boss Fight' });
+  await bossFightTab.scrollIntoViewIfNeeded();
+  await bossFightTab.click({ force: true });
+  await expect(bossFightTab).toHaveAttribute('aria-selected', 'true');
+
+  const panel = modal.locator('#encounter-setup');
+  await expect(panel).toBeVisible();
+  return { modal, panel };
 };
 
 const recordNailStrike = async (page: Page) => {
@@ -30,9 +44,9 @@ test.describe('Combat log', () => {
     const getCombatHistory = () => page.getByRole('log', { name: 'Combat history' });
     await expect(getCombatHistory().getByText('Nail Strike')).toHaveCount(1);
 
-    const setupPanel = await openEncounterSetup(page);
-    await setupPanel.getByRole('radio', { name: 'Custom target' }).click();
-    await closeEncounterSetup(page);
+    const { modal, panel } = await openBossFightSetup(page);
+    await panel.getByRole('radio', { name: 'Custom target' }).click();
+    await closeLoadoutModal(modal);
 
     await expect(page.getByText(/Target: Custom target/i)).toBeVisible();
 
@@ -50,9 +64,9 @@ test.describe('Combat log', () => {
     await expect(nailStrikeEntries).toHaveCount(0);
     await expect(page.locator('.combat-log__entry')).toHaveCount(1);
 
-    const reopenPanel = await openEncounterSetup(page);
-    await reopenPanel.getByRole('radio', { name: 'False Knight' }).click();
-    await closeEncounterSetup(page);
+    const reopened = await openBossFightSetup(page);
+    await reopened.panel.getByRole('radio', { name: 'False Knight' }).click();
+    await closeLoadoutModal(reopened.modal);
 
     await expect(page.getByText(/Target: False Knight/i)).toBeVisible();
     await expect(nailStrikeEntries).toHaveCount(0);
