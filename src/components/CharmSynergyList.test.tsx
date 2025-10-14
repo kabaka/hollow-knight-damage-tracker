@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Charm, CharmSynergy } from '../data';
 import { CharmSynergyList, type CharmSynergyStatus } from './CharmSynergyList';
@@ -46,6 +46,8 @@ const iconMap = new Map<string, string>([
   ['charm-b', '/icons/sharp-shadow.png'],
 ]);
 
+const realSessionStorage = window.sessionStorage;
+
 const statuses: CharmSynergyStatus[] = [
   {
     synergy: createSynergy({
@@ -70,7 +72,24 @@ const statuses: CharmSynergyStatus[] = [
 ];
 
 describe('CharmSynergyList', () => {
-  it('hides inactive synergies and category headings by default', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: realSessionStorage,
+    });
+    window.sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: realSessionStorage,
+    });
+    vi.restoreAllMocks();
+    window.sessionStorage.clear();
+  });
+
+  it('shows all synergies and category headings by default', () => {
     render(
       <CharmSynergyList
         statuses={statuses}
@@ -80,16 +99,65 @@ describe('CharmSynergyList', () => {
     );
 
     expect(screen.getByText('Fleet Footed')).toBeInTheDocument();
-    expect(screen.queryByText('Shadow Clash')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Movement' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Combat' })).not.toBeInTheDocument();
+    expect(screen.getByText('Shadow Clash')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Movement' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Combat' })).toBeInTheDocument();
     expect(screen.getByText('1/2')).toBeInTheDocument();
 
-    const toggleButton = screen.getByRole('button', { name: 'Show all synergies' });
-    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+    const toggleButton = screen.getByRole('button', { name: 'Show active synergies' });
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('reveals inactive synergies and headings when toggled', () => {
+  it('persists the toggled preference via sessionStorage', async () => {
+    const storage = new Map<string, string>();
+    const mockSessionStorage: Storage = {
+      get length() {
+        return storage.size;
+      },
+      clear: vi.fn(() => {
+        storage.clear();
+      }),
+      getItem: vi.fn((key: string) => {
+        return storage.get(key) ?? null;
+      }),
+      key: vi.fn((index: number) => {
+        return Array.from(storage.keys())[index] ?? null;
+      }),
+      removeItem: vi.fn((key: string) => {
+        storage.delete(key);
+      }),
+      setItem: vi.fn((key: string, value: string) => {
+        storage.set(key, value);
+      }),
+    };
+
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: mockSessionStorage,
+    });
+
+    const { unmount } = render(
+      <CharmSynergyList
+        statuses={statuses}
+        charmDetails={charmDetails}
+        iconMap={iconMap}
+      />,
+    );
+
+    const toggleButton = screen.getByRole('button', { name: 'Show active synergies' });
+    fireEvent.click(toggleButton);
+
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+    await waitFor(() => {
+      expect(mockSessionStorage.setItem).toHaveBeenLastCalledWith(
+        'hkdt.synergyFilter',
+        'active',
+      );
+    });
+    expect(storage.get('hkdt.synergyFilter')).toBe('active');
+
+    unmount();
+
     render(
       <CharmSynergyList
         statuses={statuses}
@@ -98,13 +166,13 @@ describe('CharmSynergyList', () => {
       />,
     );
 
-    const toggleButton = screen.getByRole('button', { name: 'Show all synergies' });
-    fireEvent.click(toggleButton);
-
-    expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
-    expect(toggleButton).toHaveTextContent('Show active synergies');
-    expect(screen.getByText('Shadow Clash')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Movement' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Combat' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all synergies' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(mockSessionStorage.getItem).toHaveBeenCalledWith('hkdt.synergyFilter');
+    expect(screen.queryByText('Shadow Clash')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Movement' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Combat' })).not.toBeInTheDocument();
   });
 });

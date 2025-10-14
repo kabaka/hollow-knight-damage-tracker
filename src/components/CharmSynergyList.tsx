@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC } from 'react';
+import { useEffect, useMemo, useState, type FC } from 'react';
 
 import type { Charm, CharmSynergy } from '../data';
 
@@ -45,12 +45,49 @@ const getCategoryLabel = (category: string) => {
     .join(' ');
 };
 
+const SYNERGY_FILTER_STORAGE_KEY = 'hkdt.synergyFilter';
+
 export const CharmSynergyList: FC<CharmSynergyListProps> = ({
   statuses,
   charmDetails,
   iconMap,
 }) => {
-  const [showAllSynergies, setShowAllSynergies] = useState(false);
+  const [showAllSynergies, setShowAllSynergies] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return true;
+    }
+
+    try {
+      const storedPreference = window.sessionStorage.getItem(SYNERGY_FILTER_STORAGE_KEY);
+
+      if (storedPreference === 'active') {
+        return false;
+      }
+
+      if (storedPreference === 'all') {
+        return true;
+      }
+    } catch {
+      // Ignore storage access errors and fall back to default.
+    }
+
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(
+        SYNERGY_FILTER_STORAGE_KEY,
+        showAllSynergies ? 'all' : 'active',
+      );
+    } catch {
+      // Ignore storage access errors so the UI continues working.
+    }
+  }, [showAllSynergies]);
 
   const activeCount = useMemo(
     () => statuses.reduce((total, status) => (status.isActive ? total + 1 : total), 0),
