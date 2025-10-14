@@ -91,6 +91,23 @@ type CharmFlight = {
 type PanelCharmState = 'entering' | 'visible' | 'exiting';
 type EquippedCharmEntry = { charm: Charm; state: PanelCharmState };
 
+type EquippedNotchSlot =
+  | {
+      type: 'charm';
+      charm: Charm;
+      state: PanelCharmState;
+      key: string;
+      slotIndex: number;
+      isPrimary: boolean;
+      isOverflow: boolean;
+      isZeroCost: boolean;
+    }
+  | {
+      type: 'empty';
+      key: string;
+      slotIndex: number;
+    };
+
 export const CHARM_FLIGHT_TIMEOUT_MS = 600;
 
 type TabId = 'charms' | 'synergies' | 'nail' | 'spells' | 'boss';
@@ -441,19 +458,54 @@ const PlayerConfigModalContent: FC = () => {
 
     return [...activeEntries, ...exitingEntries];
   }, [activeCharmIds, charmDetails, panelCharmStates]);
-  const notchIndicators = useMemo(
-    () =>
-      Array.from({ length: MAX_NOTCH_LIMIT }, (_, index) => {
-        const isWithinLimit = index < notchLimit;
-        const isUsed = index < activeCharmCost;
-        return {
-          isWithinLimit,
-          isUsed,
-          isOverfill: isUsed && !isWithinLimit,
-        };
-      }),
-    [activeCharmCost, notchLimit],
-  );
+  const equippedNotchSlots = useMemo(() => {
+    const slots: EquippedNotchSlot[] = [];
+    let notchSlotCount = 0;
+
+    for (const entry of equippedCharmEntries) {
+      const { charm, state } = entry;
+      const cost = Math.max(0, charm.cost);
+
+      if (cost === 0) {
+        slots.push({
+          type: 'charm',
+          charm,
+          state,
+          key: `${charm.id}-free`,
+          slotIndex: notchSlotCount,
+          isPrimary: true,
+          isOverflow: false,
+          isZeroCost: true,
+        });
+        continue;
+      }
+
+      for (let index = 0; index < cost; index += 1) {
+        slots.push({
+          type: 'charm',
+          charm,
+          state,
+          key: `${charm.id}-${index}`,
+          slotIndex: notchSlotCount,
+          isPrimary: index === 0,
+          isOverflow: notchSlotCount >= notchLimit,
+          isZeroCost: false,
+        });
+        notchSlotCount += 1;
+      }
+    }
+
+    const totalSlots = Math.max(notchLimit, notchSlotCount);
+    for (let index = notchSlotCount; index < totalSlots; index += 1) {
+      slots.push({
+        type: 'empty',
+        key: `empty-${index}`,
+        slotIndex: index,
+      });
+    }
+
+    return slots;
+  }, [equippedCharmEntries, notchLimit]);
 
   useEffect(() => {
     const wasOvercharmed = overcharmRef.current;
@@ -717,32 +769,71 @@ const PlayerConfigModalContent: FC = () => {
                 ))}
               </div>
               <div className="charm-workbench__overview">
-                <div className="equipped-panel">
-                  <h4 className="equipped-panel__title">Equipped</h4>
-                  <div
-                    className="equipped-panel__grid"
-                    role="list"
-                    aria-live="polite"
-                    aria-label="Equipped charms"
-                  >
-                    {equippedCharmEntries.length > 0 ? (
-                      equippedCharmEntries.map(({ charm, state }) => {
-                        const icon = charmIconMap.get(charm.id);
-                        const isHidden = state !== 'visible';
+                <div
+                  className={`equipped-overview${
+                    isOvercharmed ? ' equipped-overview--overcharmed' : ''
+                  }`}
+                >
+                  <div className="equipped-overview__body">
+                    <div className="equipped-overview__header">
+                      <h4 className="equipped-overview__title">Equipped</h4>
+                      <span className="equipped-overview__usage">{notchUsage}</span>
+                    </div>
+                    <div
+                      className="equipped-overview__slots"
+                      role="list"
+                      aria-live="polite"
+                      aria-label="Equipped charms"
+                    >
+                      {equippedNotchSlots.map((slot) => {
+                        if (slot.type === 'empty') {
+                          return (
+                            <div
+                              key={slot.key}
+                              className="equipped-overview__slot equipped-overview__slot--empty"
+                              data-testid="notch-slot-empty"
+                              aria-hidden="true"
+                            />
+                          );
+                        }
+
+                        const icon = charmIconMap.get(slot.charm.id);
+                        const isHidden = slot.state !== 'visible';
+                        const classes = ['equipped-overview__slot'];
+                        if (slot.isZeroCost) {
+                          classes.push('equipped-overview__slot--free');
+                        } else {
+                          classes.push('equipped-overview__slot--filled');
+                        }
+                        if (slot.isOverflow) {
+                          classes.push('equipped-overview__slot--overflow');
+                        }
+                        if (isHidden) {
+                          classes.push('equipped-overview__slot--hidden');
+                        }
+
                         return (
                           <div
-                            key={charm.id}
-                            role="listitem"
-                            className={`equipped-panel__item${
-                              isHidden ? ' equipped-panel__item--hidden' : ''
-                            }`}
-                            aria-hidden={isHidden}
-                            title={getCharmTooltip(charm)}
+                            key={slot.key}
+                            className={classes.join(' ')}
+                            data-testid={
+                              slot.isZeroCost
+                                ? 'notch-slot-free'
+                                : slot.isOverflow
+                                  ? 'notch-slot-overflow'
+                                  : 'notch-slot-filled'
+                            }
+                            role={slot.isPrimary ? 'listitem' : 'presentation'}
+                            aria-hidden={slot.isPrimary ? undefined : 'true'}
+                            title={getCharmTooltip(slot.charm)}
                             ref={(element) => {
+                              if (!slot.isPrimary) {
+                                return;
+                              }
                               if (element) {
-                                equippedCharmRefs.current.set(charm.id, element);
+                                equippedCharmRefs.current.set(slot.charm.id, element);
                               } else {
-                                equippedCharmRefs.current.delete(charm.id);
+                                equippedCharmRefs.current.delete(slot.charm.id);
                               }
                             }}
                           >
@@ -750,53 +841,27 @@ const PlayerConfigModalContent: FC = () => {
                               <img
                                 src={icon}
                                 alt=""
-                                className="equipped-panel__icon"
+                                className="equipped-overview__icon"
                                 aria-hidden="true"
                               />
                             ) : null}
-                            <span className="visually-hidden">
-                              {getCharmAriaLabel(charm)}
-                            </span>
+                            {slot.isPrimary ? (
+                              <span className="visually-hidden">
+                                {getCharmAriaLabel(slot.charm)}
+                              </span>
+                            ) : null}
                           </div>
                         );
-                      })
-                    ) : (
-                      <p className="equipped-panel__empty">No charms equipped.</p>
-                    )}
+                      })}
+                    </div>
+                    {activeCharmIds.length === 0 ? (
+                      <p className="equipped-overview__empty" aria-live="polite">
+                        No charms equipped.
+                      </p>
+                    ) : null}
                   </div>
-                </div>
-                <div
-                  className={`notch-panel${isOvercharmed ? ' notch-panel--overcharmed' : ''}`}
-                >
-                  <div className="notch-panel__header">
-                    <h4 className="notch-panel__title">Notches</h4>
-                    <span className="notch-panel__usage">{notchUsage}</span>
-                  </div>
-                  <div className="notch-panel__bracelet" role="presentation">
-                    {notchIndicators.map((indicator, index) => {
-                      const classes = ['notch-dot'];
-                      if (indicator.isWithinLimit) {
-                        classes.push('notch-dot--available');
-                      } else {
-                        classes.push('notch-dot--locked');
-                      }
-                      if (indicator.isUsed) {
-                        classes.push('notch-dot--filled');
-                      }
-                      if (indicator.isOverfill) {
-                        classes.push('notch-dot--overfill');
-                      }
-                      return (
-                        <span
-                          key={index}
-                          className={classes.join(' ')}
-                          aria-hidden="true"
-                        />
-                      );
-                    })}
-                  </div>
-                  <label className="notch-panel__slider" htmlFor="notch-limit">
-                    <span className="notch-panel__slider-label">Notch limit</span>
+                  <label className="equipped-overview__slider" htmlFor="notch-limit">
+                    <span className="equipped-overview__slider-label">Notch limit</span>
                     <input
                       id="notch-limit"
                       type="range"
@@ -808,11 +873,6 @@ const PlayerConfigModalContent: FC = () => {
                       }}
                     />
                   </label>
-                  <p className="notch-panel__description">
-                    Set this to match your save file&apos;s available notches. Reducing
-                    the limit below your equipped cost cracks the bracelet to warn you
-                    that you are overcharmed.
-                  </p>
                 </div>
               </div>
               {isOvercharmed ? (
