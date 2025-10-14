@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +8,7 @@ import {
   CharmFlightSprite,
   PlayerConfigModal,
 } from './PlayerConfigModal';
+import { MAX_NOTCH_LIMIT, MIN_NOTCH_LIMIT } from '../fight-state/fightReducer';
 
 const openModal = () => {
   window.localStorage.clear();
@@ -83,6 +84,53 @@ describe('PlayerConfigModal charms', () => {
     vi.useRealTimers();
   });
 
+  it('renders empty notch slots and updates them when the slider changes', async () => {
+    openModal();
+
+    const slider = (await screen.findByLabelText(/notch limit/i)) as HTMLInputElement;
+    const initialLimit = Number(slider.value);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('notch-slot-empty')).toHaveLength(initialLimit);
+    });
+
+    const nextLimit =
+      initialLimit < MAX_NOTCH_LIMIT
+        ? initialLimit + 1
+        : Math.max(MIN_NOTCH_LIMIT, initialLimit - 1);
+
+    fireEvent.change(slider, { target: { value: String(nextLimit) } });
+
+    await waitFor(() => {
+      expect(Number(slider.value)).toBe(nextLimit);
+      expect(screen.getAllByTestId('notch-slot-empty')).toHaveLength(nextLimit);
+    });
+  });
+
+  it('displays filled notch slots for equipped charms', async () => {
+    const user = userEvent.setup();
+    openModal();
+
+    const slider = (await screen.findByLabelText(/notch limit/i)) as HTMLInputElement;
+    const compassButton = screen.getByRole('button', {
+      name: /wayward compass/i,
+    });
+
+    await user.click(compassButton);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('notch-slot-filled')).not.toHaveLength(0);
+    });
+
+    const filledSlots = screen.getAllByTestId('notch-slot-filled');
+    const emptySlots = screen.queryAllByTestId('notch-slot-empty');
+    const overflowSlots = screen.queryAllByTestId('notch-slot-overflow');
+
+    expect(filledSlots.length).toBeGreaterThan(0);
+    expect(overflowSlots.length).toBe(0);
+    expect(filledSlots.length + emptySlots.length).toBe(Number(slider.value));
+  });
+
   it('retains rapid charm selections without dropping earlier choices', async () => {
     const user = userEvent.setup();
     openModal();
@@ -135,7 +183,7 @@ describe('PlayerConfigModal charms', () => {
       const equippedItems = within(equippedList).getAllByRole('listitem');
       expect(equippedItems).toHaveLength(1);
       expect(equippedItems[0]).toHaveTextContent(/fragile heart/i);
-      expect(equippedItems[0]).not.toHaveClass('equipped-panel__item--hidden');
+      expect(equippedItems[0]).not.toHaveClass('equipped-overview__slot--hidden');
     });
   });
 
@@ -164,7 +212,7 @@ describe('PlayerConfigModal charms', () => {
     await waitFor(() => {
       const equippedItems = within(modal).queryAllByRole('listitem');
       for (const item of equippedItems) {
-        expect(item).not.toHaveClass('equipped-panel__item--hidden');
+        expect(item).not.toHaveClass('equipped-overview__slot--hidden');
       }
     });
 
@@ -175,7 +223,7 @@ describe('PlayerConfigModal charms', () => {
     await waitFor(() => {
       const equippedItems = within(modal).queryAllByRole('listitem');
       for (const item of equippedItems) {
-        expect(item).not.toHaveClass('equipped-panel__item--hidden');
+        expect(item).not.toHaveClass('equipped-overview__slot--hidden');
       }
     });
     const equippedList = within(modal).getByRole('list', { name: /equipped charms/i });
@@ -193,7 +241,7 @@ describe('PlayerConfigModal charms', () => {
     await waitFor(() => {
       const equippedItems = within(modal).queryAllByRole('listitem');
       for (const item of equippedItems) {
-        expect(item).not.toHaveClass('equipped-panel__item--hidden');
+        expect(item).not.toHaveClass('equipped-overview__slot--hidden');
       }
     });
     await waitFor(() => {
