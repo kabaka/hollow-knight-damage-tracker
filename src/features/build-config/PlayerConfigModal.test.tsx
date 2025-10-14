@@ -24,6 +24,60 @@ const baseAnimation = {
   size: { width: 32, height: 32 },
 } as const;
 
+describe('PlayerConfigModal tabs', () => {
+  it('activates the requested panel when its tab is selected', async () => {
+    const user = userEvent.setup();
+    openModal();
+    await Promise.resolve();
+
+    const spellsTab = screen.getByRole('tab', { name: /spells/i });
+    const charmsTab = screen.getByRole('tab', { name: /charms/i });
+    await user.click(spellsTab);
+
+    await waitFor(() => {
+      expect(spellsTab).toHaveAttribute('aria-selected', 'true');
+    });
+    expect(charmsTab).toHaveAttribute('aria-selected', 'false');
+
+    const tabPanels = screen.getAllByRole('tabpanel', { hidden: true });
+    const findPanelByTab = (tabId: string | null) =>
+      tabPanels.find((panel) => panel.getAttribute('aria-labelledby') === tabId);
+
+    const spellsPanel = findPanelByTab(spellsTab.id);
+    expect(spellsPanel).toBeDefined();
+    expect(spellsPanel).not.toHaveAttribute('hidden');
+
+    const charmsPanel = findPanelByTab(charmsTab.id);
+    expect(charmsPanel).toBeDefined();
+    expect(charmsPanel).toHaveAttribute('hidden');
+  });
+
+  it('supports roving focus and selection via keyboard navigation', async () => {
+    const user = userEvent.setup();
+    openModal();
+    await Promise.resolve();
+
+    const charmsTab = screen.getByRole('tab', { name: /charms/i });
+    charmsTab.focus();
+    expect(charmsTab).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    const synergiesTab = screen.getByRole('tab', { name: /charm synergies/i });
+    expect(synergiesTab).toHaveFocus();
+    expect(synergiesTab).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{End}');
+    const bossTab = screen.getByRole('tab', { name: /boss fight/i });
+    expect(bossTab).toHaveFocus();
+    expect(bossTab).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{ArrowUp}');
+    const spellsTab = screen.getByRole('tab', { name: /spells/i });
+    expect(spellsTab).toHaveFocus();
+    expect(spellsTab).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
 describe('PlayerConfigModal charms', () => {
   afterEach(() => {
     vi.useRealTimers();
