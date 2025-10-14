@@ -267,7 +267,10 @@ test.describe('Landing page', () => {
     const modal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(modal).toBeVisible();
 
+    await modal.getByRole('tab', { name: 'Nail' }).click();
     await modal.locator('#nail-level').selectOption('pure-nail');
+
+    await modal.getByRole('tab', { name: 'Charms' }).click();
     await modal.getByRole('button', { name: 'Strength & Quick Slash' }).click();
 
     await modal.getByRole('button', { name: 'Close', exact: true }).click();
@@ -307,7 +310,10 @@ test.describe('Landing page', () => {
     const reopenedModal = page.getByRole('dialog', { name: 'Player Loadout' });
     await expect(reopenedModal).toBeVisible();
 
+    await reopenedModal.getByRole('tab', { name: 'Nail' }).click();
     await expect(reopenedModal.locator('#nail-level')).toHaveValue('pure-nail');
+
+    await reopenedModal.getByRole('tab', { name: 'Charms' }).click();
     await expect(
       reopenedModal.getByRole('button', { name: /^Unbreakable Strength/ }),
     ).toHaveAttribute('aria-pressed', 'true');
