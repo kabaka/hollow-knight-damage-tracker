@@ -21,7 +21,7 @@ const openBossFightSetup = async (page: Page): Promise<BossFightSetup> => {
   await bossFightTab.click({ force: true });
   await expect(bossFightTab).toHaveAttribute('aria-selected', 'true');
 
-  const panel = modal.locator('#encounter-setup');
+  const panel = modal.locator('.boss-config');
   await expect(panel).toBeVisible();
   return { modal, panel };
 };

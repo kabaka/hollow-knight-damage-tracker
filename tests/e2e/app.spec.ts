@@ -51,7 +51,7 @@ const openBossFightSetup = async (page: Page): Promise<BossFightSetup> => {
   const modal = await openLoadoutModal(page);
   await activateModalTab(modal, 'Boss Fight');
 
-  const panel = modal.locator('#encounter-setup');
+  const panel = modal.locator('.boss-config');
   await expect(panel).toBeVisible();
   return { modal, panel };
 };

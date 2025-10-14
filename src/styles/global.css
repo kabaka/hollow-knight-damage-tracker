@@ -1054,69 +1054,48 @@ h6 {
   }
 }
 
-.encounter-setup {
-  position: relative;
-  clip-path: var(--shape-tablet);
-  background-color: var(--color-surface-muted);
-  background-image:
-    radial-gradient(circle at 25% 20%, rgb(214 217 231 / 18%), transparent 62%),
-    radial-gradient(circle at 80% 75%, rgb(34 52 84 / 42%), transparent 70%),
-    var(--texture-vein);
-  padding: clamp(0.95rem, 2.4vw, 1.45rem);
+.boss-config {
   display: grid;
-  gap: clamp(0.8rem, 1.6vw, 1.2rem);
-  box-shadow:
-    var(--frame-shadow-raised),
-    var(--frame-outline),
-    inset 0 0 0 1px rgb(255 255 255 / 8%),
-    var(--frame-etch);
-  overflow: hidden;
+  gap: clamp(0.85rem, 1.8vw, 1.35rem);
 }
 
-.encounter-setup[hidden] {
+.boss-config[hidden] {
   display: none;
 }
 
-.encounter-setup__grid {
+.boss-config__mode-toggle {
   display: grid;
-  gap: clamp(0.8rem, 1.6vw, 1.2rem);
-}
-
-.encounter-setup__mode-toggle {
-  display: grid;
-  gap: 0.55rem;
+  gap: 0.5rem;
   align-items: start;
 }
 
-.encounter-setup__mode-label {
+.boss-config__mode-label {
   font-size: var(--font-size-caption);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
 
-.encounter-setup__mode-segments {
+.boss-config__mode-tabs {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem;
   border-radius: 999px;
-  background-color: rgb(18 26 44 / 78%);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 12%),
-    0 8px 22px rgb(0 0 0 / 55%);
+  background-color: rgb(21 28 42 / 82%);
+  border: 1px solid rgb(255 255 255 / 10%);
 }
 
-.encounter-setup__mode-button {
+.boss-config__mode-button {
   appearance: none;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0.45rem 0.95rem;
+  padding: 0.45rem 0.9rem;
   background: transparent;
-  color: rgb(240 243 255 / 65%);
+  color: rgb(238 244 255 / 68%);
   font-weight: 600;
   font-size: var(--font-size-body);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition:
     color 160ms ease,
@@ -1125,17 +1104,14 @@ h6 {
     box-shadow 160ms ease;
 }
 
-.encounter-setup__mode-button[aria-selected='true'] {
+.boss-config__mode-button[aria-selected='true'] {
   color: var(--color-text);
-  background: linear-gradient(140deg, rgb(215 245 255 / 24%), transparent);
-  border-color: rgb(215 245 255 / 35%);
-  box-shadow:
-    0 10px 24px rgb(0 0 0 / 48%),
-    0 0 14px rgb(215 245 255 / 28%),
-    inset 0 0 0 1px rgb(255 255 255 / 14%);
+  background-color: rgb(233 244 255 / 28%);
+  border-color: rgb(233 244 255 / 35%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
 }
 
-.encounter-setup__mode-button:focus-visible {
+.boss-config__mode-button:focus-visible {
   outline: 2px solid rgb(215 245 255 / 55%);
   outline-offset: 2px;
 }
@@ -1842,12 +1818,6 @@ h6 {
 
 .app-main {
   gap: clamp(0.9rem, 1.9vw, 1.35rem);
-}
-
-@media (width >= 768px) {
-  .encounter-setup__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (width >= 1024px) {
