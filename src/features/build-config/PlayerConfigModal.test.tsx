@@ -95,13 +95,13 @@ describe('PlayerConfigModal spells', () => {
     expect(abyssShriekOption).toHaveTextContent(/Total damage\s*80/i);
     expect(abyssShriekOption).toHaveTextContent(/Hits\s*4/i);
     expect(abyssShriekOption).toHaveTextContent(
-      /Origin:\s*Found at the bottom of The Abyss\./i,
+      /Origin\s*Found at the bottom of The Abyss\./i,
     );
   });
 });
 
 describe('PlayerConfigModal nail', () => {
-  it('summarises the selected upgrade requirements', async () => {
+  it('renders metadata for each upgrade and allows selection without a dropdown', async () => {
     const user = userEvent.setup();
     openModal();
     await Promise.resolve();
@@ -109,14 +109,19 @@ describe('PlayerConfigModal nail', () => {
     const nailTab = screen.getByRole('tab', { name: /nail/i });
     await user.click(nailTab);
 
-    const select = (await screen.findByLabelText(/nail upgrade/i)) as HTMLSelectElement;
-    await user.selectOptions(select, 'coiled-nail');
+    const coiledCard = await screen.findByTestId('nail-option-coiled-nail');
+    expect(coiledCard).toHaveTextContent(/Geo\s*2,?000/i);
+    expect(coiledCard).toHaveTextContent(/Pale Ore\s*2/i);
+    expect(coiledCard).toHaveTextContent(/Origin\s*Upgrade from the Nailsmith/i);
 
-    const summaryContainer = await screen.findByTestId('nail-upgrade-summary');
-    expect(summaryContainer).toHaveTextContent(/Damage\s*17/i);
-    expect(summaryContainer).toHaveTextContent(/Geo\s*2,?000/i);
-    expect(summaryContainer).toHaveTextContent(/Pale Ore\s*2/i);
-    expect(summaryContainer).toHaveTextContent(/Origin:\s*Upgrade from the Nailsmith\./i);
+    const pureCard = await screen.findByTestId('nail-option-pure-nail');
+    expect(pureCard).toHaveTextContent(/Damage\s*21/i);
+    expect(pureCard).toHaveTextContent(/Geo\s*4,?000/i);
+    expect(pureCard).toHaveTextContent(/Pale Ore\s*3/i);
+
+    const coiledRadio = within(coiledCard).getByRole('radio', { name: /coiled nail/i });
+    await user.click(coiledCard);
+    expect(coiledRadio).toBeChecked();
   });
 });
 

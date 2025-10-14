@@ -83,12 +83,12 @@ type StatEntry = { term: string; value: string };
 
 type MetadataEntry = { label: string; value: string };
 
-type SpellMetadata = { stats: StatEntry[]; meta: MetadataEntry[] };
+type OptionMetadata = { stats: StatEntry[]; meta: MetadataEntry[] };
 
 const createSpellMetadata = (
   spell: Spell,
   level: 'none' | 'base' | 'upgrade',
-): SpellMetadata => {
+): OptionMetadata => {
   let variant: SpellVariant | null = null;
 
   switch (level) {
@@ -137,10 +137,14 @@ const createSpellMetadata = (
   return { stats, meta };
 };
 
-const SpellOptionMetadata: FC<{ metadata: SpellMetadata }> = ({ metadata }) => (
-  <>
+const OptionMetadataBlock: FC<{ metadata: OptionMetadata }> = ({ metadata }) => (
+  <div
+    className="option-metadata"
+    data-has-meta={metadata.meta.length > 0}
+    data-has-stats={metadata.stats.length > 0}
+  >
     {metadata.stats.length > 0 ? (
-      <dl className="stat-list">
+      <dl className="option-metadata__stats stat-list">
         {metadata.stats.map((stat) => (
           <div key={stat.term} className="stat-list__item">
             <dt className="stat-list__term">{stat.term}</dt>
@@ -149,27 +153,33 @@ const SpellOptionMetadata: FC<{ metadata: SpellMetadata }> = ({ metadata }) => (
         ))}
       </dl>
     ) : null}
-    {metadata.meta.map((entry, index) => (
-      <p key={`${entry.label}-${index}`} className="metadata-block">
-        <span className="metadata-block__label">{entry.label}:</span>{' '}
-        <span className="metadata-block__value">{entry.value}</span>
-      </p>
-    ))}
-  </>
+    {metadata.meta.length > 0 ? (
+      <dl className="option-metadata__meta">
+        {metadata.meta.map((entry, index) => (
+          <div key={`${entry.label}-${index}`} className="option-metadata__meta-row">
+            <dt className="option-metadata__meta-term">{entry.label}</dt>
+            <dd className="option-metadata__meta-value">{entry.value}</dd>
+          </div>
+        ))}
+      </dl>
+    ) : null}
+  </div>
 );
 
-type NailMetadata = { stats: StatEntry[]; origin?: string };
-
-const createNailMetadata = (upgrade: NailUpgrade): NailMetadata => {
+const createNailMetadata = (upgrade: NailUpgrade): OptionMetadata => {
   const stats: StatEntry[] = [
     { term: 'Damage', value: formatNumber(upgrade.damage) },
     { term: 'Geo', value: formatNumber(upgrade.cost.geo) },
     { term: 'Pale Ore', value: formatNumber(upgrade.cost.pale_ore) },
   ];
 
+  const meta: MetadataEntry[] = upgrade.origin
+    ? [{ label: 'Origin', value: upgrade.origin }]
+    : [];
+
   return {
     stats,
-    origin: upgrade.origin,
+    meta,
   };
 };
 
@@ -355,6 +365,7 @@ const PlayerConfigModalContent: FC = () => {
     },
   );
   const tabBaseId = useId();
+  const nailRadioName = useId();
   const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({
     charms: null,
     synergies: null,
@@ -1168,75 +1179,85 @@ const PlayerConfigModalContent: FC = () => {
             </div>
             <div className="spell-grid">
               {spells.map((spell) => {
+                const selectedLevel = build.spellLevels[spell.id];
                 const noneMetadata = createSpellMetadata(spell, 'none');
                 const baseMetadata = createSpellMetadata(spell, 'base');
                 const upgradeMetadata = spell.upgrade
                   ? createSpellMetadata(spell, 'upgrade')
                   : null;
 
+                const renderSpellOption = (
+                  level: 'none' | 'base' | 'upgrade',
+                  title: string,
+                  metadata: OptionMetadata,
+                  testId: string,
+                  extraClassName?: string,
+                ) => {
+                  const isSelected = selectedLevel === level;
+                  const name = `spell-${spell.id}`;
+                  const optionId = `${name}-${level}`;
+                  return (
+                    <label
+                      key={level}
+                      className={`spell-card__option${
+                        extraClassName ? ` ${extraClassName}` : ''
+                      }`}
+                      data-testid={testId}
+                      data-selected={isSelected}
+                      htmlFor={optionId}
+                      aria-label={title}
+                    >
+                      <input
+                        id={optionId}
+                        type="radio"
+                        name={name}
+                        value={level}
+                        checked={build.spellLevels[spell.id] === level}
+                        onChange={() => {
+                          setSpellLevel(spell.id, level);
+                        }}
+                      />
+                      <div className="spell-card__option-body">
+                        <div className="spell-card__option-header">
+                          <span className="spell-card__option-title">{title}</span>
+                        </div>
+                        <div className="spell-card__option-metadata">
+                          <OptionMetadataBlock metadata={metadata} />
+                        </div>
+                      </div>
+                    </label>
+                  );
+                };
+
                 return (
                   <fieldset key={spell.id} className="spell-card">
                     <legend>{spell.name}</legend>
-                    <label
-                      className="spell-card__option spell-card__option--muted"
-                      data-testid={`spell-option-${spell.id}-none`}
+                    <div
+                      className="spell-card__options"
+                      data-option-count={spell.upgrade ? 3 : 2}
                     >
-                      <input
-                        type="radio"
-                        name={`spell-${spell.id}`}
-                        value="none"
-                        checked={build.spellLevels[spell.id] === 'none'}
-                        onChange={() => {
-                          setSpellLevel(spell.id, 'none');
-                        }}
-                      />
-                      <div className="spell-card__option-body">
-                        <span className="spell-card__option-title">Not acquired</span>
-                        <SpellOptionMetadata metadata={noneMetadata} />
-                      </div>
-                    </label>
-                    <label
-                      className="spell-card__option"
-                      data-testid={`spell-option-${spell.id}-base`}
-                    >
-                      <input
-                        type="radio"
-                        name={`spell-${spell.id}`}
-                        value="base"
-                        checked={build.spellLevels[spell.id] === 'base'}
-                        onChange={() => {
-                          setSpellLevel(spell.id, 'base');
-                        }}
-                      />
-                      <div className="spell-card__option-body">
-                        <span className="spell-card__option-title">
-                          {spell.base.name}
-                        </span>
-                        <SpellOptionMetadata metadata={baseMetadata} />
-                      </div>
-                    </label>
-                    {spell.upgrade && upgradeMetadata ? (
-                      <label
-                        className="spell-card__option"
-                        data-testid={`spell-option-${spell.id}-upgrade`}
-                      >
-                        <input
-                          type="radio"
-                          name={`spell-${spell.id}`}
-                          value="upgrade"
-                          checked={build.spellLevels[spell.id] === 'upgrade'}
-                          onChange={() => {
-                            setSpellLevel(spell.id, 'upgrade');
-                          }}
-                        />
-                        <div className="spell-card__option-body">
-                          <span className="spell-card__option-title">
-                            {spell.upgrade.name}
-                          </span>
-                          <SpellOptionMetadata metadata={upgradeMetadata} />
-                        </div>
-                      </label>
-                    ) : null}
+                      {renderSpellOption(
+                        'none',
+                        'Not acquired',
+                        noneMetadata,
+                        `spell-option-${spell.id}-none`,
+                        'spell-card__option--muted',
+                      )}
+                      {renderSpellOption(
+                        'base',
+                        spell.base.name,
+                        baseMetadata,
+                        `spell-option-${spell.id}-base`,
+                      )}
+                      {spell.upgrade && upgradeMetadata
+                        ? renderSpellOption(
+                            'upgrade',
+                            spell.upgrade.name,
+                            upgradeMetadata,
+                            `spell-option-${spell.id}-upgrade`,
+                          )
+                        : null}
+                    </div>
                   </fieldset>
                 );
               })}
@@ -1245,13 +1266,10 @@ const PlayerConfigModalContent: FC = () => {
         );
       case 'nail': {
         const fallbackUpgrade = nailUpgrades.length > 0 ? nailUpgrades[0] : null;
-        const selectedNailUpgrade =
-          nailUpgrades.find((upgrade) => upgrade.id === build.nailUpgradeId) ??
-          fallbackUpgrade;
-        const nailMetadata = selectedNailUpgrade
-          ? createNailMetadata(selectedNailUpgrade)
-          : null;
-
+        const selectedNailUpgradeId = build.nailUpgradeId || fallbackUpgrade?.id || '';
+        const nailMetadataById = new Map(
+          nailUpgrades.map((upgrade) => [upgrade.id, createNailMetadata(upgrade)]),
+        );
         return (
           <section className="modal-section" aria-labelledby="nail-heading">
             <div className="modal-section__header">
@@ -1260,47 +1278,43 @@ const PlayerConfigModalContent: FC = () => {
             <p className="modal-section__description">
               Select your smithing progress so damage calculations stay accurate.
             </p>
-            <div className="form-grid">
-              <label className="form-grid__field" htmlFor="nail-level">
-                <span>Nail upgrade</span>
-                <select
-                  id="nail-level"
-                  value={build.nailUpgradeId}
-                  onChange={(event) => {
-                    setNailUpgrade(event.target.value);
-                  }}
-                >
-                  {nailUpgrades.map((upgrade) => (
-                    <option key={upgrade.id} value={upgrade.id}>
-                      {upgrade.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {nailMetadata ? (
-                <div
-                  className="form-grid__summary"
-                  aria-live="polite"
-                  data-testid="nail-upgrade-summary"
-                >
-                  <span className="form-grid__summary-label">Upgrade details</span>
-                  <dl className="stat-list">
-                    {nailMetadata.stats.map((stat) => (
-                      <div key={`nail-${stat.term}`} className="stat-list__item">
-                        <dt className="stat-list__term">{stat.term}</dt>
-                        <dd className="stat-list__value">{stat.value}</dd>
+            <fieldset className="nail-upgrade-grid">
+              <legend className="nail-upgrade-grid__legend">Nail upgrade</legend>
+              {nailUpgrades.map((upgrade) => {
+                const metadata = nailMetadataById.get(upgrade.id);
+                const optionId = `nail-upgrade-${upgrade.id}`;
+                const isSelected = selectedNailUpgradeId === upgrade.id;
+                return (
+                  <label
+                    key={upgrade.id}
+                    className="nail-card"
+                    htmlFor={optionId}
+                    data-testid={`nail-option-${upgrade.id}`}
+                    data-selected={isSelected}
+                  >
+                    <input
+                      id={optionId}
+                      type="radio"
+                      name={nailRadioName}
+                      value={upgrade.id}
+                      checked={isSelected}
+                      onChange={(event) => {
+                        setNailUpgrade(event.target.value);
+                      }}
+                    />
+                    <div className="nail-card__content">
+                      <div className="nail-card__header">
+                        <span className="nail-card__title">{upgrade.name}</span>
+                        <span className="nail-card__subtitle">
+                          Damage {formatNumber(upgrade.damage)}
+                        </span>
                       </div>
-                    ))}
-                  </dl>
-                  {nailMetadata.origin ? (
-                    <p className="metadata-block">
-                      <span className="metadata-block__label">Origin:</span>{' '}
-                      <span className="metadata-block__value">{nailMetadata.origin}</span>
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+                      {metadata ? <OptionMetadataBlock metadata={metadata} /> : null}
+                    </div>
+                  </label>
+                );
+              })}
+            </fieldset>
           </section>
         );
       }
