@@ -120,6 +120,8 @@ describe('AttackLogPanel', () => {
       </AttackLogProvider>,
     );
 
+    await user.click(screen.getByRole('tab', { name: /spells/i }));
+
     await user.click(
       screen.getByRole('radio', {
         name: /shade soul/i,
