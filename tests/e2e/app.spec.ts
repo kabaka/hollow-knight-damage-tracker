@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 const STORAGE_KEY = 'hollow-knight-damage-tracker:fight-state';
 const STORAGE_VERSION = 5;
@@ -26,24 +26,42 @@ const getAttackDamage = async (page: Page, attackId: string) => {
   return Number.parseInt(damageText, 10);
 };
 
-const openEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Setup' }).click();
-  const panel = page.locator('#encounter-setup');
-  await expect(panel).toBeVisible();
-  return panel;
+type BossFightSetup = { modal: Locator; panel: Locator };
+
+const openLoadoutModal = async (page: Page): Promise<Locator> => {
+  await page.getByRole('button', { name: /Open loadout configuration/i }).click();
+  const modal = page.getByRole('dialog', { name: 'Player Loadout' });
+  await expect(modal).toBeVisible();
+  return modal;
 };
 
-const closeEncounterSetup = async (page: Page) => {
-  await page.getByRole('button', { name: 'Setup' }).click();
-  await expect(page.locator('#encounter-setup')).toBeHidden();
+const closeLoadoutModal = async (modal: Locator) => {
+  await modal.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+};
+
+const activateModalTab = async (modal: Locator, name: string) => {
+  const tab = modal.getByRole('tab', { name });
+  await tab.click({ force: true });
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+  return tab;
+};
+
+const openBossFightSetup = async (page: Page): Promise<BossFightSetup> => {
+  const modal = await openLoadoutModal(page);
+  await activateModalTab(modal, 'Boss Fight');
+
+  const panel = modal.locator('#encounter-setup');
+  await expect(panel).toBeVisible();
+  return { modal, panel };
 };
 
 const setCustomTargetHp = async (page: Page, hp: number) => {
-  const panel = await openEncounterSetup(page);
+  const { modal, panel } = await openBossFightSetup(page);
   await panel.getByRole('radio', { name: 'Custom target' }).click();
   const customTargetInput = panel.getByLabel(/custom target hp/i);
   await customTargetInput.fill(hp.toString());
-  await closeEncounterSetup(page);
+  await closeLoadoutModal(modal);
 };
 
 const selectBossWithVersion = async (
@@ -51,15 +69,17 @@ const selectBossWithVersion = async (
   bossName: string,
   versionLabel: string,
 ) => {
-  const panel = await openEncounterSetup(page);
+  const { modal, panel } = await openBossFightSetup(page);
   await panel.getByRole('radio', { name: bossName }).click();
-  await panel.getByRole('button', { name: 'Toggle advanced target options' }).click();
+  await panel
+    .getByRole('button', { name: 'Toggle advanced target options' })
+    .click({ force: true });
   await panel.getByLabel('Boss version').selectOption({ label: `${versionLabel}` });
-  await closeEncounterSetup(page);
+  await closeLoadoutModal(modal);
 };
 
-const selectSequence = async (page: Page, name: string) => {
-  const panel = await openEncounterSetup(page);
+const selectSequence = async (page: Page, name: string): Promise<BossFightSetup> => {
+  const { modal, panel } = await openBossFightSetup(page);
   const sequenceTab = panel.getByRole('tab', { name: 'Sequence run' });
   await sequenceTab.click();
   await expect(sequenceTab).toHaveAttribute('aria-selected', 'true');
@@ -75,7 +95,7 @@ const selectSequence = async (page: Page, name: string) => {
   await expect(sequenceOption).toBeChecked();
   await expect(sequenceCard.locator('.sequence-selector__stages')).toBeVisible();
 
-  return panel;
+  return { modal, panel };
 };
 
 type FightStateOverrides = {
@@ -210,7 +230,6 @@ test.describe('Landing page', () => {
 
   test('displays the core sections', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Damage Tracker' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Setup' })).toBeVisible();
     await expect(
       page.getByRole('button', { name: /Open loadout configuration/i }),
     ).toBeVisible();
@@ -257,23 +276,17 @@ test.describe('Landing page', () => {
   });
 
   test('restores build configuration and logs after a reload', async ({ page }) => {
-    await page.getByRole('button', { name: 'Setup' }).click();
-    await page.getByRole('radio', { name: 'Custom target' }).click();
-    const customTargetInput = page.getByLabel(/custom target hp/i);
-    await customTargetInput.fill('3333');
+    await setCustomTargetHp(page, 3333);
 
-    await page.getByRole('button', { name: /Open loadout configuration/i }).click();
+    const modal = await openLoadoutModal(page);
 
-    const modal = page.getByRole('dialog', { name: 'Player Loadout' });
-    await expect(modal).toBeVisible();
-
-    await modal.getByRole('tab', { name: 'Nail' }).click();
+    await activateModalTab(modal, 'Nail');
     await modal.locator('#nail-level').selectOption('pure-nail');
 
-    await modal.getByRole('tab', { name: 'Charms' }).click();
+    await activateModalTab(modal, 'Charms');
     await modal.getByRole('button', { name: 'Strength & Quick Slash' }).click();
 
-    await modal.getByRole('button', { name: 'Close', exact: true }).click();
+    await closeLoadoutModal(modal);
 
     await page.getByRole('button', { name: 'Nail Strike' }).click();
 
@@ -298,22 +311,18 @@ test.describe('Landing page', () => {
 
     await page.reload();
 
-    await page.getByRole('button', { name: 'Setup' }).click();
-    const restoredCustomOption = page.getByRole('radio', {
+    const { modal: reopenedModal, panel: bossPanel } = await openBossFightSetup(page);
+    const restoredCustomOption = bossPanel.getByRole('radio', {
       name: 'Custom target',
       checked: true,
     });
     await expect(restoredCustomOption).toBeVisible();
-    await expect(page.getByLabel(/custom target hp/i)).toHaveValue('3333');
+    await expect(bossPanel.getByLabel(/custom target hp/i)).toHaveValue('3333');
 
-    await page.getByRole('button', { name: /Open loadout configuration/i }).click();
-    const reopenedModal = page.getByRole('dialog', { name: 'Player Loadout' });
-    await expect(reopenedModal).toBeVisible();
-
-    await reopenedModal.getByRole('tab', { name: 'Nail' }).click();
+    await activateModalTab(reopenedModal, 'Nail');
     await expect(reopenedModal.locator('#nail-level')).toHaveValue('pure-nail');
 
-    await reopenedModal.getByRole('tab', { name: 'Charms' }).click();
+    await activateModalTab(reopenedModal, 'Charms');
     await expect(
       reopenedModal.getByRole('button', { name: /^Unbreakable Strength/ }),
     ).toHaveAttribute('aria-pressed', 'true');
@@ -321,7 +330,7 @@ test.describe('Landing page', () => {
       reopenedModal.getByRole('button', { name: /^Quick Slash/ }),
     ).toHaveAttribute('aria-pressed', 'true');
 
-    await reopenedModal.getByRole('button', { name: 'Close', exact: true }).click();
+    await closeLoadoutModal(reopenedModal);
     await expect(totalActionsSublabel).toHaveText('1');
     await expect(progressbar).toHaveAttribute(
       'aria-valuenow',
@@ -413,8 +422,8 @@ test.describe('Combat mechanics', () => {
 test.describe('Sequence modes and navigation', () => {
   test('auto-advances to the next pantheon stage after a defeat', async ({ page }) => {
     await configurePureNailStrengthShamanBuild(page);
-    await selectSequence(page, 'Pantheon of the Master');
-    await closeEncounterSetup(page);
+    const setup = await selectSequence(page, 'Pantheon of the Master');
+    await closeLoadoutModal(setup.modal);
 
     const timelineTitle = page.locator('.hud-timeline__title');
     await expect(timelineTitle).toHaveText('Vengefly King');
@@ -440,8 +449,8 @@ test.describe('Sequence modes and navigation', () => {
 
   test('supports manual stage navigation with persistent state', async ({ page }) => {
     await configurePureNailStrengthShamanBuild(page);
-    await selectSequence(page, 'Pantheon of the Master');
-    await closeEncounterSetup(page);
+    const setup = await selectSequence(page, 'Pantheon of the Master');
+    await closeLoadoutModal(setup.modal);
 
     const progressbar = getBossHealthProgressbar(page);
     const targetHp = Number.parseInt(
@@ -477,7 +486,10 @@ test.describe('Sequence modes and navigation', () => {
 
   test('toggles conditional bosses within a pantheon sequence', async ({ page }) => {
     await configurePureNailStrengthShamanBuild(page);
-    const panel = await selectSequence(page, 'Pantheon of the Sage');
+    const { modal: setupModal, panel } = await selectSequence(
+      page,
+      'Pantheon of the Sage',
+    );
 
     const activeOption = panel.locator(
       '.sequence-selector__option[data-selected="true"]',
@@ -494,7 +506,7 @@ test.describe('Sequence modes and navigation', () => {
     const zoteIndex = stageNames.indexOf('Grey Prince Zote');
     expect(zoteIndex).toBe(galienIndex + 1);
 
-    await closeEncounterSetup(page);
+    await closeLoadoutModal(setupModal);
   });
 });
 
@@ -555,14 +567,16 @@ test.describe('UI controls and shortcuts', () => {
 
     await modal.locator('#notch-limit').fill('6');
 
-    await modal.getByRole('button', { name: /^Fragile Strength,/ }).click();
-    await modal.getByRole('button', { name: /^Unbreakable Strength,/ }).click();
-    await expect(
-      modal.getByRole('button', { name: /^Unbreakable Strength,/ }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    await expect(
-      modal.getByRole('button', { name: /^Fragile Strength,/ }),
-    ).toHaveAttribute('aria-pressed', 'false');
+    const fragileButton = modal.getByRole('button', { name: /^Fragile Strength,/ });
+    await fragileButton.click();
+    await expect(fragileButton).toHaveAttribute('aria-pressed', 'true');
+
+    const unbreakableButton = modal.getByRole('button', {
+      name: /^Unbreakable Strength,/,
+    });
+    await unbreakableButton.evaluate((element) => (element as HTMLButtonElement).click());
+    await expect(unbreakableButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(fragileButton).toHaveAttribute('aria-pressed', 'false');
 
     await modal.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(modal).toBeHidden();

@@ -6,6 +6,19 @@ import { CHARM_FLIGHT_TIMEOUT_MS } from '../features/build-config/PlayerConfigMo
 import { App } from './App';
 import { formatSequenceHeaderLabel } from './formatSequenceHeaderLabel';
 
+const openLoadoutModal = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByRole('button', { name: /open loadout configuration/i }));
+  return screen.findByRole('dialog', { name: /player loadout/i });
+};
+
+const openBossFightPanel = async (user: ReturnType<typeof userEvent.setup>) => {
+  const modal = await openLoadoutModal(user);
+  const bossTab = within(modal).getByRole('tab', { name: /boss fight/i });
+  await user.click(bossTab);
+  const panel = within(modal).getByRole('tabpanel', { name: /boss fight/i });
+  return { modal, panel };
+};
+
 describe('App', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -26,9 +39,7 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: /open loadout configuration/i }),
     ).toBeVisible();
-    const changeEncounter = screen.getByRole('button', { name: /setup/i });
-    expect(changeEncounter).toHaveAttribute('aria-expanded', 'false');
-    const banner = screen.getByRole('banner');
+    const banner = screen.getByRole('banner', { name: /damage tracker/i });
     expect(
       within(banner).getByRole('progressbar', { name: /boss hp/i }),
     ).toBeInTheDocument();
@@ -44,36 +55,38 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /setup/i }));
-    const optionsToggle = screen.getByRole('button', {
+    const { panel } = await openBossFightPanel(user);
+    const optionsToggle = within(panel).getByRole('button', {
       name: /toggle advanced target options/i,
     });
     await user.click(optionsToggle);
-    await user.click(screen.getByRole('radio', { name: /custom/i }));
-    const hpInput = await screen.findByLabelText(/custom target hp/i);
+    await user.click(within(panel).getByRole('radio', { name: /custom/i }));
+    const hpInput = await within(panel).findByLabelText(/custom target hp/i);
     await user.click(hpInput);
     await user.keyboard('{Control>}a{/Control}');
     await user.keyboard('{Backspace}');
     await user.type(hpInput, '500');
 
-    expect(
-      within(screen.getByRole('banner')).getByText(/500\s*\/\s*500/),
-    ).toBeInTheDocument();
+    const banner = screen.getByRole('banner', { name: /damage tracker/i });
+    const bossChip = within(banner).getByRole('group', { name: /boss hp/i });
+    await waitFor(() => {
+      expect(within(bossChip).getByText(/500\s*\/\s*500/)).toBeInTheDocument();
+    });
   });
 
   it('displays the sequence context in the header when running a sequence', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /setup/i }));
-    await user.click(screen.getByRole('tab', { name: /sequence run/i }));
+    const { panel } = await openBossFightPanel(user);
+    await user.click(within(panel).getByRole('tab', { name: /sequence run/i }));
 
-    const sequenceSelect = await screen.findByLabelText(/sequence/i, {
+    const sequenceSelect = await within(panel).findByLabelText(/sequence/i, {
       selector: 'select',
     });
     await user.selectOptions(sequenceSelect, 'pantheon-of-the-master');
 
-    const banner = screen.getByRole('banner');
+    const banner = screen.getByRole('banner', { name: /damage tracker/i });
     await waitFor(() => {
       expect(
         within(banner).getByText(/pantheon of the master \(1\/\d+\)/i),
@@ -96,36 +109,46 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /setup/i }));
-    const search = await screen.findByLabelText(/search bosses/i);
+    const { panel } = await openBossFightPanel(user);
+    const search = await within(panel).findByLabelText(/search bosses/i);
 
     await user.type(search, 'rdnc');
 
     expect(
-      await screen.findByRole('radio', { name: /the radiance/i }),
+      await within(panel).findByRole('radio', { name: /the radiance/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: /gruz mother/i })).not.toBeInTheDocument();
+    expect(
+      within(panel).queryByRole('radio', { name: /gruz mother/i }),
+    ).not.toBeInTheDocument();
 
     await user.clear(search);
-    expect(screen.getByRole('radio', { name: /gruz mother/i })).toBeInTheDocument();
+    expect(
+      within(panel).getByRole('radio', { name: /gruz mother/i }),
+    ).toBeInTheDocument();
   });
 
   it('switches boss versions to reflect Godhome health pools', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /setup/i }));
-    await user.click(screen.getByRole('radio', { name: /gruz mother/i }));
-    const optionsToggle = screen.getByRole('button', {
+    const { panel } = await openBossFightPanel(user);
+    await user.click(within(panel).getByRole('radio', { name: /gruz mother/i }));
+    const optionsToggle = within(panel).getByRole('button', {
       name: /toggle advanced target options/i,
     });
     await user.click(optionsToggle);
-    const versionSelect = await screen.findByLabelText(/boss version/i);
+    const versionSelect = await within(panel).findByLabelText(/boss version/i);
     await user.selectOptions(versionSelect, 'gruz-mother__ascended');
 
-    expect(
-      within(screen.getByRole('banner')).getByText(/945\s*\/\s*945/),
-    ).toBeInTheDocument();
+    const banner = screen.getByRole('banner', { name: /damage tracker/i });
+    const bossChip = within(banner).getByRole('group', { name: /boss hp/i });
+    await waitFor(() => {
+      const progressbar = within(bossChip).getByRole('progressbar', {
+        name: /boss hp/i,
+      });
+      expect(progressbar).toHaveAttribute('aria-valuemax', '945');
+      expect(within(bossChip).getByText(/945\s*\/\s*945/)).toBeInTheDocument();
+    });
   });
 
   it('applies charm presets and enforces overcharm limits', async () => {
@@ -256,9 +279,11 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /setup/i }));
-    await user.click(screen.getByRole('tab', { name: /sequence run/i }));
-    const sequencePanel = await screen.findByRole('tabpanel', { name: /sequence run/i });
+    const { panel } = await openBossFightPanel(user);
+    await user.click(within(panel).getByRole('tab', { name: /sequence run/i }));
+    const sequencePanel = await within(panel).findByRole('tabpanel', {
+      name: /sequence run/i,
+    });
 
     const sequenceChoices = within(sequencePanel).getByRole('radiogroup', {
       name: /sequence run/i,

@@ -19,7 +19,6 @@ import {
 import { HelpModal } from '../features/help/HelpModal';
 import { useVisualViewportCssVars } from './useVisualViewportCssVars';
 import { SurfaceSection } from '../components/SurfaceSection';
-import { EncounterSetupPanel } from '../features/encounter-setup';
 import { HeaderBar } from './components/HeaderBar';
 import { MobilePinnedHud } from './components/MobilePinnedHud';
 import { formatSequenceHeaderLabel } from './formatSequenceHeaderLabel';
@@ -29,7 +28,6 @@ const AppContent: FC = () => {
   useVisualViewportCssVars();
 
   const [isModalOpen, setModalOpen] = useState(false);
-  const [isSetupOpen, setSetupOpen] = useState(false);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const handleCloseLoadout = useCallback(() => {
     setModalOpen(false);
@@ -39,31 +37,15 @@ const AppContent: FC = () => {
   }, [setHelpOpen]);
 
   const {
-    bosses,
-    bossSelectValue,
-    handleBossChange,
-    selectedBoss,
-    selectedBossId,
-    handleBossVersionChange,
     selectedTarget,
     selectedVersion,
-    customTargetHp,
-    handleCustomHpChange,
-    bossSequences,
-    sequenceSelectValue,
-    handleSequenceChange,
     sequenceEntries,
     cappedSequenceIndex,
-    handleSequenceStageChange,
     handleAdvanceSequence,
     handleRewindSequence,
     hasNextSequenceStage,
     hasPreviousSequenceStage,
     activeSequence,
-    sequenceConditionValues,
-    handleSequenceConditionToggle,
-    sequenceBindingValues,
-    handleSequenceBindingToggle,
     currentSequenceEntry,
   } = useBuildConfiguration();
 
@@ -172,16 +154,12 @@ const AppContent: FC = () => {
         encounterName={encounterName}
         versionLabel={versionLabel}
         arenaLabel={arenaLabel}
-        onToggleSetup={() => {
-          setSetupOpen((open) => !open);
-        }}
         onOpenLoadout={() => {
           setModalOpen(true);
         }}
         onOpenHelp={() => {
           setHelpOpen(true);
         }}
-        isSetupOpen={isSetupOpen}
         stageLabel={stageLabel}
         stageProgress={stageProgress}
         onAdvanceStage={handleAdvanceSequence}
@@ -194,31 +172,6 @@ const AppContent: FC = () => {
         encounterName={encounterName}
         arenaLabel={arenaLabel}
       />
-
-      <EncounterSetupPanel
-        isOpen={isSetupOpen}
-        bosses={bosses}
-        bossSelectValue={bossSelectValue}
-        onBossChange={handleBossChange}
-        selectedBoss={selectedBoss}
-        selectedBossId={selectedBossId}
-        onBossVersionChange={handleBossVersionChange}
-        selectedTarget={selectedTarget}
-        selectedVersion={selectedVersion}
-        customTargetHp={customTargetHp}
-        onCustomHpChange={handleCustomHpChange}
-        bossSequences={bossSequences}
-        sequenceSelectValue={sequenceSelectValue}
-        onSequenceChange={handleSequenceChange}
-        sequenceEntries={sequenceEntries}
-        cappedSequenceIndex={cappedSequenceIndex}
-        onStageSelect={handleSequenceStageChange}
-        sequenceConditionValues={sequenceConditionValues}
-        onConditionToggle={handleSequenceConditionToggle}
-        sequenceBindingValues={sequenceBindingValues}
-        onBindingToggle={handleSequenceBindingToggle}
-      />
-
       <main className="app-main">
         <AttackLogProvider>
           <SurfaceSection

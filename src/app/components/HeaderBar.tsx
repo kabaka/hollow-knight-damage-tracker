@@ -9,10 +9,8 @@ export type HeaderBarProps = {
   readonly encounterName: string;
   readonly versionLabel: string | null;
   readonly arenaLabel: string | null;
-  readonly onToggleSetup: () => void;
   readonly onOpenLoadout: () => void;
   readonly onOpenHelp: () => void;
-  readonly isSetupOpen: boolean;
   readonly stageLabel: string | null;
   readonly stageProgress: { current: number; total: number } | null;
   readonly onAdvanceStage: () => void;
@@ -26,10 +24,8 @@ export const HeaderBar: FC<HeaderBarProps> = ({
   encounterName,
   versionLabel,
   arenaLabel,
-  onToggleSetup,
   onOpenLoadout,
   onOpenHelp,
-  isSetupOpen,
   stageLabel,
   stageProgress,
   onAdvanceStage,
@@ -55,14 +51,6 @@ export const HeaderBar: FC<HeaderBarProps> = ({
     }
     actions={
       <div className="hud-actions">
-        <AppButton
-          type="button"
-          onClick={onToggleSetup}
-          aria-expanded={isSetupOpen}
-          aria-controls="encounter-setup"
-        >
-          Setup
-        </AppButton>
         <AppButton
           type="button"
           onClick={onOpenLoadout}
