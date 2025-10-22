@@ -79,6 +79,52 @@ describe('PlayerConfigModal tabs', () => {
   });
 });
 
+describe('PlayerConfigModal spells', () => {
+  it('displays metadata for spell variants', async () => {
+    const user = userEvent.setup();
+    openModal();
+    await Promise.resolve();
+
+    const spellsTab = screen.getByRole('tab', { name: /spells/i });
+    await user.click(spellsTab);
+
+    const abyssShriekOption = await screen.findByTestId(
+      'spell-option-howling-wraiths-upgrade',
+    );
+    expect(abyssShriekOption).toHaveTextContent(/Soul cost\s*33/i);
+    expect(abyssShriekOption).toHaveTextContent(/Total damage\s*80/i);
+    expect(abyssShriekOption).toHaveTextContent(/Hits\s*4/i);
+    expect(abyssShriekOption).toHaveTextContent(
+      /Origin\s*Found at the bottom of The Abyss\./i,
+    );
+  });
+});
+
+describe('PlayerConfigModal nail', () => {
+  it('renders metadata for each upgrade and allows selection without a dropdown', async () => {
+    const user = userEvent.setup();
+    openModal();
+    await Promise.resolve();
+
+    const nailTab = screen.getByRole('tab', { name: /nail/i });
+    await user.click(nailTab);
+
+    const coiledCard = await screen.findByTestId('nail-option-coiled-nail');
+    expect(coiledCard).toHaveTextContent(/Geo\s*2,?000/i);
+    expect(coiledCard).toHaveTextContent(/Pale Ore\s*2/i);
+    expect(coiledCard).toHaveTextContent(/Origin\s*Upgrade from the Nailsmith/i);
+
+    const pureCard = await screen.findByTestId('nail-option-pure-nail');
+    expect(pureCard).toHaveTextContent(/Damage\s*21/i);
+    expect(pureCard).toHaveTextContent(/Geo\s*4,?000/i);
+    expect(pureCard).toHaveTextContent(/Pale Ore\s*3/i);
+
+    const coiledRadio = within(coiledCard).getByRole('radio', { name: /coiled nail/i });
+    await user.click(coiledCard);
+    expect(coiledRadio).toBeChecked();
+  });
+});
+
 describe('PlayerConfigModal charms', () => {
   afterEach(() => {
     vi.useRealTimers();

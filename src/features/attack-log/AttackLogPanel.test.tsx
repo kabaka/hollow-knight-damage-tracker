@@ -98,14 +98,23 @@ describe('AttackLogPanel', () => {
       </AttackLogProvider>,
     );
 
+    const modal = screen.getByRole('dialog', { name: /player loadout/i });
     const nailStrikeButton = screen.getByRole('button', { name: /nail strike/i });
     const damageDisplay = within(nailStrikeButton).getByLabelText(/damage per hit/i);
     expect(damageDisplay).toHaveTextContent(baseNailDamageText);
+    const strengthButton = within(modal).getByRole('button', {
+      name: /unbreakable strength/i,
+    });
 
-    await user.selectOptions(screen.getByLabelText(/nail upgrade/i), 'pure-nail');
+    await user.click(within(modal).getByRole('tab', { name: /nail/i }));
+    const pureNailOption = await within(modal).findByRole('radio', {
+      name: /pure nail/i,
+    });
+    await user.click(pureNailOption);
     expect(damageDisplay).toHaveTextContent('21');
 
-    await user.click(screen.getByRole('button', { name: /unbreakable strength/i }));
+    await user.click(within(modal).getByRole('tab', { name: /charms/i }));
+    await user.click(strengthButton);
     expect(damageDisplay).toHaveTextContent('32');
   });
 

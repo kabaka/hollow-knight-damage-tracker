@@ -198,10 +198,11 @@ describe('App', () => {
 
     modalBody.scrollTop = 200;
 
-    await user.selectOptions(
-      within(modal).getByLabelText(/nail upgrade/i),
-      'channelled-nail',
-    );
+    await user.click(within(modal).getByRole('tab', { name: /nail/i }));
+    const channelledNailOption = await within(modal).findByRole('radio', {
+      name: /channelled nail/i,
+    });
+    await user.click(channelledNailOption);
 
     expect(modalBody.scrollTop).toBe(200);
   });
