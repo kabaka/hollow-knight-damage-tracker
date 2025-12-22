@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Cache Vite build output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # Cache Vite's internal artifacts to accelerate subsequent builds.
           path: |
